@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { User } from '@supabase/supabase-js'
 import { FiPlus, FiMessageSquare, FiMoreVertical, FiEdit2, FiArchive, FiTrash2, FiLoader } from 'react-icons/fi'
 import SidebarProfile from './SidebarProfile'
-import { createChat, updateChatTitle, archiveChat, deleteChat } from '../../app/actions/chat/chat'
+import { updateChatTitle, archiveChat, deleteChat } from '../../app/actions/chat/chat'
 
 interface Chat {
     id: string
@@ -24,27 +24,13 @@ interface SidebarProps {
 export default function Sidebar({ user, chats }: SidebarProps) {
     const router = useRouter()
     const pathname = usePathname()
-    const [isPending, startTransition] = useTransition()
-    const [isCreatingDb, setIsCreatingDb] = useState(false)
     const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null)
     const [editingChatId, setEditingChatId] = useState<string | null>(null)
     const [editTitle, setEditTitle] = useState('')
     const [deleteConfirmationId, setDeleteConfirmationId] = useState<string | null>(null)
 
-    const isCreating = isPending || isCreatingDb
-
-    const handleNewChat = async () => {
-        if (!user || isCreating) return
-        setIsCreatingDb(true)
-        try {
-            const chat = await createChat(user.id)
-            startTransition(() => {
-                router.push(`/chat/${chat.id}`)
-                router.refresh()
-            })
-        } finally {
-            setIsCreatingDb(false)
-        }
+    const handleNewChat = () => {
+        router.push('/')
     }
 
     const formatDate = (date: Date) => {
@@ -96,15 +82,10 @@ export default function Sidebar({ user, chats }: SidebarProps) {
 
                 <button
                     onClick={handleNewChat}
-                    disabled={isCreating}
-                    className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 text-zinc-300 hover:text-zinc-100 text-sm font-medium transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group"
+                    className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 text-zinc-300 hover:text-zinc-100 text-sm font-medium transition-all cursor-pointer group"
                 >
-                    {isCreating ? (
-                        <FiLoader size={16} className="shrink-0 animate-spin" />
-                    ) : (
-                        <FiPlus size={16} className="shrink-0 group-hover:rotate-90 transition-transform duration-200" />
-                    )}
-                    <span>{isCreating ? 'Loading...' : 'New Chat'}</span>
+                    <FiPlus size={16} className="shrink-0 group-hover:rotate-90 transition-transform duration-200" />
+                    <span>New Chat</span>
                 </button>
 
                 {chats.length > 0 && (

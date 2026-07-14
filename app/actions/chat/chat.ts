@@ -2,12 +2,20 @@
 
 import db from "@/lib/db"
 import { revalidatePath } from "next/cache"
+import { createClient } from "@/lib/supabase/server"
 
-export async function createChat(userId: string) {
+export async function createChat(userId?: string) {
+    let resolvedUserId = userId
+    if (!resolvedUserId) {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error('Unauthorized')
+        resolvedUserId = user.id
+    }
+    
     const chat = await db.chat.create({
-        data: { userId }
+        data: { userId: resolvedUserId }
     })
-    revalidatePath('/')
     return chat
 }
 
@@ -60,6 +68,7 @@ export async function updateChatSession(
         where: { id: chatId },
         data: { eveSessionId, eveContinuationToken, eveStreamIndex, updatedAt: new Date() }
     })
+    revalidatePath('/')
 }
 
 export async function updateChatTitle(chatId: string, title: string) {

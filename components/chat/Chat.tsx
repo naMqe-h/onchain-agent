@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { useEveAgent } from 'eve/react'
 import ChatInput from './ChatInput'
 import ChatMessagesList from './ChatMessagesList'
-import { addMessage, updateChatSession } from '../../app/actions/chat/chat'
+import { addMessage, updateChatSession, createChat } from '../../app/actions/chat/chat'
 
 interface SessionState {
     sessionId?: string
@@ -21,18 +21,28 @@ interface StoredMessage {
 }
 
 interface ChatProps {
-    chatId: string
+    chatId: string | null
     initialMessages: StoredMessage[]
     initialSession: SessionState
 }
 
-export default function Chat({ chatId, initialMessages, initialSession }: ChatProps) {
+export default function Chat({ chatId: initialChatId, initialMessages, initialSession }: ChatProps) {
     const [input, setInput] = useState('')
     const [displayMessages, setDisplayMessages] = useState<StoredMessage[]>(initialMessages)
+    const [currentChatId, setCurrentChatId] = useState<string | null>(initialChatId)
+    const [isCreatingDb, setIsCreatingDb] = useState(false)
+    
+    const chatIdRef = useRef<string | null>(initialChatId)
+    useEffect(() => {
+        chatIdRef.current = currentChatId
+    }, [currentChatId])
 
     const agent = useEveAgent({
         initialSession,
         onFinish: useCallback(async (snapshot: any) => {
+            const chatId = chatIdRef.current
+            if (!chatId) return
+
             const messages = snapshot?.data?.messages
             if (!messages || messages.length < 2) return
 
@@ -58,14 +68,29 @@ export default function Chat({ chatId, initialMessages, initialSession }: ChatPr
                     session.streamIndex ?? 0
                 )
             }
-        }, [chatId])
+        }, [])
     })
 
-    const isBusy = agent.status === 'submitted' || agent.status === 'streaming'
+    const isBusy = agent.status === 'submitted' || agent.status === 'streaming' || isCreatingDb
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         if (!input.trim() || isBusy) return
+        
+        let targetChatId = currentChatId
+        if (!targetChatId) {
+            setIsCreatingDb(true)
+            try {
+                const chat = await createChat()
+                targetChatId = chat.id
+                setCurrentChatId(chat.id)
+                chatIdRef.current = chat.id
+                window.history.replaceState(null, '', `/chat/${chat.id}`)
+            } finally {
+                setIsCreatingDb(false)
+            }
+        }
+
         await agent.send({ message: input.trim() })
         setInput('')
     }
@@ -75,7 +100,8 @@ export default function Chat({ chatId, initialMessages, initialSession }: ChatPr
         : displayMessages.map(m => ({
             id: m.id,
             role: m.role,
-            parts: m.parts ?? [{ type: 'text', text: m.content }]
+            parts: m.parts ?? [{ type: 'text', text: m.content }],
+            createdAt: m.createdAt
         }))
 
     return (
