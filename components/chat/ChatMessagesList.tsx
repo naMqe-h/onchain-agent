@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { TbBrain } from 'react-icons/tb'
 import ReactMarkdown from 'react-markdown'
 
@@ -9,6 +9,7 @@ interface Message {
 }
 
 interface ChatMessagesListProps {
+    chatId: string | null
     messages: readonly Message[]
 }
 
@@ -80,7 +81,36 @@ function MessageItem({ message }: { message: Message }) {
     )
 }
 
-export default function ChatMessagesList({ messages }: ChatMessagesListProps) {
+export default function ChatMessagesList({ chatId, messages }: ChatMessagesListProps) {
+    const containerRef = useRef<HTMLDivElement>(null)
+    const isAtBottomRef = useRef(true)
+
+    const handleScroll = useCallback(() => {
+        const container = containerRef.current
+        if (!container) return
+
+        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 150
+        isAtBottomRef.current = isNearBottom
+    }, [])
+
+    useEffect(() => {
+        isAtBottomRef.current = true
+
+        const raf = requestAnimationFrame(() => {
+            if (containerRef.current) {
+                containerRef.current.scrollTop = containerRef.current.scrollHeight
+            }
+        })
+
+        return () => cancelAnimationFrame(raf)
+    }, [chatId])
+
+    useEffect(() => {
+        if (isAtBottomRef.current && containerRef.current) {
+            containerRef.current.scrollTop = containerRef.current.scrollHeight
+        }
+    }, [messages])
+
     if (!messages || messages.length === 0) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center text-zinc-500">
@@ -90,10 +120,14 @@ export default function ChatMessagesList({ messages }: ChatMessagesListProps) {
     }
 
     return (
-        <div className="flex-1 overflow-y-auto p-4 md:px-8 space-y-8 scroll-smooth">
+        <div
+            ref={containerRef}
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto p-4 md:px-8 space-y-8"
+        >
             <div className="max-w-3xl mx-auto flex flex-col gap-8 pb-4 pt-8">
-                {messages.map((message) => (
-                    <MessageItem key={message.id} message={message} />
+                {messages.map((message, idx) => (
+                    <MessageItem key={idx} message={message} />
                 ))}
             </div>
         </div>
