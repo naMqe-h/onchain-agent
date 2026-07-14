@@ -1,7 +1,7 @@
 'use client'
 
+import { loginAction, signupAction } from '@/app/actions/auth/auth'
 import { useState } from 'react'
-import { loginAction, signupAction } from '../actions/auth/auth'
 import { FaCheckCircle, FaRegCircle } from 'react-icons/fa'
 
 export default function LoginPage() {
@@ -115,7 +115,7 @@ export default function LoginPage() {
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="flex w-full justify-center rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black hover:bg-neutral-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                        className="flex w-full justify-center rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black hover:bg-neutral-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                     >
                         {isLoading ? 'Processing...' : isLogin ? 'Sign in' : 'Sign up'}
                     </button>
