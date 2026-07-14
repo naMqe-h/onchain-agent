@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Sidebar from '@/components/dashboard/Sidebar'
 import { redirect } from 'next/navigation'
+import { getUserChats } from '@/app/actions/chat/chat'
 
 export default async function DashboardLayout({
   children,
@@ -14,10 +15,12 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
+  const chats = await getUserChats(user.id)
+
   return (
     <div className="flex h-screen w-full overflow-hidden">
-      <Sidebar user={user} />
-      <main className="flex-1 flex flex-col">
+      <Sidebar user={user} chats={chats} />
+      <main className="flex-1 flex flex-col overflow-hidden">
         {children}
       </main>
     </div>
