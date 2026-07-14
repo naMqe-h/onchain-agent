@@ -28,6 +28,7 @@ model Chat {
   eveSessionId         String?
   eveContinuationToken String?
   eveStreamIndex       Int       @default(0)
+  isArchived           Boolean   @default(false)
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   messages             Message[]
