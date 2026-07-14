@@ -5,6 +5,7 @@ const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-export const myAgent = defineAgent({
+export default defineAgent({
   model: openrouter("cohere/north-mini-code:free"),
+  modelContextWindowTokens: 256000,
 });
