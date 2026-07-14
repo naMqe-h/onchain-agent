@@ -4,7 +4,7 @@ import db from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 
-export async function createChat(userId?: string) {
+export async function createChat(model?: string, userId?: string) {
     let resolvedUserId = userId
     if (!resolvedUserId) {
         const supabase = await createClient()
@@ -14,7 +14,10 @@ export async function createChat(userId?: string) {
     }
     
     const chat = await db.chat.create({
-        data: { userId: resolvedUserId }
+        data: { 
+            userId: resolvedUserId,
+            model: model || "gpt-4.1-nano"
+        }
     })
     return chat
 }
@@ -90,6 +93,14 @@ export async function archiveChat(chatId: string) {
 export async function deleteChat(chatId: string) {
     await db.chat.delete({
         where: { id: chatId }
+    })
+    revalidatePath('/')
+}
+
+export async function updateChatModel(chatId: string, model: string) {
+    await db.chat.update({
+        where: { id: chatId },
+        data: { model }
     })
     revalidatePath('/')
 }

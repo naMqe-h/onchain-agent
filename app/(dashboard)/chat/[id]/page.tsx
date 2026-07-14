@@ -39,6 +39,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
                 role: m.role as 'user' | 'assistant'
             }))}
             initialSession={initialSession}
+            initialModel={chat.model}
         />
     )
 }

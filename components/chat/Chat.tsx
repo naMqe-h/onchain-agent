@@ -5,7 +5,7 @@ import { useEveAgent } from 'eve/react'
 import ChatInput from './ChatInput'
 import ChatMessagesList from './ChatMessagesList'
 import AgentAnalysisPanel, { getStepMetrics, getToolMetrics } from './AgentAnalysisPanel'
-import { addMessage, updateChatSession, createChat } from '../../app/actions/chat/chat'
+import { addMessage, updateChatSession, createChat, updateChatModel } from '../../app/actions/chat/chat'
 
 interface SessionState {
     sessionId?: string
@@ -25,9 +25,10 @@ interface ChatProps {
     chatId: string | null
     initialMessages: StoredMessage[]
     initialSession: SessionState
+    initialModel?: string
 }
 
-export default function Chat({ chatId: initialChatId, initialMessages, initialSession }: ChatProps) {
+export default function Chat({ chatId: initialChatId, initialMessages, initialSession, initialModel }: ChatProps) {
     const [input, setInput] = useState('')
     const [displayMessages, setDisplayMessages] = useState<StoredMessage[]>(initialMessages)
     const [currentChatId, setCurrentChatId] = useState<string | null>(initialChatId)
@@ -35,6 +36,20 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
     const [isStreaming, setIsStreaming] = useState(false)
     const [streamStartIndex, setStreamStartIndex] = useState(0)
     const [activeMessageId, setActiveMessageId] = useState<string | null>(null)
+    const [selectedModel, setSelectedModel] = useState(initialModel || 'gpt-4.1-nano')
+
+    useEffect(() => {
+        if (initialModel) {
+            setSelectedModel(initialModel)
+        }
+    }, [initialModel])
+
+    const handleModelChange = async (model: string) => {
+        setSelectedModel(model)
+        if (currentChatId) {
+            await updateChatModel(currentChatId, model)
+        }
+    }
 
     const handleToggleReasoning = useCallback((id: string) => {
         setActiveMessageId(prev => prev === id ? null : id)
@@ -167,7 +182,7 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
         if (!targetChatId) {
             setIsCreatingDb(true)
             try {
-                const chat = await createChat()
+                const chat = await createChat(selectedModel)
                 targetChatId = chat.id
                 setCurrentChatId(chat.id)
                 chatIdRef.current = chat.id
@@ -177,7 +192,12 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
             }
         }
 
-        await agent.send({ message: input.trim() })
+        await agent.send({
+            message: input.trim(),
+            headers: {
+                'x-model-name': selectedModel
+            }
+        })
         setInput('')
     }
 
@@ -255,6 +275,8 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
                         handleInputChange={(e) => setInput(e.target.value)}
                         handleSubmit={handleSubmit}
                         isBusy={isBusy}
+                        selectedModel={selectedModel}
+                        onModelChange={handleModelChange}
                     />
                 </div>
             </div>

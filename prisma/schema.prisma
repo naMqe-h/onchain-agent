@@ -32,6 +32,7 @@ model Chat {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   messages             Message[]
+  model                String    @default("gpt-4.1-nano")
 }
 
 model Message {

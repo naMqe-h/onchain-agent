@@ -15,6 +15,7 @@ export default async function DashboardPage() {
             chatId={null}
             initialMessages={[]}
             initialSession={{ streamIndex: 0 }}
+            initialModel="gpt-4.1-nano"
         />
     )
 }

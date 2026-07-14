@@ -5,6 +5,7 @@ import { createServerClient } from "@supabase/ssr"
 function supabaseAuth(): AuthFn<Request> {
     return async (request) => {
         const cookieHeader = request.headers.get("cookie") || ""
+        const modelHeader = request.headers.get("x-model-name") || ""
         
         const supabase = createServerClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,7 +36,9 @@ function supabaseAuth(): AuthFn<Request> {
             authenticator: "supabase",
             principalId: user.id,
             principalType: "user" as const,
-            attributes: {}
+            attributes: {
+                modelName: modelHeader
+            }
         }
     }
 }
