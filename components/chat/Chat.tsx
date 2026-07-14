@@ -268,6 +268,7 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
                     messages={enrichedMessages}
                     activeMessageId={activeMessageId}
                     onToggleReasoning={handleToggleReasoning}
+                    isBusy={isBusy}
                 />
                 <div className="w-full">
                     <ChatInput

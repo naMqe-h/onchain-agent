@@ -14,11 +14,14 @@ datasource db {
 model Wallet {
   id           String   @id @default(uuid())
   userId       String
+  name         String
   address      String
   type         String
   encryptedKey String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  @@unique([userId, name])
 }
 
 model Chat {

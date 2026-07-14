@@ -13,6 +13,7 @@ interface ChatMessagesListProps {
     messages: readonly Message[]
     activeMessageId: string | null
     onToggleReasoning: (id: string) => void
+    isBusy?: boolean
 }
 
 interface MessageItemProps {
@@ -84,7 +85,12 @@ function MessageItem({ message, isActive, onToggleReasoning }: MessageItemProps)
     )
 }
 
-export default function ChatMessagesList({ chatId, messages, activeMessageId, onToggleReasoning }: ChatMessagesListProps) {
+const hasTextContent = (message: Message) => {
+    if (!message.parts || message.parts.length === 0) return false
+    return message.parts.some(part => part.type === 'text' && part.text && part.text.trim().length > 0)
+}
+
+export default function ChatMessagesList({ chatId, messages, activeMessageId, onToggleReasoning, isBusy }: ChatMessagesListProps) {
     const containerRef = useRef<HTMLDivElement>(null)
     const isAtBottomRef = useRef(true)
 
@@ -114,6 +120,12 @@ export default function ChatMessagesList({ chatId, messages, activeMessageId, on
         }
     }, [messages])
 
+    useEffect(() => {
+        if (isBusy && containerRef.current) {
+            containerRef.current.scrollTop = containerRef.current.scrollHeight
+        }
+    }, [isBusy])
+
     if (!messages || messages.length === 0) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center text-zinc-500">
@@ -137,6 +149,18 @@ export default function ChatMessagesList({ chatId, messages, activeMessageId, on
                         onToggleReasoning={() => onToggleReasoning(message.id)}
                     />
                 ))}
+                {isBusy && (
+                    messages[messages.length - 1]?.role === 'user' ||
+                    (messages[messages.length - 1]?.role === 'assistant' && !hasTextContent(messages[messages.length - 1]))
+                ) && (
+                    <div className="flex flex-col items-start w-full gap-2">
+                        <div className="flex items-center gap-1.5 px-4 py-3 bg-[#1e1e20]/40 rounded-[20px] border border-white/5 shadow-sm">
+                            <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                            <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     )

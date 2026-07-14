@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { FiArrowUp, FiChevronUp } from 'react-icons/fi'
 
 interface ChatInputProps {
@@ -19,6 +19,13 @@ export default function ChatInput({
     onModelChange
 }: ChatInputProps) {
     const [isOpen, setIsOpen] = useState(false)
+    const inputRef = useRef<HTMLInputElement>(null)
+
+    useEffect(() => {
+        if (!isBusy) {
+            inputRef.current?.focus()
+        }
+    }, [isBusy])
 
     const models = [
         { id: 'gpt-4.1-nano', name: 'GPT-4.1 Nano', shortName: 'GPT-4.1', provider: 'OpenAI' },
@@ -31,6 +38,7 @@ export default function ChatInput({
         <div className="p-4 bg-transparent pb-8">
             <form onSubmit={handleSubmit} className="flex gap-3 max-w-3xl mx-auto bg-[#1e1e20] rounded-full px-4 py-3 items-center shadow-lg border border-white/5 relative z-10">
                 <input
+                    ref={inputRef}
                     type="text"
                     value={input}
                     onChange={handleInputChange}

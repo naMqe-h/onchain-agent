@@ -7,13 +7,13 @@ import db from "../../lib/db"
 export default defineTool({
     description: "Get the ETH balance of a specified address or the authenticated user's wallet.",
     inputSchema: z.object({
-        address: z.string().optional().describe("The EVM blockchain address to check the balance of. If not provided, the authenticated user's wallet is used.")
+        address: z.string().optional().describe("The EVM blockchain address or the custom wallet name (e.g. 'Primary Wallet') to check the balance of. If not provided, the authenticated user's default/first wallet is used.")
     }),
     async execute({ address }, ctx) {
         let targetAddress = address
+        const userId = ctx.session?.auth?.current?.principalId
 
         if (!targetAddress) {
-            const userId = ctx.session?.auth?.current?.principalId
             if (!userId || userId === "local-dev") {
                 return {
                     success: false,
@@ -29,6 +29,32 @@ export default defineTool({
                 return {
                     success: false,
                     error: `No wallet found for user ID: ${userId}`
+                }
+            }
+
+            targetAddress = wallet.address
+        } else if (!targetAddress.startsWith('0x') || targetAddress.length !== 42) {
+            if (!userId || userId === "local-dev") {
+                return {
+                    success: false,
+                    error: "A wallet name was provided, but no authenticated database user could be identified from the session."
+                }
+            }
+
+            const wallet = await db.wallet.findFirst({
+                where: {
+                    userId,
+                    name: {
+                        equals: targetAddress.trim(),
+                        mode: 'insensitive'
+                    }
+                }
+            })
+
+            if (!wallet) {
+                return {
+                    success: false,
+                    error: `No wallet named "${targetAddress}" was found for your account.`
                 }
             }
 
