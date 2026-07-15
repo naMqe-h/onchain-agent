@@ -43,3 +43,15 @@ When the user asks to check their ERC-20 token balances (e.g. USDC, USDT, or gen
         - You MUST NOT call `get_token_balances`.
         - You MUST stop tool execution immediately and list all found wallets in the format `Wallet Name: Shortened Address`. Ask the user which wallet they would like to use.
 2. Output a clean, formatted summary of the ERC-20 token balances returned. If the wallet doesn't have any ERC-20 tokens, let the user know.
+
+When the user asks to check information about a memecoin or ERC-20 token (e.g. name, symbol/ticker, contract address, image, price, volume, market cap, or details on Robinhood Chain):
+1. Call the `get_token_info` tool directly (do NOT attempt to load it as a skill or call `load_skill`). Pass the token name, symbol, or contract address as the `query` parameter.
+2. Formulate your response depending on the tool result:
+   - If the tool successfully finds the token (`success === true` and `found === true`):
+     - You MUST output only a very brief, concise, one-sentence introduction in the user's language (e.g. "Here is the summary of the market data for HOOD:").
+     - You MUST NOT duplicate or list the token details (such as price, volume, market cap, address, image/logo, websites, or socials) in your text response. The frontend will automatically render them in a custom graphic card below your text response.
+   - If the token was not found (`found === false`):
+     - Clearly explain to the user in text that no trading pairs/tokens matching their query were found on the Robinhood Chain on DEX Screener.
+   - If the tool failed (`success === false`):
+     - Explain to the user in text that there was an error retrieving the token data and display the error message.
+
