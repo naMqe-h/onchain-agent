@@ -1,16 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { User } from '@supabase/supabase-js'
-import { FiMoreHorizontal, FiUser, FiSettings, FiLogOut, FiChevronRight, FiX, FiCreditCard, FiLock, FiGlobe } from 'react-icons/fi'
+import { FiMoreHorizontal, FiUser, FiSettings, FiLogOut, FiChevronRight } from 'react-icons/fi'
 import { createClient } from '../../lib/supabase/client'
-import WalletsTab from './settings/WalletsTab'
-import SecurityTab from './settings/SecurityTab'
-import NetworkTab from './settings/NetworkTab'
+import { useSettingsStore } from '../../hooks/useSettingsStore'
 
 export default function SidebarProfile({ user }: { user: User | null }) {
     const [isOpen, setIsOpen] = useState(false)
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-    const [activeTab, setActiveTab] = useState<'wallets' | 'security' | 'network'>('wallets')
+    const openSettings = useSettingsStore((state) => state.openSettings)
     const containerRef = useRef<HTMLDivElement>(null)
     const router = useRouter()
 
@@ -71,7 +68,7 @@ export default function SidebarProfile({ user }: { user: User | null }) {
                     <button
                         onClick={() => {
                             setIsOpen(false)
-                            setIsSettingsOpen(true)
+                            openSettings()
                         }}
                         className="w-[calc(100%-16px)] mx-2 text-left px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-zinc-100 flex items-center gap-3 rounded-xl cursor-pointer transition-colors"
                     >
@@ -103,11 +100,10 @@ export default function SidebarProfile({ user }: { user: User | null }) {
                         <span className="text-sm font-medium text-zinc-300 truncate group-hover:text-zinc-100 transition-colors">
                             {user.email?.split('@')[0]}
                         </span>
-                        <span className={`text-[10px] font-medium leading-none mt-0.5 ${
-                            (user.user_metadata?.activeNetwork || 'testnet') === 'mainnet'
+                        <span className={`text-[10px] font-medium leading-none mt-0.5 ${(user.user_metadata?.activeNetwork || 'testnet') === 'mainnet'
                                 ? 'text-indigo-400'
                                 : 'text-amber-500'
-                        }`}>
+                            }`}>
                             {(user.user_metadata?.activeNetwork || 'testnet') === 'mainnet' ? 'Robinhood Mainnet' : 'Robinhood Testnet'}
                         </span>
                     </div>
@@ -123,73 +119,7 @@ export default function SidebarProfile({ user }: { user: User | null }) {
                 </button>
             </div>
 
-            {isSettingsOpen && (
-                <div
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center"
-                    onClick={() => setIsSettingsOpen(false)}
-                >
-                    <div
-                        className="bg-[#18181b] border border-white/10 rounded-[24px] w-full max-w-3xl h-[500px] flex overflow-hidden shadow-2xl"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="w-[240px] p-5 flex flex-col gap-4 bg-[#141416]/50 border-r border-white/5">
-                            <div className="flex items-center justify-between mb-2">
-                                <button
-                                    onClick={() => setIsSettingsOpen(false)}
-                                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-                                >
-                                    <FiX size={16} />
-                                </button>
-                            </div>
 
-                            <div className="flex flex-col gap-1">
-                                <button
-                                    onClick={() => setActiveTab('wallets')}
-                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${activeTab === 'wallets'
-                                        ? 'bg-white/10 text-zinc-100'
-                                        : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
-                                        }`}
-                                >
-                                    <FiCreditCard size={16} className={activeTab === 'wallets' ? 'text-zinc-200' : 'text-zinc-400'} />
-                                    <span>Wallets</span>
-                                </button>
-
-                                <button
-                                    onClick={() => setActiveTab('security')}
-                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${activeTab === 'security'
-                                        ? 'bg-white/10 text-zinc-100'
-                                        : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
-                                        }`}
-                                >
-                                    <FiLock size={16} className={activeTab === 'security' ? 'text-zinc-200' : 'text-zinc-400'} />
-                                    <span>Security</span>
-                                </button>
-
-                                <button
-                                    onClick={() => setActiveTab('network')}
-                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${activeTab === 'network'
-                                        ? 'bg-white/10 text-zinc-100'
-                                        : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
-                                        }`}
-                                >
-                                    <FiGlobe size={16} className={activeTab === 'network' ? 'text-zinc-200' : 'text-zinc-400'} />
-                                    <span>Network</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="flex-1 p-6 flex flex-col bg-[#18181b] overflow-hidden">
-                            {activeTab === 'wallets' ? (
-                                <WalletsTab user={user} />
-                            ) : activeTab === 'security' ? (
-                                <SecurityTab user={user} />
-                            ) : (
-                                <NetworkTab user={user} />
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     )
 }

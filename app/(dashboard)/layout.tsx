@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import Sidebar from '@/components/dashboard/Sidebar'
 import { redirect } from 'next/navigation'
 import { getUserChats } from '@/app/actions/chat/chat'
+import SettingsModal from '../../components/dashboard/settings/SettingsModal'
 
 export default async function DashboardLayout({
   children,
@@ -23,6 +24,7 @@ export default async function DashboardLayout({
       <main className="flex-1 flex flex-col overflow-hidden">
         {children}
       </main>
+      <SettingsModal user={user} />
     </div>
   )
 }
