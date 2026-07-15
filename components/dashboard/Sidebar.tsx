@@ -75,7 +75,7 @@ export default function Sidebar({ user, chats }: SidebarProps) {
 
     return (
         <div className="w-64 h-screen border-r border-white/5 bg-[#131314] flex flex-col">
-            <div className="flex-1 px-4 py-6 overflow-y-auto flex flex-col gap-4">
+            <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
                 <div className="flex items-center justify-between px-2">
                     <span className="font-medium text-[17px] text-zinc-100 tracking-tight">Robinhood Agent</span>
                 </div>
@@ -87,7 +87,9 @@ export default function Sidebar({ user, chats }: SidebarProps) {
                     <FiPlus size={16} className="shrink-0 group-hover:rotate-90 transition-transform duration-200" />
                     <span>New Chat</span>
                 </button>
+            </div>
 
+            <div className="flex-1 px-4 pb-6 overflow-y-auto flex flex-col min-h-0">
                 {chats.length > 0 && (
                     <div className="flex flex-col gap-0.5">
                         <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider px-2 mb-1">Recent</p>

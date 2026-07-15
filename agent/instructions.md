@@ -32,3 +32,14 @@ When the user asks to send or transfer ETH:
      - **Gas Price**: <gasPriceGwei> Gwei
      - **Total Gas Fee**: <gasFeeEth> ETH
 
+When the user asks to check their ERC-20 token balances (e.g. USDC, USDT, or general "token balances"):
+1. For the wallet selection:
+   - If the user provides a wallet address or name in the prompt, use it as the `walletAddressOrName` parameter.
+   - If the user does NOT provide a wallet address or name:
+     a. Call the `get_user_wallets` tool first to find if they have any configured wallets.
+     b. If the tool returns NO wallets: ask the user to provide a wallet address to check.
+     c. If the tool returns EXACTLY ONE wallet: call `get_token_balances` using that wallet's address or name.
+     d. If the tool returns MULTIPLE wallets (more than 1 wallet):
+        - You MUST NOT call `get_token_balances`.
+        - You MUST stop tool execution immediately and list all found wallets in the format `Wallet Name: Shortened Address`. Ask the user which wallet they would like to use.
+2. Output a clean, formatted summary of the ERC-20 token balances returned. If the wallet doesn't have any ERC-20 tokens, let the user know.
