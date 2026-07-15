@@ -18,10 +18,10 @@ export default async function DashboardLayout({
 
   const chats = await getUserChats(user.id)
 
-  return (
-    <div className="flex h-screen w-full overflow-hidden">
-      <Sidebar user={user} chats={chats} />
-      <main className="flex-1 flex flex-col overflow-hidden">
+    return (
+        <div className="flex flex-col md:flex-row h-screen w-full overflow-hidden">
+            <Sidebar user={user} chats={chats} />
+            <main className="flex-1 flex flex-col overflow-hidden">
         {children}
       </main>
       <SettingsModal user={user} />

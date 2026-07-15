@@ -22,23 +22,14 @@ export default function SettingsModal({ user }: SettingsModalProps) {
             onClick={closeSettings}
         >
             <div
-                className="bg-[#18181b] border border-white/10 rounded-[24px] w-full max-w-3xl h-[500px] flex overflow-hidden shadow-2xl"
+                className="bg-[#18181b] w-full h-full rounded-none max-w-none border-none md:max-w-3xl md:h-[500px] md:rounded-[24px] md:border md:border-white/10 flex flex-col md:flex-row overflow-hidden shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="w-[240px] p-5 flex flex-col gap-4 bg-[#141416]/50 border-r border-white/5">
-                    <div className="flex items-center justify-between mb-2">
-                        <button
-                            onClick={closeSettings}
-                            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-                        >
-                            <FiX size={16} />
-                        </button>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
+                <div className="w-full md:w-[240px] p-4 md:p-5 flex flex-row md:flex-col justify-between md:justify-start gap-3 md:gap-4 bg-[#141416]/50 border-b border-white/5 md:border-b-0 md:border-r md:border-white/5 items-center md:items-stretch shrink-0">
+                    <div className="flex flex-row md:flex-col gap-1 flex-1 md:flex-initial">
                         <button
                             onClick={() => setActiveTab('wallets')}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
+                            className={`flex items-center gap-1.5 md:gap-3 px-2.5 py-1.5 md:px-3 md:py-2.5 rounded-xl text-xs md:text-sm font-medium transition-colors cursor-pointer ${
                                 activeTab === 'wallets'
                                     ? 'bg-white/10 text-zinc-100'
                                     : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
@@ -50,7 +41,7 @@ export default function SettingsModal({ user }: SettingsModalProps) {
 
                         <button
                             onClick={() => setActiveTab('security')}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
+                            className={`flex items-center gap-1.5 md:gap-3 px-2.5 py-1.5 md:px-3 md:py-2.5 rounded-xl text-xs md:text-sm font-medium transition-colors cursor-pointer ${
                                 activeTab === 'security'
                                     ? 'bg-white/10 text-zinc-100'
                                     : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
@@ -62,7 +53,7 @@ export default function SettingsModal({ user }: SettingsModalProps) {
 
                         <button
                             onClick={() => setActiveTab('network')}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
+                            className={`flex items-center gap-1.5 md:gap-3 px-2.5 py-1.5 md:px-3 md:py-2.5 rounded-xl text-xs md:text-sm font-medium transition-colors cursor-pointer ${
                                 activeTab === 'network'
                                     ? 'bg-white/10 text-zinc-100'
                                     : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
@@ -70,6 +61,15 @@ export default function SettingsModal({ user }: SettingsModalProps) {
                         >
                             <FiGlobe size={16} className={activeTab === 'network' ? 'text-zinc-200' : 'text-zinc-400'} />
                             <span>Network</span>
+                        </button>
+                    </div>
+
+                    <div className="flex items-center md:mb-2 md:order-first">
+                        <button
+                            onClick={closeSettings}
+                            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+                        >
+                            <FiX size={16} />
                         </button>
                     </div>
                 </div>

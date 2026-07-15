@@ -128,7 +128,7 @@ export default function TokenInfoCard({ token }: TokenInfoCardProps) {
                 )}
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-5">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 py-5">
                 <div className="flex flex-col gap-1">
                     <span className="text-[11px] text-zinc-500 uppercase font-semibold tracking-wider">Price USD</span>
                     <span className="text-base font-bold text-zinc-100">{formatPrice(token.priceUsd)}</span>

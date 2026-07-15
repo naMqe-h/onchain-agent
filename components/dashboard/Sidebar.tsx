@@ -4,9 +4,11 @@ import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { User } from '@supabase/supabase-js'
-import { FiPlus, FiMessageSquare, FiMoreVertical, FiEdit2, FiArchive, FiTrash2, FiLoader } from 'react-icons/fi'
+import { FiPlus, FiMessageSquare, FiMoreVertical, FiEdit2, FiArchive, FiTrash2, FiMenu, FiX } from 'react-icons/fi'
 import SidebarProfile from './SidebarProfile'
 import { updateChatTitle, archiveChat, deleteChat } from '../../app/actions/chat/chat'
+import { motion, AnimatePresence } from 'framer-motion'
+import { slideInLeft } from '../../lib/motion'
 
 interface Chat {
     id: string
@@ -24,12 +26,14 @@ interface SidebarProps {
 export default function Sidebar({ user, chats }: SidebarProps) {
     const router = useRouter()
     const pathname = usePathname()
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null)
     const [editingChatId, setEditingChatId] = useState<string | null>(null)
     const [editTitle, setEditTitle] = useState('')
     const [deleteConfirmationId, setDeleteConfirmationId] = useState<string | null>(null)
 
     const handleNewChat = () => {
+        setIsMobileMenuOpen(false)
         router.push('/')
     }
 
@@ -57,6 +61,7 @@ export default function Sidebar({ user, chats }: SidebarProps) {
     const handleArchive = async (chatId: string) => {
         await archiveChat(chatId)
         setActiveDropdownId(null)
+        setIsMobileMenuOpen(false)
         router.refresh()
         if (pathname === `/chat/${chatId}`) {
             router.push('/')
@@ -67,14 +72,15 @@ export default function Sidebar({ user, chats }: SidebarProps) {
         await deleteChat(chatId)
         setActiveDropdownId(null)
         setDeleteConfirmationId(null)
+        setIsMobileMenuOpen(false)
         router.refresh()
         if (pathname === `/chat/${chatId}`) {
             router.push('/')
         }
     }
 
-    return (
-        <div className="w-64 h-screen border-r border-white/5 bg-[#131314] flex flex-col">
+    const renderSidebarContent = () => (
+        <>
             <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
                 <div className="flex items-center justify-between px-2">
                     <span className="font-medium text-[17px] text-zinc-100 tracking-tight">Robinhood Agent</span>
@@ -98,10 +104,14 @@ export default function Sidebar({ user, chats }: SidebarProps) {
                             return (
                                 <div key={chat.id} className="relative">
                                     <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all group ${isActive
-                                            ? 'bg-white/8 text-zinc-100'
-                                            : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
+                                        ? 'bg-white/8 text-zinc-100'
+                                        : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
                                         }`}>
-                                        <Link href={`/chat/${chat.id}`} className="flex-1 min-w-0 flex items-start gap-2.5">
+                                        <Link
+                                            href={`/chat/${chat.id}`}
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className="flex-1 min-w-0 flex items-start gap-2.5"
+                                        >
                                             <FiMessageSquare size={14} className="shrink-0 mt-0.5 opacity-60" />
                                             <div className="flex-1 min-w-0">
                                                 {editingChatId === chat.id ? (
@@ -181,6 +191,58 @@ export default function Sidebar({ user, chats }: SidebarProps) {
             </div>
 
             <SidebarProfile user={user} />
+        </>
+    )
+
+    return (
+        <>
+            <div className="flex md:hidden h-14 border-b border-white/5 bg-[#131314] items-center justify-between px-4 w-full shrink-0">
+                <button
+                    onClick={() => setIsMobileMenuOpen(true)}
+                    className="p-2 -ml-2 text-zinc-400 hover:text-zinc-100 cursor-pointer"
+                >
+                    <FiMenu size={20} />
+                </button>
+                <span className="font-medium text-[16px] text-zinc-100 tracking-tight">Robinhood Agent</span>
+                <button
+                    onClick={handleNewChat}
+                    className="p-2 -mr-2 text-zinc-400 hover:text-zinc-100 cursor-pointer"
+                >
+                    <FiPlus size={20} />
+                </button>
+            </div>
+
+            <motion.div
+                variants={slideInLeft}
+                initial="initial"
+                animate="animate"
+                className="hidden md:flex w-56 lg:w-64 h-screen border-r border-white/5 bg-[#131314] flex-col shrink-0"
+            >
+                {renderSidebarContent()}
+            </motion.div>
+
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <motion.div
+                        variants={slideInLeft}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        className="fixed inset-0 z-50 bg-[#131314] flex flex-col h-full w-full"
+                    >
+                        <div className="flex items-center justify-between px-4 h-14 border-b border-white/5 bg-[#131314] shrink-0">
+                            <span className="font-medium text-[16px] text-zinc-100 tracking-tight">Robinhood Agent</span>
+                            <button
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="p-2 rounded-lg hover:bg-white/5 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                            >
+                                <FiX size={20} />
+                            </button>
+                        </div>
+                        {renderSidebarContent()}
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {deleteConfirmationId && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -206,6 +268,6 @@ export default function Sidebar({ user, chats }: SidebarProps) {
                     </div>
                 </div>
             )}
-        </div>
+        </>
     )
 }

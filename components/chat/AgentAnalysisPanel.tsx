@@ -1,5 +1,7 @@
 import { TbBrain } from 'react-icons/tb'
 import { FiX } from 'react-icons/fi'
+import { motion } from 'framer-motion'
+import { slideInRight } from '../../lib/motion'
 
 interface AgentAnalysisPanelProps {
     activeMessage: any
@@ -83,7 +85,13 @@ export const getToolMetrics = (toolCallId: string, agentEvents: readonly any[] |
 
 export default function AgentAnalysisPanel({ activeMessage, onClose, agentEvents }: AgentAnalysisPanelProps) {
     return (
-        <div className="w-80 md:w-96 shrink-0 border-l border-zinc-800 bg-[#171719] h-full flex flex-col text-zinc-300">
+        <motion.div
+            variants={slideInRight}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className="absolute right-0 top-0 bottom-0 w-80 md:w-96 border-l border-zinc-800 bg-[#171719]/95 backdrop-blur-md h-full flex flex-col text-zinc-300 z-30 shadow-2xl"
+        >
             <div className="flex items-center justify-between p-4 border-b border-zinc-800 shrink-0">
                 <div className="flex items-center gap-2 font-semibold text-zinc-100">
                     <TbBrain size={18} className="text-purple-400" />
@@ -185,6 +193,6 @@ export default function AgentAnalysisPanel({ activeMessage, onClose, agentEvents
                     return null
                 })}
             </div>
-        </div>
+        </motion.div>
     )
 }

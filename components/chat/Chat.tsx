@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useEveAgent } from 'eve/react'
+import { AnimatePresence } from 'framer-motion'
 import ChatInput from './ChatInput'
 import ChatMessagesList from './ChatMessagesList'
 import AgentAnalysisPanel, { getStepMetrics, getToolMetrics } from './AgentAnalysisPanel'
@@ -267,7 +268,7 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
     })
 
     return (
-        <div className="flex h-full w-full bg-[#131314] overflow-hidden">
+        <div className="relative flex h-full w-full bg-[#131314] overflow-hidden">
             <div className="flex-1 flex flex-col h-full min-w-0">
                 <ChatMessagesList
                     chatId={currentChatId}
@@ -288,13 +289,15 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
                 </div>
             </div>
 
-            {activeMessage && (
-                <AgentAnalysisPanel
-                    activeMessage={activeMessage}
-                    onClose={handleClosePanel}
-                    agentEvents={agent.events}
-                />
-            )}
+            <AnimatePresence>
+                {activeMessage && (
+                    <AgentAnalysisPanel
+                        activeMessage={activeMessage}
+                        onClose={handleClosePanel}
+                        agentEvents={agent.events}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     )
 }

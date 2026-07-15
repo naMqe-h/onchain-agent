@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { TbBrain } from 'react-icons/tb'
 import ReactMarkdown from 'react-markdown'
+import { motion } from 'framer-motion'
 import TokenInfoCard from './tools/get_token_info/TokenInfoCard'
 import TokenInfoSkeleton from './tools/get_token_info/TokenInfoSkeleton'
+import { slideInUp, staggerContainer } from '../../lib/motion'
 
 interface Message {
     id: string
@@ -66,19 +68,25 @@ function MessageItem({ message, isActive, onToggleReasoning, isLast, isBusy }: M
 
     if (message.role === 'user') {
         return (
-            <div className="flex flex-col items-end justify-end w-full gap-1">
+            <motion.div
+                variants={slideInUp}
+                className="flex flex-col items-end justify-end w-full gap-1"
+            >
                 <div className="bg-[#1e1e20] text-zinc-200 px-5 py-3 rounded-[24px] max-w-[85%] text-[15px] leading-relaxed">
                     {renderContent()}
                 </div>
                 <span className="text-[11px] text-zinc-500 px-2">{time}</span>
-            </div>
+            </motion.div>
         )
     }
 
     const isWriting = message.role === 'assistant' && isLast && isBusy
 
     return (
-        <div className="flex flex-col items-start w-full gap-2">
+        <motion.div
+            variants={slideInUp}
+            className="flex flex-col items-start w-full gap-2"
+        >
             <div className="text-zinc-200 text-[15px] leading-relaxed w-full">
                 {renderContent()}
             </div>
@@ -104,7 +112,7 @@ function MessageItem({ message, isActive, onToggleReasoning, isLast, isBusy }: M
                     )}
                 </div>
             )}
-        </div>
+        </motion.div>
     )
 }
 
@@ -163,7 +171,12 @@ export default function ChatMessagesList({ chatId, messages, activeMessageId, on
             onScroll={handleScroll}
             className="flex-1 overflow-y-auto p-4 md:px-8 space-y-8"
         >
-            <div className="max-w-3xl mx-auto flex flex-col gap-8 pb-4 pt-8">
+            <motion.div
+                variants={staggerContainer}
+                initial="initial"
+                animate="animate"
+                className="max-w-3xl mx-auto flex flex-col gap-8 pb-4 pt-8"
+            >
                 {messages.map((message, idx) => (
                     <MessageItem
                         key={idx}
@@ -178,15 +191,15 @@ export default function ChatMessagesList({ chatId, messages, activeMessageId, on
                     messages[messages.length - 1]?.role === 'user' ||
                     (messages[messages.length - 1]?.role === 'assistant' && !hasTextContent(messages[messages.length - 1]))
                 ) && (
-                    <div className="flex flex-col items-start w-full gap-2">
+                    <motion.div variants={slideInUp} className="flex flex-col items-start w-full gap-2">
                         <div className="flex items-center gap-1.5 px-4 py-3 bg-[#1e1e20]/40 rounded-[20px] border border-white/5 shadow-sm">
                             <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                             <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                             <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                         </div>
-                    </div>
+                    </motion.div>
                 )}
-            </div>
+            </motion.div>
         </div>
     )
 }

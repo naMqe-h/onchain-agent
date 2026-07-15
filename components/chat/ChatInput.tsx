@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { FiArrowUp, FiChevronUp } from 'react-icons/fi'
+import { motion } from 'framer-motion'
+import { slideInUp } from '../../lib/motion'
 
 interface ChatInputProps {
     input: string
@@ -35,7 +37,12 @@ export default function ChatInput({
     const activeModel = models.find(m => m.id === selectedModel) || models[0]
 
     return (
-        <div className="p-4 bg-transparent pb-8">
+        <motion.div
+            variants={slideInUp}
+            initial="initial"
+            animate="animate"
+            className="p-4 bg-transparent pb-8"
+        >
             <form onSubmit={handleSubmit} className="flex gap-3 max-w-3xl mx-auto bg-[#1e1e20] rounded-full px-4 py-3 items-center shadow-lg border border-white/5 relative z-10">
                 <input
                     ref={inputRef}
@@ -44,7 +51,7 @@ export default function ChatInput({
                     onChange={handleInputChange}
                     disabled={isBusy}
                     placeholder="Ask Agent"
-                    className="flex-1 bg-transparent text-zinc-200 placeholder-zinc-500 focus:outline-none transition-colors disabled:opacity-50 text-[15px] ml-2"
+                    className="flex-1 bg-transparent text-zinc-200 placeholder-zinc-500 focus:outline-none transition-colors disabled:opacity-50 text-[15px] ml-2 min-w-0"
                 />
 
                 <div className="relative shrink-0">
@@ -75,8 +82,8 @@ export default function ChatInput({
                                             setIsOpen(false)
                                         }}
                                         className={`w-full text-left px-4 py-2.5 text-xs transition-colors flex flex-col gap-0.5 cursor-pointer ${selectedModel === m.id
-                                                ? 'bg-white/5 text-zinc-100'
-                                                : 'text-zinc-400 hover:bg-white/5'
+                                            ? 'bg-white/5 text-zinc-100'
+                                            : 'text-zinc-400 hover:bg-white/5'
                                             }`}
                                     >
                                         <span className={`font-medium ${selectedModel === m.id ? 'text-zinc-100' : 'text-zinc-200 hover:text-white'}`}>{m.name}</span>
@@ -96,6 +103,6 @@ export default function ChatInput({
                     <FiArrowUp size={20} />
                 </button>
             </form>
-        </div>
+        </motion.div>
     )
 }
