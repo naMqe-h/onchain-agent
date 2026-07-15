@@ -5,35 +5,15 @@ import { robinhoodTestnet } from "../../lib/web3/config"
 import db from "../../lib/db"
 
 export default defineTool({
-    description: "Get the ETH balance of a specified address or the authenticated user's wallet.",
+    description: "Get the ETH balance of a specified address or wallet name.",
     inputSchema: z.object({
-        address: z.string().optional().describe("The EVM blockchain address or the custom wallet name (e.g. 'Primary Wallet') to check the balance of. If not provided, the authenticated user's default/first wallet is used.")
+        address: z.string().describe("The EVM blockchain address or the custom wallet name (e.g. 'Primary Wallet') to check the balance of.")
     }),
     async execute({ address }, ctx) {
         let targetAddress = address
         const userId = ctx.session?.auth?.current?.principalId
 
-        if (!targetAddress) {
-            if (!userId || userId === "local-dev") {
-                return {
-                    success: false,
-                    error: "No address was provided, and no authenticated database user could be identified from the session."
-                }
-            }
-
-            const wallet = await db.wallet.findFirst({
-                where: { userId }
-            })
-
-            if (!wallet) {
-                return {
-                    success: false,
-                    error: `No wallet found for user ID: ${userId}`
-                }
-            }
-
-            targetAddress = wallet.address
-        } else if (!targetAddress.startsWith('0x') || targetAddress.length !== 42) {
+        if (!targetAddress.startsWith('0x') || targetAddress.length !== 42) {
             if (!userId || userId === "local-dev") {
                 return {
                     success: false,

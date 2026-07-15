@@ -20,9 +20,11 @@ interface MessageItemProps {
     message: Message
     isActive: boolean
     onToggleReasoning: () => void
+    isLast: boolean
+    isBusy?: boolean
 }
 
-function MessageItem({ message, isActive, onToggleReasoning }: MessageItemProps) {
+function MessageItem({ message, isActive, onToggleReasoning, isLast, isBusy }: MessageItemProps) {
     const [time] = useState(() => {
         const d = (message as any).createdAt || (message as any).timestamp
         if (d) return new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -56,31 +58,35 @@ function MessageItem({ message, isActive, onToggleReasoning }: MessageItemProps)
         )
     }
 
+    const isWriting = message.role === 'assistant' && isLast && isBusy
+
     return (
         <div className="flex flex-col items-start w-full gap-2">
             <div className="text-zinc-200 text-[15px] leading-relaxed w-full">
                 {renderContent()}
             </div>
 
-            <div className="flex items-center gap-3 mt-1 text-zinc-500">
-                <span className="text-[11px] font-medium">{time}</span>
-                {hasReasoning && (
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={onToggleReasoning}
-                            className={`p-1.5 rounded-full transition-colors cursor-pointer flex items-center gap-2 ${isActive ? 'bg-zinc-800 text-white' : 'hover:bg-[#1e1e20] hover:text-zinc-200'}`}
-                            title="Toggle reasoning panel"
-                        >
-                            <TbBrain size={16} />
-                        </button>
-                        {(message as any).aggregateMetrics && (
-                            <span className="text-[11px] text-zinc-500 font-mono">
-                                (took {((message as any).aggregateMetrics.durationMs < 1000) ? `${(message as any).aggregateMetrics.durationMs}ms` : `${((message as any).aggregateMetrics.durationMs / 1000).toFixed(1)}s`}{(message as any).aggregateMetrics.totalTokens > 0 ? `, used ${(message as any).aggregateMetrics.totalTokens} tkn` : ''})
-                            </span>
-                        )}
-                    </div>
-                )}
-            </div>
+            {!isWriting && (
+                <div className="flex items-center gap-3 mt-1 text-zinc-500">
+                    <span className="text-[11px] font-medium">{time}</span>
+                    {hasReasoning && (
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={onToggleReasoning}
+                                className={`p-1.5 rounded-full transition-colors cursor-pointer flex items-center gap-2 ${isActive ? 'bg-zinc-800 text-white' : 'hover:bg-[#1e1e20] hover:text-zinc-200'}`}
+                                title="Toggle reasoning panel"
+                            >
+                                <TbBrain size={16} />
+                            </button>
+                            {(message as any).aggregateMetrics && (
+                                <span className="text-[11px] text-zinc-500 font-mono">
+                                    (took {((message as any).aggregateMetrics.durationMs < 1000) ? `${(message as any).aggregateMetrics.durationMs}ms` : `${((message as any).aggregateMetrics.durationMs / 1000).toFixed(1)}s`}{(message as any).aggregateMetrics.totalTokens > 0 ? `, used ${(message as any).aggregateMetrics.totalTokens} tkn` : ''})
+                                </span>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     )
 }
@@ -147,6 +153,8 @@ export default function ChatMessagesList({ chatId, messages, activeMessageId, on
                         message={message}
                         isActive={activeMessageId === message.id}
                         onToggleReasoning={() => onToggleReasoning(message.id)}
+                        isLast={idx === messages.length - 1}
+                        isBusy={isBusy}
                     />
                 ))}
                 {isBusy && (
