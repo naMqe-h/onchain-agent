@@ -10,12 +10,15 @@ export default async function DashboardPage() {
         redirect('/login')
     }
 
+    const activeNetwork = user?.user_metadata?.activeNetwork || 'testnet'
+
     return (
         <Chat
             chatId={null}
             initialMessages={[]}
             initialSession={{ streamIndex: 0 }}
             initialModel="gpt-4.1-nano"
+            activeNetwork={activeNetwork}
         />
     )
 }

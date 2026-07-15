@@ -27,9 +27,10 @@ interface ChatProps {
     initialMessages: StoredMessage[]
     initialSession: SessionState
     initialModel?: string
+    activeNetwork: string
 }
 
-export default function Chat({ chatId: initialChatId, initialMessages, initialSession, initialModel }: ChatProps) {
+export default function Chat({ chatId: initialChatId, initialMessages, initialSession, initialModel, activeNetwork }: ChatProps) {
     const router = useRouter()
     const [input, setInput] = useState('')
     const [displayMessages, setDisplayMessages] = useState<StoredMessage[]>(initialMessages)
@@ -199,7 +200,8 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
             message: input.trim(),
             headers: {
                 'x-model-name': selectedModel,
-                'x-chat-id': targetChatId || ''
+                'x-chat-id': targetChatId || '',
+                'x-active-network': activeNetwork
             }
         })
         setInput('')

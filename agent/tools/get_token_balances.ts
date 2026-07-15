@@ -11,6 +11,8 @@ export default defineTool({
     async execute({ walletAddressOrName }, ctx) {
         let targetAddress = walletAddressOrName?.trim()
         const userId = ctx.session?.auth?.current?.principalId
+        const activeNetworkAttr = ctx.session?.auth?.current?.attributes?.activeNetwork
+        const activeNetwork = (typeof activeNetworkAttr === 'string' ? activeNetworkAttr : activeNetworkAttr?.[0]) || "testnet"
 
         if (targetAddress) {
             if (!targetAddress.startsWith('0x') || targetAddress.length !== 42) {
@@ -71,7 +73,22 @@ export default defineTool({
         }
 
         try {
-            const url = `https://explorer.testnet.chain.robinhood.com/api/v2/addresses/${targetAddress}/token-balances`
+            let url: string
+            if (activeNetwork === "mainnet") {
+                const apiBase = process.env.BLOCKSCOUT_API_URL_MAINNET
+                const apiKey = process.env.BLOCKSCOUT_API_KEY_MAINNET
+                url = `${apiBase}/addresses/${targetAddress}/token-balances`
+                if (apiKey) {
+                    url += `?apikey=${apiKey}`
+                }
+            } else {
+                const apiBase = process.env.BLOCKSCOUT_API_URL_TESTNET
+                const apiKey = process.env.BLOCKSCOUT_API_KEY_TESTNET
+                url = `${apiBase}/addresses/${targetAddress}/token-balances`
+                if (apiKey) {
+                    url += `?apikey=${apiKey}`
+                }
+            }
             const response = await fetch(url)
 
             if (!response.ok) {

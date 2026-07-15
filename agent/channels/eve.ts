@@ -7,6 +7,7 @@ function supabaseAuth(): AuthFn<Request> {
         const cookieHeader = request.headers.get("cookie") || ""
         const modelHeader = request.headers.get("x-model-name") || ""
         const chatIdHeader = request.headers.get("x-chat-id") || ""
+        const networkHeader = request.headers.get("x-active-network") || ""
         
         const supabase = createServerClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,13 +34,16 @@ function supabaseAuth(): AuthFn<Request> {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return null
 
+        const activeNetwork = networkHeader || user.user_metadata?.activeNetwork || "testnet"
+
         return {
             authenticator: "supabase",
             principalId: user.id,
             principalType: "user" as const,
             attributes: {
                 modelName: modelHeader,
-                chatId: chatIdHeader
+                chatId: chatIdHeader,
+                activeNetwork: activeNetwork
             }
         }
     }

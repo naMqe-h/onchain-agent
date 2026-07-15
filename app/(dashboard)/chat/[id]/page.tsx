@@ -31,6 +31,8 @@ export default async function ChatPage({ params }: ChatPageProps) {
         }
         : { streamIndex: 0 }
 
+    const activeNetwork = user?.user_metadata?.activeNetwork || 'testnet'
+
     return (
         <Chat
             chatId={chat.id}
@@ -40,6 +42,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
             }))}
             initialSession={initialSession}
             initialModel={chat.model}
+            activeNetwork={activeNetwork}
         />
     )
 }

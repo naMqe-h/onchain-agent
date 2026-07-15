@@ -11,7 +11,7 @@ export const robinhoodTestnet = defineChain({
     },
     rpcUrls: {
         default: {
-            http: [process.env.ALCHEMY_RPC_URL as string]
+            http: [process.env.ALCHEMY_RPC_URL_TESTNET || ""]
         }
     },
     blockExplorers: {
@@ -21,3 +21,29 @@ export const robinhoodTestnet = defineChain({
         }
     }
 })
+
+export const robinhoodMainnet = defineChain({
+    id: 4663,
+    name: "Robinhood Chain",
+    network: "robinhood-mainnet",
+    nativeCurrency: {
+        decimals: 18,
+        name: "Ether",
+        symbol: "ETH"
+    },
+    rpcUrls: {
+        default: {
+            http: [process.env.ALCHEMY_RPC_URL_MAINNET || ""]
+        }
+    },
+    blockExplorers: {
+        default: {
+            name: "Explorer",
+            url: "https://robinhoodchain.blockscout.com"
+        }
+    }
+})
+
+export function getChainConfig(network?: string) {
+    return network === "mainnet" ? robinhoodMainnet : robinhoodTestnet
+}

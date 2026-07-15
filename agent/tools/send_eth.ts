@@ -2,7 +2,7 @@ import { defineTool } from "eve/tools"
 import { z } from "zod"
 import { createWalletClient, createPublicClient, http, parseEther, formatEther, formatGwei } from "viem"
 import { privateKeyToAccount } from "viem/accounts"
-import { robinhoodTestnet } from "../../lib/web3/config"
+import { getChainConfig } from "../../lib/web3/config"
 import db from "../../lib/db"
 import { createHash, createDecipheriv } from "crypto"
 
@@ -34,6 +34,8 @@ export default defineTool({
     }),
     async execute({ toAddress, amount, fromAddressOrName }, ctx) {
         const userId = ctx.session?.auth?.current?.principalId
+        const activeNetworkAttr = ctx.session?.auth?.current?.attributes?.activeNetwork
+        const activeNetwork = (typeof activeNetworkAttr === 'string' ? activeNetworkAttr : activeNetworkAttr?.[0]) || "testnet"
 
         if (!userId || userId === "local-dev") {
             return {
@@ -94,13 +96,14 @@ export default defineTool({
             const privateKey = decryptKey(wallet.encryptedKey)
 
             const account = privateKeyToAccount(privateKey as `0x${string}`)
+            const chain = getChainConfig(activeNetwork)
             const walletClient = createWalletClient({
                 account,
-                chain: robinhoodTestnet,
+                chain,
                 transport: http()
             })
             const publicClient = createPublicClient({
-                chain: robinhoodTestnet,
+                chain,
                 transport: http()
             })
 

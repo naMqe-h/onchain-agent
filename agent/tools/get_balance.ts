@@ -1,7 +1,7 @@
 import { defineTool } from "eve/tools"
 import { z } from "zod"
 import { createPublicClient, http, formatEther } from "viem"
-import { robinhoodTestnet } from "../../lib/web3/config"
+import { getChainConfig } from "../../lib/web3/config"
 import db from "../../lib/db"
 
 export default defineTool({
@@ -12,6 +12,8 @@ export default defineTool({
     async execute({ address }, ctx) {
         let targetAddress = address
         const userId = ctx.session?.auth?.current?.principalId
+        const activeNetworkAttr = ctx.session?.auth?.current?.attributes?.activeNetwork
+        const activeNetwork = (typeof activeNetworkAttr === 'string' ? activeNetworkAttr : activeNetworkAttr?.[0]) || "testnet"
 
         if (!targetAddress.startsWith('0x') || targetAddress.length !== 42) {
             if (!userId || userId === "local-dev") {
@@ -42,8 +44,9 @@ export default defineTool({
         }
 
         try {
+            const chain = getChainConfig(activeNetwork)
             const publicClient = createPublicClient({
-                chain: robinhoodTestnet,
+                chain,
                 transport: http()
             })
 
