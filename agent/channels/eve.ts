@@ -6,6 +6,7 @@ function supabaseAuth(): AuthFn<Request> {
     return async (request) => {
         const cookieHeader = request.headers.get("cookie") || ""
         const modelHeader = request.headers.get("x-model-name") || ""
+        const chatIdHeader = request.headers.get("x-chat-id") || ""
         
         const supabase = createServerClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -37,7 +38,8 @@ function supabaseAuth(): AuthFn<Request> {
             principalId: user.id,
             principalType: "user" as const,
             attributes: {
-                modelName: modelHeader
+                modelName: modelHeader,
+                chatId: chatIdHeader
             }
         }
     }

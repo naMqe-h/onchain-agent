@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useEveAgent } from 'eve/react'
 import ChatInput from './ChatInput'
 import ChatMessagesList from './ChatMessagesList'
@@ -29,6 +30,7 @@ interface ChatProps {
 }
 
 export default function Chat({ chatId: initialChatId, initialMessages, initialSession, initialModel }: ChatProps) {
+    const router = useRouter()
     const [input, setInput] = useState('')
     const [displayMessages, setDisplayMessages] = useState<StoredMessage[]>(initialMessages)
     const [currentChatId, setCurrentChatId] = useState<string | null>(initialChatId)
@@ -165,6 +167,7 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
                     session.continuationToken ?? '',
                     session.streamIndex ?? 0
                 )
+                router.refresh()
             }
         }, [])
     })
@@ -195,7 +198,8 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
         await agent.send({
             message: input.trim(),
             headers: {
-                'x-model-name': selectedModel
+                'x-model-name': selectedModel,
+                'x-chat-id': targetChatId || ''
             }
         })
         setInput('')

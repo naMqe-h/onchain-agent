@@ -29,7 +29,7 @@ function MessageItem({ message, isActive, onToggleReasoning }: MessageItemProps)
         return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     })
 
-    const hasReasoning = message.parts?.some(part => part.type === 'reasoning') || message.parts?.some(part => part.type === 'dynamic-tool')
+    const hasReasoning = message.parts?.some(part => part.type === 'reasoning') || message.parts?.some(part => part.type === 'dynamic-tool' && part.toolName !== 'update_chat_title')
 
     const renderContent = () => {
         if (!message.parts || message.parts.length === 0) return null

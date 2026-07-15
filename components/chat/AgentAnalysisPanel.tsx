@@ -129,6 +129,7 @@ export default function AgentAnalysisPanel({ activeMessage, onClose, agentEvents
                         )
                     }
                     if (p.type === 'dynamic-tool') {
+                        if (p.toolName === 'update_chat_title') return null
                         const toolMetrics = p.metrics || getToolMetrics(p.toolCallId, agentEvents)
                         return (
                             <div key={i} className="space-y-2">
