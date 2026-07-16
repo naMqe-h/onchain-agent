@@ -4,6 +4,10 @@ import ReactMarkdown from 'react-markdown'
 import { motion } from 'framer-motion'
 import TokenInfoCard from './tools/get_token_info/TokenInfoCard'
 import TokenInfoSkeleton from './tools/get_token_info/TokenInfoSkeleton'
+import SendErc20Card from './tools/send_erc20/SendErc20Card'
+import SendErc20Skeleton from './tools/send_erc20/SendErc20Skeleton'
+import SendEthCard from './tools/send_eth/SendEthCard'
+import SendEthSkeleton from './tools/send_eth/SendEthSkeleton'
 import { slideInUp, staggerContainer } from '../../lib/motion'
 
 interface Message {
@@ -41,7 +45,9 @@ function MessageItem({ message, isActive, onToggleReasoning, isLast, isBusy }: M
         if (!message.parts || message.parts.length === 0) return null
 
         const textParts = message.parts.filter(part => part.type === 'text')
-        const toolParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_token_info')
+        const tokenInfoParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_token_info')
+        const sendErc20Parts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'send_erc20')
+        const sendEthParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'send_eth')
 
         return (
             <div className="flex flex-col gap-2 w-full">
@@ -50,15 +56,33 @@ function MessageItem({ message, isActive, onToggleReasoning, isLast, isBusy }: M
                         <ReactMarkdown>{part.text}</ReactMarkdown>
                     </div>
                 ))}
-                {toolParts.map((part, i) => {
+                {tokenInfoParts.map((part, i) => {
                     if (part.state === 'executing' || part.state === 'requested') {
-                        return <TokenInfoSkeleton key={`skeleton-${i}`} />
+                        return <TokenInfoSkeleton key={`token-skeleton-${i}`} />
                     }
                     if (part.state === 'output-available') {
                         const tokenData = part.output?.token
                         if (tokenData) {
-                            return <TokenInfoCard key={`card-${i}`} token={tokenData} />
+                            return <TokenInfoCard key={`token-card-${i}`} token={tokenData} />
                         }
+                    }
+                    return null
+                })}
+                {sendErc20Parts.map((part, i) => {
+                    if (part.state === 'executing' || part.state === 'requested') {
+                        return <SendErc20Skeleton key={`send-erc20-skeleton-${i}`} />
+                    }
+                    if (part.state === 'output-available' && part.output?.success === true) {
+                        return <SendErc20Card key={`send-erc20-card-${i}`} tx={part.output} />
+                    }
+                    return null
+                })}
+                {sendEthParts.map((part, i) => {
+                    if (part.state === 'executing' || part.state === 'requested') {
+                        return <SendEthSkeleton key={`send-eth-skeleton-${i}`} />
+                    }
+                    if (part.state === 'output-available' && part.output?.success === true) {
+                        return <SendEthCard key={`send-eth-card-${i}`} tx={part.output} />
                     }
                     return null
                 })}

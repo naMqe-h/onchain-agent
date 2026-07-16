@@ -97,7 +97,8 @@ export default defineTool({
                 gasUsed,
                 gasPriceGwei,
                 gasFeeEth,
-                status: receipt.status
+                status: receipt.status,
+                network: activeNetwork,
             }
         } catch (error: any) {
             return {
