@@ -19,6 +19,7 @@ export default async function DashboardPage() {
             initialSession={{ streamIndex: 0 }}
             initialModel="gpt-4.1-nano"
             activeNetwork={activeNetwork}
+            userId={user.id}
         />
     )
 }

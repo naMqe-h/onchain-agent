@@ -90,32 +90,32 @@ export default function AgentAnalysisPanel({ activeMessage, onClose, agentEvents
             initial="initial"
             animate="animate"
             exit="exit"
-            className="absolute right-0 top-0 bottom-0 w-80 md:w-96 border-l border-zinc-800 bg-[#171719]/95 backdrop-blur-md h-full flex flex-col text-zinc-300 z-30 shadow-2xl"
+            className="absolute right-0 top-0 bottom-0 w-80 md:w-96 max-w-full border-l border-zinc-800 bg-[#171719]/95 backdrop-blur-md h-full flex flex-col text-zinc-300 z-30 shadow-2xl overflow-hidden min-w-0"
         >
-            <div className="flex items-center justify-between p-4 border-b border-zinc-800 shrink-0">
-                <div className="flex items-center gap-2 font-semibold text-zinc-100">
-                    <TbBrain size={18} className="text-purple-400" />
-                    <span>Agent Analysis</span>
+            <div className="flex items-center justify-between p-4 border-b border-zinc-800 shrink-0 min-w-0">
+                <div className="flex items-center gap-2 font-semibold text-zinc-100 min-w-0">
+                    <TbBrain size={18} className="text-purple-400 shrink-0" />
+                    <span className="truncate">Agent Analysis</span>
                 </div>
                 <button
                     onClick={onClose}
-                    className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                    className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors cursor-pointer shrink-0"
                 >
                     <FiX size={18} />
                 </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden p-4 space-y-6">
                 {activeMessage.parts?.map((p: any, i: number) => {
                     if (p.type === 'reasoning') {
                         const stepMetrics = p.metrics || getStepMetrics(p.stepIndex, agentEvents)
                         return (
-                            <div key={i} className="space-y-2">
+                            <div key={i} className="space-y-2 min-w-0 max-w-full">
                                 <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Thought Process</h4>
-                                <div className="text-[14px] leading-relaxed text-zinc-300 whitespace-pre-wrap bg-zinc-900/40 p-3 rounded-xl border border-zinc-800/50 wrap-break-words">
+                                <div className="text-[14px] leading-relaxed text-zinc-300 whitespace-pre-wrap bg-zinc-900/40 p-3 rounded-xl border border-zinc-800/50 min-w-0 max-w-full overflow-hidden break-words [overflow-wrap:anywhere]">
                                     {p.text}
                                 </div>
                                 {stepMetrics && (
-                                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-zinc-500 font-mono px-1">
+                                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-zinc-500 font-mono px-1 min-w-0">
                                         {stepMetrics.durationMs !== undefined && (
                                             <span>Duration: {stepMetrics.durationMs < 1000 ? `${stepMetrics.durationMs}ms` : `${(stepMetrics.durationMs / 1000).toFixed(1)}s`}</span>
                                         )}
@@ -140,12 +140,12 @@ export default function AgentAnalysisPanel({ activeMessage, onClose, agentEvents
                         if (p.toolName === 'update_chat_title') return null
                         const toolMetrics = p.metrics || getToolMetrics(p.toolCallId, agentEvents)
                         return (
-                            <div key={i} className="space-y-2">
+                            <div key={i} className="space-y-2 min-w-0 max-w-full">
                                 <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Tool Execution</h4>
-                                <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-3.5 space-y-3">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <span className="font-mono text-sm font-semibold text-purple-300 break-all">{p.toolName}</span>
-                                        <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium shrink-0 ${p.state === 'output-available' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                                <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-3.5 space-y-3 min-w-0 max-w-full overflow-hidden">
+                                    <div className="flex items-start justify-between gap-2 min-w-0">
+                                        <span className="font-mono text-sm font-semibold text-purple-300 min-w-0 break-all [overflow-wrap:anywhere]">{p.toolName}</span>
+                                        <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium shrink-0 max-w-[45%] truncate ${p.state === 'output-available' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
                                                 p.state === 'output-error' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
                                                     p.state === 'output-denied' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
                                                         'bg-zinc-800 text-zinc-400'
@@ -155,27 +155,27 @@ export default function AgentAnalysisPanel({ activeMessage, onClose, agentEvents
                                     </div>
 
                                     {p.input && (
-                                        <div className="space-y-1">
+                                        <div className="space-y-1 min-w-0 max-w-full">
                                             <span className="text-[11px] text-zinc-500 font-medium">Arguments:</span>
-                                            <pre className="text-xs bg-[#1a1a1c] p-2.5 rounded-lg border border-zinc-800/80 overflow-x-auto text-zinc-300 font-mono whitespace-pre-wrap break-all">
+                                            <pre className="text-xs bg-[#1a1a1c] p-2.5 rounded-lg border border-zinc-800/80 max-w-full min-w-0 overflow-x-auto text-zinc-300 font-mono whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
                                                 {JSON.stringify(p.input, null, 2)}
                                             </pre>
                                         </div>
                                     )}
 
                                     {p.output && (
-                                        <div className="space-y-1">
+                                        <div className="space-y-1 min-w-0 max-w-full">
                                             <span className="text-[11px] text-zinc-500 font-medium">Result:</span>
-                                            <pre className="text-xs bg-[#1a1a1c] p-2.5 rounded-lg border border-zinc-800/80 overflow-x-auto text-zinc-300 font-mono whitespace-pre-wrap break-all">
+                                            <pre className="text-xs bg-[#1a1a1c] p-2.5 rounded-lg border border-zinc-800/80 max-w-full min-w-0 overflow-x-auto text-zinc-300 font-mono whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
                                                 {typeof p.output === 'object' ? JSON.stringify(p.output, null, 2) : String(p.output)}
                                             </pre>
                                         </div>
                                     )}
 
                                     {p.errorText && (
-                                        <div className="space-y-1">
+                                        <div className="space-y-1 min-w-0 max-w-full">
                                             <span className="text-[11px] text-rose-400 font-medium">Error:</span>
-                                            <pre className="text-xs bg-rose-950/20 border border-rose-900/30 p-2.5 rounded-lg overflow-x-auto text-rose-300 font-mono whitespace-pre-wrap break-all">
+                                            <pre className="text-xs bg-rose-950/20 border border-rose-900/30 p-2.5 rounded-lg max-w-full min-w-0 overflow-x-auto text-rose-300 font-mono whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
                                                 {p.errorText}
                                             </pre>
                                         </div>

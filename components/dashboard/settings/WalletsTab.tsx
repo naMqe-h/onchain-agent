@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { User } from '@supabase/supabase-js'
 import { FiPlus, FiCreditCard, FiCopy, FiCheck } from 'react-icons/fi'
 import { getUserWallets, createWallet } from '../../../app/actions/wallet'
+import { useWalletStore } from '../../../hooks/useWalletStore'
 
 interface WalletsTabProps {
     user: User
@@ -18,12 +19,15 @@ export default function WalletsTab({ user }: WalletsTabProps) {
     const [isSubmittingWallet, setIsSubmittingWallet] = useState(false)
     const [copiedId, setCopiedId] = useState<string | null>(null)
 
+    const setStoreWallets = useWalletStore(s => s.setWallets)
+
     const fetchWallets = async () => {
         setIsLoadingWallets(true)
         setWalletError('')
         try {
             const data = await getUserWallets(user.id)
             setWallets(data)
+            setStoreWallets(data)
         } catch (err: any) {
             setWalletError(err.message || 'Failed to fetch wallets')
         } finally {
@@ -113,8 +117,8 @@ export default function WalletsTab({ user }: WalletsTabProps) {
                                     type="button"
                                     onClick={() => setNewWalletType('burner')}
                                     className={`flex-1 py-2 text-xs font-medium rounded-xl border transition-all cursor-pointer ${newWalletType === 'burner'
-                                            ? 'bg-white/5 text-zinc-100 border-white/20 shadow-inner'
-                                            : 'bg-transparent text-zinc-500 border-white/5 hover:text-zinc-300'
+                                        ? 'bg-white/5 text-zinc-100 border-white/20 shadow-inner'
+                                        : 'bg-transparent text-zinc-500 border-white/5 hover:text-zinc-300'
                                         }`}
                                 >
                                     Generate Burner
@@ -123,8 +127,8 @@ export default function WalletsTab({ user }: WalletsTabProps) {
                                     type="button"
                                     onClick={() => setNewWalletType('imported')}
                                     className={`flex-1 py-2 text-xs font-medium rounded-xl border transition-all cursor-pointer ${newWalletType === 'imported'
-                                            ? 'bg-white/5 text-zinc-100 border-white/20 shadow-inner'
-                                            : 'bg-transparent text-zinc-500 border-white/5 hover:text-zinc-300'
+                                        ? 'bg-white/5 text-zinc-100 border-white/20 shadow-inner'
+                                        : 'bg-transparent text-zinc-500 border-white/5 hover:text-zinc-300'
                                         }`}
                                 >
                                     Import Private Key
@@ -172,19 +176,6 @@ export default function WalletsTab({ user }: WalletsTabProps) {
                         <FiCreditCard size={40} className="mb-3 text-zinc-600" />
                         <p className="text-sm font-medium text-zinc-400">No Wallets Connected</p>
                         <p className="text-xs text-zinc-600 mt-1 mb-4">Create a burner wallet or import your private key to get started.</p>
-                        <button
-                            onClick={() => {
-                                setShowCreateForm(true)
-                                setNewWalletName('')
-                                setNewWalletType('burner')
-                                setImportedPrivateKey('')
-                                setWalletError('')
-                            }}
-                            className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded-xl transition-colors cursor-pointer"
-                        >
-                            <FiPlus size={14} />
-                            <span>Create First Wallet</span>
-                        </button>
                     </div>
                 ) : (
                     <div className="flex flex-col gap-2.5">
@@ -194,8 +185,8 @@ export default function WalletsTab({ user }: WalletsTabProps) {
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm font-semibold text-zinc-200 truncate">{wallet.name}</span>
                                         <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 ${wallet.type === 'burner'
-                                                ? 'bg-amber-500/10 text-amber-400 border border-amber-500/10'
-                                                : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/10'
+                                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/10'
+                                            : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/10'
                                             }`}>
                                             {wallet.type === 'burner' ? 'Burner' : 'Imported'}
                                         </span>

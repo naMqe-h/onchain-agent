@@ -32,10 +32,23 @@ function decryptKey(encryptedText: string): string {
     return decrypted
 }
 
-export async function getUserWallets(userId: string) {
+export type PublicWallet = {
+    id: string
+    name: string
+    address: string
+    type: string
+}
+
+export async function getUserWallets(userId: string): Promise<PublicWallet[]> {
     return db.wallet.findMany({
         where: { userId },
-        orderBy: { createdAt: 'asc' }
+        orderBy: { createdAt: 'asc' },
+        select: {
+            id: true,
+            name: true,
+            address: true,
+            type: true,
+        },
     })
 }
 

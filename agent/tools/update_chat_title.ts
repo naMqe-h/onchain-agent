@@ -3,7 +3,9 @@ import { z } from "zod"
 import db from "../../lib/db"
 
 export default defineTool({
-    description: "Update the title of the current chat conversation to a short, descriptive name (maximum 3-4 words) matching what the user provided in their initial query.",
+    description:
+        "Agent TOOL (not a skill): update the current chat title to a short name (max 3-4 words) based on the user's prompt. " +
+        "Call this tool directly with { title }. Never use load_skill for this — there is no skill named update_chat_title.",
     inputSchema: z.object({
         title: z.string().describe("The new short, descriptive title for the chat (maximum 3-4 words, in the same language as the user's prompt).")
     }),

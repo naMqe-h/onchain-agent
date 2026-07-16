@@ -3,9 +3,12 @@ import { z } from "zod"
 import db from "../../lib/db"
 
 export default defineTool({
-    description: "Get all wallets configured for the authenticated user. Useful to check if the user has any wallets, or to list them when they want to perform an action but haven't specified which wallet to use.",
+    description:
+        "List all wallets configured for the authenticated user (name, address, type). " +
+        "Use only when the user asks to list their wallets. " +
+        "Do NOT use this to pick a default acting wallet - the chat UI wallet selector sets the active wallet for send/balance tools.",
     inputSchema: z.object({}),
-    async execute({}, ctx) {
+    async execute({ }, ctx) {
         const userId = ctx.session?.auth?.current?.principalId
 
         if (!userId || userId === "local-dev") {

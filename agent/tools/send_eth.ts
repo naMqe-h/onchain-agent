@@ -3,7 +3,7 @@ import { z } from "zod"
 import { createWalletClient, createPublicClient, http, parseEther, formatEther, formatGwei } from "viem"
 import { privateKeyToAccount } from "viem/accounts"
 import { getChainConfig } from "../../lib/web3/config"
-import db from "../../lib/db"
+import { resolveActingWallet } from "../../lib/web3/resolveActiveWallet"
 import { createHash, createDecipheriv } from "crypto"
 
 const getEncryptionKey = () => {
@@ -28,13 +28,14 @@ function decryptKey(encryptedText: string): string {
 export default defineTool({
     description:
         "Send native Ether (ETH) only - not ERC-20 tokens. " +
+        "Uses the user's active wallet from the chat UI selector (session) unless fromAddressOrName is explicitly provided. " +
         "Use when the user explicitly means ETH/Ether/native currency, or amount+recipient with no token contract and no token ticker. " +
-        "Do NOT use this tool if the user provided a token contract address (0x…) together with amount and from/to wallets (e.g. 'send 5 0xToken… from x to y') - use send_erc20 instead. " +
+        "Do NOT use this tool if the user provided a token contract address (0x…) together with amount and from/to wallets - use send_erc20 instead. " +
         "Do NOT use for USDC/USDT or any ERC-20 transfer.",
     inputSchema: z.object({
         toAddress: z.string().describe("The recipient EVM address (must start with '0x' and be 42 characters long). Resolve wallet names to addresses first."),
         amount: z.string().describe("The amount of native ETH to send (e.g. '0.01'). Never pass an ERC-20 token amount here."),
-        fromAddressOrName: z.string().optional().describe("The EVM wallet address or custom wallet name of the sender. If omitted, and the user has exactly one wallet, that wallet will be used.")
+        fromAddressOrName: z.string().optional().describe("Optional override: sender wallet address or name. If omitted, uses the active wallet selected in the chat UI.")
     }),
     async execute({ toAddress, amount, fromAddressOrName }, ctx) {
         const userId = ctx.session?.auth?.current?.principalId
@@ -56,46 +57,11 @@ export default defineTool({
         }
 
         try {
-            let wallet
-
-            if (fromAddressOrName) {
-                wallet = await db.wallet.findFirst({
-                    where: {
-                        userId,
-                        OR: [
-                            { address: { equals: fromAddressOrName.trim(), mode: 'insensitive' } },
-                            { name: { equals: fromAddressOrName.trim(), mode: 'insensitive' } }
-                        ]
-                    }
-                })
-
-                if (!wallet) {
-                    return {
-                        success: false,
-                        error: `No wallet named or with address "${fromAddressOrName}" was found for your account.`
-                    }
-                }
-            } else {
-                const wallets = await db.wallet.findMany({
-                    where: { userId }
-                })
-
-                if (wallets.length === 0) {
-                    return {
-                        success: false,
-                        error: "You don't have any wallets configured in the database."
-                    }
-                }
-
-                if (wallets.length > 1) {
-                    return {
-                        success: false,
-                        error: "You have multiple wallets configured. Please specify which wallet to use by name or address."
-                    }
-                }
-
-                wallet = wallets[0]
+            const resolved = await resolveActingWallet(userId, ctx, fromAddressOrName)
+            if (!resolved.ok) {
+                return { success: false, error: resolved.error }
             }
+            const wallet = resolved.wallet
 
             const privateKey = decryptKey(wallet.encryptedKey)
 

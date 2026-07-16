@@ -8,7 +8,8 @@ function supabaseAuth(): AuthFn<Request> {
         const modelHeader = request.headers.get("x-model-name") || ""
         const chatIdHeader = request.headers.get("x-chat-id") || ""
         const networkHeader = request.headers.get("x-active-network") || ""
-        
+        const walletHeader = request.headers.get("x-active-wallet") || ""
+
         const supabase = createServerClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -26,7 +27,7 @@ function supabaseAuth(): AuthFn<Request> {
                         })
                         return list
                     },
-                    setAll() {}
+                    setAll() { }
                 }
             }
         )
@@ -34,17 +35,23 @@ function supabaseAuth(): AuthFn<Request> {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return null
 
-        const activeNetwork = networkHeader || user.user_metadata?.activeNetwork || "testnet"
+        const metaNetwork = user.user_metadata?.activeNetwork
+        const activeNetwork =
+            networkHeader ||
+            (typeof metaNetwork === "string" ? metaNetwork : "testnet")
+
+        const attributes: Record<string, string> = {
+            modelName: modelHeader,
+            chatId: chatIdHeader,
+            activeNetwork,
+            activeWalletAddress: walletHeader,
+        }
 
         return {
             authenticator: "supabase",
             principalId: user.id,
             principalType: "user" as const,
-            attributes: {
-                modelName: modelHeader,
-                chatId: chatIdHeader,
-                activeNetwork: activeNetwork
-            }
+            attributes,
         }
     }
 }

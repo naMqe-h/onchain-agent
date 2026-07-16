@@ -12,6 +12,7 @@ import {
 } from "viem"
 import { privateKeyToAccount } from "viem/accounts"
 import { getChainConfig } from "../../lib/web3/config"
+import { resolveActingWallet } from "../../lib/web3/resolveActiveWallet"
 import db from "../../lib/db"
 import { createHash, createDecipheriv } from "crypto"
 
@@ -38,65 +39,12 @@ function isValidEvmAddress(address: string): boolean {
     return /^0x[a-fA-F0-9]{40}$/.test(address)
 }
 
-type WalletRow = {
-    id: string
-    userId: string
-    address: string
-    name: string
-    encryptedKey: string
-    type: string
-}
-
 type BalanceToken = {
     name: string
     symbol: string
     address: string
     balance: string
     decimals: number
-}
-
-async function findUserWallet(userId: string, fromAddressOrName?: string): Promise<
-    | { ok: true; wallet: WalletRow }
-    | { ok: false; error: string }
-> {
-    if (fromAddressOrName) {
-        const wallet = await db.wallet.findFirst({
-            where: {
-                userId,
-                OR: [
-                    { address: { equals: fromAddressOrName.trim(), mode: 'insensitive' } },
-                    { name: { equals: fromAddressOrName.trim(), mode: 'insensitive' } }
-                ]
-            }
-        })
-
-        if (!wallet) {
-            return {
-                ok: false,
-                error: `No wallet named or with address "${fromAddressOrName}" was found for your account.`
-            }
-        }
-
-        return { ok: true, wallet: wallet as WalletRow }
-    }
-
-    const wallets = await db.wallet.findMany({ where: { userId } })
-
-    if (wallets.length === 0) {
-        return {
-            ok: false,
-            error: "You don't have any wallets configured in the database."
-        }
-    }
-
-    if (wallets.length > 1) {
-        return {
-            ok: false,
-            error: "You have multiple wallets configured. Please specify which wallet to use by name or address."
-        }
-    }
-
-    return { ok: true, wallet: wallets[0] as WalletRow }
 }
 
 async function resolveRecipientAddress(
@@ -251,6 +199,7 @@ export default defineTool({
         "Pass token as either a contract address (0x…) OR a ticker/name held on the sender wallet (e.g. USDC, USDT, or any other symbol/name the user provides). " +
         "When a ticker/name is passed, this tool automatically loads the sender's ERC-20 balances and resolves the contract — no prior get_token_balances call is required. " +
         "Any user-provided ticker/name may be a valid ERC-20 on this chain if it appears in the wallet balances; do not refuse based on off-chain assumptions. " +
+        "Uses the chat UI active wallet as sender unless fromAddressOrName is set. " +
         "Recipient may be a 0x address or a wallet name. Uses session active network. Never use send_eth for these transfers.",
     inputSchema: z.object({
         token: z.string().describe(
@@ -262,7 +211,7 @@ export default defineTool({
         ),
         amount: z.string().describe("Amount of tokens in human-readable units (e.g. '2' or '10.5'), not raw wei."),
         fromAddressOrName: z.string().optional().describe(
-            "Sender wallet address or name (e.g. 'primary'). Required if the user has multiple wallets."
+            "Optional sender override (address or name). If omitted, uses the active wallet selected in the chat UI."
         ),
     }),
     async execute({ token, toAddress, amount, fromAddressOrName }, ctx) {
@@ -283,7 +232,7 @@ export default defineTool({
         }
 
         try {
-            const walletResult = await findUserWallet(userId, fromAddressOrName)
+            const walletResult = await resolveActingWallet(userId, ctx, fromAddressOrName)
             if (!walletResult.ok) {
                 return { success: false, error: walletResult.error }
             }

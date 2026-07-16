@@ -2,16 +2,19 @@ import { defineTool } from "eve/tools"
 import { z } from "zod"
 import { formatUnits } from "viem"
 import db from "../../lib/db"
+import { resolveActingWallet } from "../../lib/web3/resolveActiveWallet"
 
 export default defineTool({
     description:
         "Get ERC-20 token balances for a wallet. " +
         "Returns each token's name, symbol, contract address, balance, and decimals. " +
-        "Useful when the user asks which tokens they hold (e.g. USDC, USDT, or any other ERC-20). " +
-        "For transfers by ticker/name, prefer send_erc20 which resolves the contract from sender balances automatically. " +
-        "Do not rely on market search alone to resolve transfer targets.",
+        "If wallet is omitted, uses the active wallet from the chat UI selector. " +
+        "For 'my tokens' / 'token balances' without a specific address, omit walletAddressOrName — do not ask which wallet. " +
+        "For transfers by ticker/name, prefer send_erc20 which resolves the contract from sender balances automatically.",
     inputSchema: z.object({
-        walletAddressOrName: z.string().optional().describe("The EVM address or custom wallet name (e.g. 'primary', 'Primary Wallet') whose ERC-20 balances to list. For transfer resolution, pass the SENDER wallet. If omitted, uses the user's only wallet or asks for clarification.")
+        walletAddressOrName: z.string().optional().describe(
+            "EVM address or custom wallet name. Omit entirely to use the chat UI active wallet (preferred for 'my tokens' / token balances)."
+        )
     }),
     async execute({ walletAddressOrName }, ctx) {
         let targetAddress = walletAddressOrName?.trim()
@@ -55,26 +58,11 @@ export default defineTool({
                 }
             }
 
-            const wallets = await db.wallet.findMany({
-                where: { userId }
-            })
-
-            if (wallets.length === 0) {
-                return {
-                    success: false,
-                    error: "You don't have any wallets configured in the database, and you didn't specify a wallet address. Please provide a wallet address in your request."
-                }
+            const resolved = await resolveActingWallet(userId, ctx)
+            if (!resolved.ok) {
+                return { success: false, error: resolved.error }
             }
-
-            if (wallets.length > 1) {
-                const walletList = wallets.map(w => `${w.name}: ${w.address.slice(0, 6)}...${w.address.slice(-4)}`).join("\n")
-                return {
-                    success: false,
-                    error: `You have multiple wallets configured. Please specify which wallet to use by name or address:\n${walletList}`
-                }
-            }
-
-            targetAddress = wallets[0].address
+            targetAddress = resolved.wallet.address
         }
 
         try {

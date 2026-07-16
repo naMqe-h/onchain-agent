@@ -2,20 +2,37 @@ import { defineTool } from "eve/tools"
 import { z } from "zod"
 import { createPublicClient, http, formatEther } from "viem"
 import { getChainConfig } from "../../lib/web3/config"
+import { resolveActingWallet } from "../../lib/web3/resolveActiveWallet"
 import db from "../../lib/db"
 
 export default defineTool({
-    description: "Get the ETH balance of a specified address or wallet name.",
+    description:
+        "Get the ETH balance of an address, a wallet name, or (if omitted) the user's active wallet from the chat UI selector. " +
+        "For 'my wallet' / 'my balance' / generic balance checks, omit address — do not ask the user which wallet.",
     inputSchema: z.object({
-        address: z.string().describe("The EVM blockchain address or the custom wallet name (e.g. 'Primary Wallet') to check the balance of.")
+        address: z.string().optional().describe(
+            "EVM address or custom wallet name to check. Omit entirely to use the chat UI active wallet (preferred for 'my wallet' / balance checks)."
+        )
     }),
     async execute({ address }, ctx) {
-        let targetAddress = address
+        let targetAddress = address?.trim()
         const userId = ctx.session?.auth?.current?.principalId
         const activeNetworkAttr = ctx.session?.auth?.current?.attributes?.activeNetwork
         const activeNetwork = (typeof activeNetworkAttr === 'string' ? activeNetworkAttr : activeNetworkAttr?.[0]) || "testnet"
 
-        if (!targetAddress.startsWith('0x') || targetAddress.length !== 42) {
+        if (!targetAddress) {
+            if (!userId || userId === "local-dev") {
+                return {
+                    success: false,
+                    error: "No address was specified, and no authenticated database user could be identified from the session."
+                }
+            }
+            const resolved = await resolveActingWallet(userId, ctx)
+            if (!resolved.ok) {
+                return { success: false, error: resolved.error }
+            }
+            targetAddress = resolved.wallet.address
+        } else if (!targetAddress.startsWith('0x') || targetAddress.length !== 42) {
             if (!userId || userId === "local-dev") {
                 return {
                     success: false,
@@ -27,7 +44,7 @@ export default defineTool({
                 where: {
                     userId,
                     name: {
-                        equals: targetAddress.trim(),
+                        equals: targetAddress,
                         mode: 'insensitive'
                     }
                 }

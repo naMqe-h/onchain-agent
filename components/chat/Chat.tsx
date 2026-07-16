@@ -8,6 +8,7 @@ import ChatInput from './ChatInput'
 import ChatMessagesList from './ChatMessagesList'
 import AgentAnalysisPanel, { getStepMetrics, getToolMetrics } from './AgentAnalysisPanel'
 import { addMessage, updateChatSession, createChat, updateChatModel } from '../../app/actions/chat/chat'
+import { useWalletStore } from '../../hooks/useWalletStore'
 
 interface SessionState {
     sessionId?: string
@@ -29,9 +30,10 @@ interface ChatProps {
     initialSession: SessionState
     initialModel?: string
     activeNetwork: string
+    userId: string
 }
 
-export default function Chat({ chatId: initialChatId, initialMessages, initialSession, initialModel, activeNetwork }: ChatProps) {
+export default function Chat({ chatId: initialChatId, initialMessages, initialSession, initialModel, activeNetwork, userId }: ChatProps) {
     const router = useRouter()
     const [input, setInput] = useState('')
     const [displayMessages, setDisplayMessages] = useState<StoredMessage[]>(initialMessages)
@@ -41,6 +43,14 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
     const [streamStartIndex, setStreamStartIndex] = useState(0)
     const [activeMessageId, setActiveMessageId] = useState<string | null>(null)
     const [selectedModel, setSelectedModel] = useState(initialModel || 'gpt-4.1-nano')
+
+    const loadWallets = useWalletStore(s => s.loadWallets)
+
+    useEffect(() => {
+        if (userId) {
+            void loadWallets(userId)
+        }
+    }, [userId, loadWallets])
 
     useEffect(() => {
         if (initialModel) {
@@ -197,12 +207,15 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
             }
         }
 
+        const activeWallet = useWalletStore.getState().selectedAddress || ''
+
         await agent.send({
             message: input.trim(),
             headers: {
                 'x-model-name': selectedModel,
                 'x-chat-id': targetChatId || '',
-                'x-active-network': activeNetwork
+                'x-active-network': activeNetwork,
+                'x-active-wallet': activeWallet,
             }
         })
         setInput('')

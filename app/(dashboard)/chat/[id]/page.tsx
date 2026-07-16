@@ -43,6 +43,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
             initialSession={initialSession}
             initialModel={chat.model}
             activeNetwork={activeNetwork}
+            userId={user.id}
         />
     )
 }
