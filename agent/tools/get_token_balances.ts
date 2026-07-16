@@ -4,9 +4,14 @@ import { formatUnits } from "viem"
 import db from "../../lib/db"
 
 export default defineTool({
-    description: "Get the ERC-20 token balances of a specified address or wallet name from the Blockscout explorer API.",
+    description:
+        "Get ERC-20 token balances for a wallet. " +
+        "Returns each token's name, symbol, contract address, balance, and decimals. " +
+        "Useful when the user asks which tokens they hold (e.g. USDC, USDT, or any other ERC-20). " +
+        "For transfers by ticker/name, prefer send_erc20 which resolves the contract from sender balances automatically. " +
+        "Do not rely on market search alone to resolve transfer targets.",
     inputSchema: z.object({
-        walletAddressOrName: z.string().optional().describe("The EVM blockchain address or the custom wallet name (e.g. 'Primary Wallet') to check token balances for. If omitted, the tool will try to use the user's only wallet or ask for clarification.")
+        walletAddressOrName: z.string().optional().describe("The EVM address or custom wallet name (e.g. 'primary', 'Primary Wallet') whose ERC-20 balances to list. For transfer resolution, pass the SENDER wallet. If omitted, uses the user's only wallet or asks for clarification.")
     }),
     async execute({ walletAddressOrName }, ctx) {
         let targetAddress = walletAddressOrName?.trim()
@@ -123,7 +128,7 @@ export default defineTool({
                     return {
                         name: tokenInfo.name || 'Unknown Token',
                         symbol: tokenInfo.symbol || 'TOKEN',
-                        address: tokenInfo.address,
+                        address: tokenInfo.address_hash || tokenInfo.address,
                         balance: formattedBalance,
                         decimals
                     }

@@ -26,10 +26,14 @@ function decryptKey(encryptedText: string): string {
 }
 
 export default defineTool({
-    description: "Send native Ether (ETH) from a user's wallet to a specified recipient address.",
+    description:
+        "Send native Ether (ETH) only - not ERC-20 tokens. " +
+        "Use when the user explicitly means ETH/Ether/native currency, or amount+recipient with no token contract and no token ticker. " +
+        "Do NOT use this tool if the user provided a token contract address (0x…) together with amount and from/to wallets (e.g. 'send 5 0xToken… from x to y') - use send_erc20 instead. " +
+        "Do NOT use for USDC/USDT or any ERC-20 transfer.",
     inputSchema: z.object({
-        toAddress: z.string().describe("The recipient EVM address (must start with '0x' and be 42 characters long)."),
-        amount: z.string().describe("The amount of ETH to send (e.g. '0.01')."),
+        toAddress: z.string().describe("The recipient EVM address (must start with '0x' and be 42 characters long). Resolve wallet names to addresses first."),
+        amount: z.string().describe("The amount of native ETH to send (e.g. '0.01'). Never pass an ERC-20 token amount here."),
         fromAddressOrName: z.string().optional().describe("The EVM wallet address or custom wallet name of the sender. If omitted, and the user has exactly one wallet, that wallet will be used.")
     }),
     async execute({ toAddress, amount, fromAddressOrName }, ctx) {
