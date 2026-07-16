@@ -7,6 +7,7 @@ import { User } from '@supabase/supabase-js'
 import { FiPlus, FiMessageSquare, FiMoreVertical, FiEdit2, FiArchive, FiTrash2, FiMenu, FiX } from 'react-icons/fi'
 import SidebarProfile from './SidebarProfile'
 import { updateChatTitle, archiveChat, deleteChat } from '../../app/actions/chat/chat'
+import { PublicProfile } from '../../app/actions/profile/profile'
 import { motion, AnimatePresence } from 'framer-motion'
 import { slideInLeft } from '../../lib/motion'
 
@@ -21,9 +22,10 @@ interface Chat {
 interface SidebarProps {
     user: User | null
     chats: Chat[]
+    profile: PublicProfile | null
 }
 
-export default function Sidebar({ user, chats }: SidebarProps) {
+export default function Sidebar({ user, chats, profile }: SidebarProps) {
     const router = useRouter()
     const pathname = usePathname()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -190,7 +192,7 @@ export default function Sidebar({ user, chats }: SidebarProps) {
                 )}
             </div>
 
-            <SidebarProfile user={user} />
+            <SidebarProfile user={user} profile={profile} />
         </>
     )
 

@@ -1,20 +1,38 @@
 'use client'
 
-import { FiX, FiCreditCard, FiLock, FiGlobe } from 'react-icons/fi'
+import { ReactNode } from 'react'
+import { FiX, FiCreditCard, FiLock, FiGlobe, FiUser } from 'react-icons/fi'
 import { User } from '@supabase/supabase-js'
-import { useSettingsStore } from '../../../hooks/useSettingsStore'
+import { useSettingsStore, SettingsTab } from '../../../hooks/useSettingsStore'
+import { PublicProfile } from '../../../app/actions/profile/profile'
 import WalletsTab from './WalletsTab'
 import SecurityTab from './SecurityTab'
 import NetworkTab from './NetworkTab'
+import ProfileTab from './ProfileTab'
 
 interface SettingsModalProps {
     user: User | null
+    profile: PublicProfile | null
 }
 
-export default function SettingsModal({ user }: SettingsModalProps) {
+export default function SettingsModal({ user, profile }: SettingsModalProps) {
     const { isOpen, activeTab, closeSettings, setActiveTab } = useSettingsStore()
 
-    if (!isOpen || !user) return null
+    if (!isOpen || !user || !profile) return null
+
+    const tabBtn = (tab: SettingsTab, label: string, icon: ReactNode) => (
+        <button
+            onClick={() => setActiveTab(tab)}
+            className={`flex items-center gap-1.5 md:gap-3 px-2.5 py-1.5 md:px-3 md:py-2.5 rounded-xl text-xs md:text-sm font-medium transition-colors cursor-pointer ${
+                activeTab === tab
+                    ? 'bg-white/10 text-zinc-100'
+                    : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
+            }`}
+        >
+            <span className={activeTab === tab ? 'text-zinc-200' : 'text-zinc-400'}>{icon}</span>
+            <span>{label}</span>
+        </button>
+    )
 
     return (
         <div
@@ -26,42 +44,11 @@ export default function SettingsModal({ user }: SettingsModalProps) {
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="w-full md:w-[240px] p-4 md:p-5 flex flex-row md:flex-col justify-between md:justify-start gap-3 md:gap-4 bg-[#141416]/50 border-b border-white/5 md:border-b-0 md:border-r md:border-white/5 items-center md:items-stretch shrink-0">
-                    <div className="flex flex-row md:flex-col gap-1 flex-1 md:flex-initial">
-                        <button
-                            onClick={() => setActiveTab('wallets')}
-                            className={`flex items-center gap-1.5 md:gap-3 px-2.5 py-1.5 md:px-3 md:py-2.5 rounded-xl text-xs md:text-sm font-medium transition-colors cursor-pointer ${
-                                activeTab === 'wallets'
-                                    ? 'bg-white/10 text-zinc-100'
-                                    : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
-                            }`}
-                        >
-                            <FiCreditCard size={16} className={activeTab === 'wallets' ? 'text-zinc-200' : 'text-zinc-400'} />
-                            <span>Wallets</span>
-                        </button>
-
-                        <button
-                            onClick={() => setActiveTab('security')}
-                            className={`flex items-center gap-1.5 md:gap-3 px-2.5 py-1.5 md:px-3 md:py-2.5 rounded-xl text-xs md:text-sm font-medium transition-colors cursor-pointer ${
-                                activeTab === 'security'
-                                    ? 'bg-white/10 text-zinc-100'
-                                    : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
-                            }`}
-                        >
-                            <FiLock size={16} className={activeTab === 'security' ? 'text-zinc-200' : 'text-zinc-400'} />
-                            <span>Security</span>
-                        </button>
-
-                        <button
-                            onClick={() => setActiveTab('network')}
-                            className={`flex items-center gap-1.5 md:gap-3 px-2.5 py-1.5 md:px-3 md:py-2.5 rounded-xl text-xs md:text-sm font-medium transition-colors cursor-pointer ${
-                                activeTab === 'network'
-                                    ? 'bg-white/10 text-zinc-100'
-                                    : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
-                            }`}
-                        >
-                            <FiGlobe size={16} className={activeTab === 'network' ? 'text-zinc-200' : 'text-zinc-400'} />
-                            <span>Network</span>
-                        </button>
+                    <div className="flex flex-row md:flex-col gap-1 flex-1 md:flex-initial overflow-x-auto">
+                        {tabBtn('profile', 'Profile', <FiUser size={16} />)}
+                        {tabBtn('wallets', 'Wallets', <FiCreditCard size={16} />)}
+                        {tabBtn('security', 'Security', <FiLock size={16} />)}
+                        {tabBtn('network', 'Network', <FiGlobe size={16} />)}
                     </div>
 
                     <div className="flex items-center md:mb-2 md:order-first">
@@ -75,7 +62,9 @@ export default function SettingsModal({ user }: SettingsModalProps) {
                 </div>
 
                 <div className="flex-1 p-6 flex flex-col bg-[#18181b] overflow-hidden">
-                    {activeTab === 'wallets' ? (
+                    {activeTab === 'profile' ? (
+                        <ProfileTab user={user} profile={profile} />
+                    ) : activeTab === 'wallets' ? (
                         <WalletsTab user={user} />
                     ) : activeTab === 'security' ? (
                         <SecurityTab user={user} />

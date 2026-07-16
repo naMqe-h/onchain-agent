@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type SettingsTab = 'wallets' | 'security' | 'network'
+export type SettingsTab = 'profile' | 'wallets' | 'security' | 'network'
 
 interface SettingsStore {
     isOpen: boolean
@@ -12,8 +12,8 @@ interface SettingsStore {
 
 export const useSettingsStore = create<SettingsStore>((set) => ({
     isOpen: false,
-    activeTab: 'wallets',
-    openSettings: (tab = 'wallets') => set({ isOpen: true, activeTab: tab }),
+    activeTab: 'profile',
+    openSettings: (tab = 'profile') => set({ isOpen: true, activeTab: tab }),
     closeSettings: () => set({ isOpen: false }),
-    setActiveTab: (tab) => set({ activeTab: tab })
+    setActiveTab: (tab) => set({ activeTab: tab }),
 }))
