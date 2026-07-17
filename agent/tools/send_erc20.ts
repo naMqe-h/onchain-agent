@@ -11,40 +11,37 @@ import {
     erc20Abi,
 } from "viem"
 import { privateKeyToAccount } from "viem/accounts"
-import { getChainConfig } from "../../lib/web3/config"
+import {
+    getChainConfig,
+    getNativeCurrencySymbol,
+    normalizeNetworkId,
+} from "../../lib/web3/config"
 import { resolveActingWallet } from "../../lib/web3/resolveActiveWallet"
+import { fetchWalletErc20Tokens, type BalanceToken } from "../../lib/web3/tokenBalances"
 import db from "../../lib/db"
 import { createHash, createDecipheriv } from "crypto"
 
 const getEncryptionKey = () => {
-    const secret = process.env.WALLET_ENCRYPTION_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'default-fallback-key-secret-1234'
-    return createHash('sha256').update(secret).digest()
+    const secret = process.env.WALLET_ENCRYPTION_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "default-fallback-key-secret-1234"
+    return createHash("sha256").update(secret).digest()
 }
 
 function decryptKey(encryptedText: string): string {
-    const parts = encryptedText.split(':')
+    const parts = encryptedText.split(":")
     if (parts.length !== 2) {
-        throw new Error('Invalid encrypted key format')
+        throw new Error("Invalid encrypted key format")
     }
-    const iv = Buffer.from(parts[0], 'hex')
+    const iv = Buffer.from(parts[0], "hex")
     const encrypted = parts[1]
     const key = getEncryptionKey()
-    const decipher = createDecipheriv('aes-256-cbc', key, iv)
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8')
-    decrypted += decipher.final('utf8')
+    const decipher = createDecipheriv("aes-256-cbc", key, iv)
+    let decrypted = decipher.update(encrypted, "hex", "utf8")
+    decrypted += decipher.final("utf8")
     return decrypted
 }
 
 function isValidEvmAddress(address: string): boolean {
     return /^0x[a-fA-F0-9]{40}$/.test(address)
-}
-
-type BalanceToken = {
-    name: string
-    symbol: string
-    address: string
-    balance: string
-    decimals: number
 }
 
 async function resolveRecipientAddress(
@@ -60,84 +57,20 @@ async function resolveRecipientAddress(
         where: {
             userId,
             OR: [
-                { address: { equals: trimmed, mode: 'insensitive' } },
-                { name: { equals: trimmed, mode: 'insensitive' } }
-            ]
-        }
+                { address: { equals: trimmed, mode: "insensitive" } },
+                { name: { equals: trimmed, mode: "insensitive" } },
+            ],
+        },
     })
 
     if (!wallet) {
         return {
             ok: false,
-            error: `Recipient "${toAddressOrName}" is not a valid EVM address and no wallet with that name was found on your account.`
+            error: `Recipient "${toAddressOrName}" is not a valid EVM address and no wallet with that name was found on your account.`,
         }
     }
 
     return { ok: true, address: wallet.address }
-}
-
-async function fetchWalletErc20Tokens(
-    walletAddress: string,
-    activeNetwork: string
-): Promise<{ ok: true; tokens: BalanceToken[] } | { ok: false; error: string }> {
-    let url: string
-    if (activeNetwork === "mainnet") {
-        const apiBase = process.env.BLOCKSCOUT_API_URL_MAINNET
-        const apiKey = process.env.BLOCKSCOUT_API_KEY_MAINNET
-        if (!apiBase) {
-            return { ok: false, error: "BLOCKSCOUT_API_URL_MAINNET is not configured." }
-        }
-        url = `${apiBase}/addresses/${walletAddress}/token-balances`
-        if (apiKey) url += `?apikey=${apiKey}`
-    } else {
-        const apiBase = process.env.BLOCKSCOUT_API_URL_TESTNET
-        const apiKey = process.env.BLOCKSCOUT_API_KEY_TESTNET
-        if (!apiBase) {
-            return { ok: false, error: "BLOCKSCOUT_API_URL_TESTNET is not configured." }
-        }
-        url = `${apiBase}/addresses/${walletAddress}/token-balances`
-        if (apiKey) url += `?apikey=${apiKey}`
-    }
-
-    const response = await fetch(url)
-    if (!response.ok) {
-        return {
-            ok: false,
-            error: `Failed to fetch token balances from explorer API (Status: ${response.status} ${response.statusText})`
-        }
-    }
-
-    const data = await response.json()
-    const rawItems = Array.isArray(data) ? data : (data && Array.isArray(data.items) ? data.items : [])
-
-    const tokens: BalanceToken[] = rawItems
-        .filter((item: any) => item?.token?.type === 'ERC-20')
-        .map((item: any) => {
-            const tokenInfo = item.token
-            const rawValue = item.value || '0'
-            const decimals = typeof tokenInfo.decimals === 'number'
-                ? tokenInfo.decimals
-                : parseInt(tokenInfo.decimals || '18', 10)
-
-            let formattedBalance = '0'
-            try {
-                formattedBalance = formatUnits(BigInt(rawValue), decimals)
-            } catch {
-                formattedBalance = (Number(rawValue) / Math.pow(10, decimals)).toString()
-            }
-
-            const address = tokenInfo.address_hash || tokenInfo.address || ''
-            return {
-                name: tokenInfo.name || 'Unknown Token',
-                symbol: tokenInfo.symbol || 'TOKEN',
-                address,
-                balance: formattedBalance,
-                decimals
-            }
-        })
-        .filter((t: BalanceToken) => isValidEvmAddress(t.address))
-
-    return { ok: true, tokens }
 }
 
 function resolveTokenFromBalances(
@@ -148,7 +81,7 @@ function resolveTokenFromBalances(
     | { ok: false; error: string; candidates?: BalanceToken[] } {
     const q = query.trim().toLowerCase()
 
-    const symbolExact = tokens.filter(t => t.symbol.toLowerCase() === q)
+    const symbolExact = tokens.filter((t) => t.symbol.toLowerCase() === q)
     if (symbolExact.length === 1) {
         return { ok: true, token: symbolExact[0] }
     }
@@ -156,11 +89,11 @@ function resolveTokenFromBalances(
         return {
             ok: false,
             error: `Multiple tokens match symbol "${query}". Specify the contract address.`,
-            candidates: symbolExact
+            candidates: symbolExact,
         }
     }
 
-    const nameExact = tokens.filter(t => t.name.toLowerCase() === q)
+    const nameExact = tokens.filter((t) => t.name.toLowerCase() === q)
     if (nameExact.length === 1) {
         return { ok: true, token: nameExact[0] }
     }
@@ -168,12 +101,12 @@ function resolveTokenFromBalances(
         return {
             ok: false,
             error: `Multiple tokens match name "${query}". Specify the contract address.`,
-            candidates: nameExact
+            candidates: nameExact,
         }
     }
 
-    const namePartial = tokens.filter(t =>
-        t.name.toLowerCase().includes(q) || t.symbol.toLowerCase().includes(q)
+    const namePartial = tokens.filter(
+        (t) => t.name.toLowerCase().includes(q) || t.symbol.toLowerCase().includes(q)
     )
     if (namePartial.length === 1) {
         return { ok: true, token: namePartial[0] }
@@ -182,29 +115,29 @@ function resolveTokenFromBalances(
         return {
             ok: false,
             error: `Multiple tokens partially match "${query}". Specify the contract address or a more exact symbol.`,
-            candidates: namePartial
+            candidates: namePartial,
         }
     }
 
-    const available = tokens.map(t => `${t.symbol} (${t.name})`).join(', ')
+    const available = tokens.map((t) => `${t.symbol} (${t.name})`).join(", ")
     return {
         ok: false,
-        error: `No ERC-20 token matching "${query}" was found in the sender wallet balances.${available ? ` Available: ${available}` : ' The wallet has no ERC-20 token balances on the active network.'}`
+        error: `No ERC-20 token matching "${query}" was found in the sender wallet balances.${available ? ` Available: ${available}` : " The wallet has no ERC-20 token balances on the active network."}`,
     }
 }
 
 export default defineTool({
     description:
-        "Send an ERC-20 token (not native ETH) from a user wallet. " +
+        "Send an ERC-20 token (not native ETH/POL) from a user wallet on the session active network. " +
         "Pass token as either a contract address (0x…) OR a ticker/name held on the sender wallet (e.g. USDC, USDT, or any other symbol/name the user provides). " +
         "When a ticker/name is passed, this tool automatically loads the sender's ERC-20 balances and resolves the contract — no prior get_token_balances call is required. " +
         "Any user-provided ticker/name may be a valid ERC-20 on this chain if it appears in the wallet balances; do not refuse based on off-chain assumptions. " +
         "Uses the chat UI active wallet as sender unless fromAddressOrName is set. " +
-        "Recipient may be a 0x address or a wallet name. Uses session active network. Never use send_eth for these transfers.",
+        "Recipient may be a 0x address or a wallet name. Never use send_native for these transfers.",
     inputSchema: z.object({
         token: z.string().describe(
             "ERC-20 contract address (0x…) OR token ticker/name as the user said it (e.g. 'USDC', 'USDT', or any other symbol/name). " +
-            "Do not refuse tickers based on off-chain assumptions — resolve them against the sender wallet balances."
+                "Do not refuse tickers based on off-chain assumptions — resolve them against the sender wallet balances."
         ),
         toAddress: z.string().describe(
             "Recipient EVM address (0x…) or the recipient wallet name (e.g. 'secondary', 'secondary wallet')."
@@ -217,12 +150,15 @@ export default defineTool({
     async execute({ token, toAddress, amount, fromAddressOrName }, ctx) {
         const userId = ctx.session?.auth?.current?.principalId
         const activeNetworkAttr = ctx.session?.auth?.current?.attributes?.activeNetwork
-        const activeNetwork = (typeof activeNetworkAttr === 'string' ? activeNetworkAttr : activeNetworkAttr?.[0]) || "testnet"
+        const activeNetwork = normalizeNetworkId(
+            typeof activeNetworkAttr === "string" ? activeNetworkAttr : activeNetworkAttr?.[0]
+        )
+        const nativeSymbol = getNativeCurrencySymbol(activeNetwork)
 
         if (!userId || userId === "local-dev") {
             return {
                 success: false,
-                error: "No authenticated database user could be identified from the session."
+                error: "No authenticated database user could be identified from the session.",
             }
         }
 
@@ -257,13 +193,13 @@ export default defineTool({
 
                 const match = resolveTokenFromBalances(tokenQuery, balances.tokens)
                 if (!match.ok) {
-                    const candidateHint = match.candidates?.map(
-                        t => `${t.symbol} (${t.name}): ${t.address} balance=${t.balance}`
-                    ).join('; ')
+                    const candidateHint = match.candidates
+                        ?.map((t) => `${t.symbol} (${t.name}): ${t.address} balance=${t.balance}`)
+                        .join("; ")
                     return {
                         success: false,
                         error: candidateHint ? `${match.error} Candidates: ${candidateHint}` : match.error,
-                        availableTokens: balances.tokens.map(t => ({
+                        availableTokens: balances.tokens.map((t) => ({
                             symbol: t.symbol,
                             name: t.name,
                             address: t.address,
@@ -282,11 +218,11 @@ export default defineTool({
             const walletClient = createWalletClient({
                 account,
                 chain,
-                transport: http()
+                transport: http(),
             })
             const publicClient = createPublicClient({
                 chain,
-                transport: http()
+                transport: http(),
             })
 
             const tokenAddr = resolvedTokenAddress as `0x${string}`
@@ -303,7 +239,7 @@ export default defineTool({
             } catch {
                 return {
                     success: false,
-                    error: "Failed to read token decimals. Ensure the address is a valid ERC-20 contract on the active network."
+                    error: "Failed to read token decimals. Ensure the address is a valid ERC-20 contract on the active network.",
                 }
             }
 
@@ -324,14 +260,14 @@ export default defineTool({
             } catch {
                 return {
                     success: false,
-                    error: `Invalid amount "${amount}". Provide a valid human-readable number (e.g. '10.5').`
+                    error: `Invalid amount "${amount}". Provide a valid human-readable number (e.g. '10.5').`,
                 }
             }
 
             if (parsedAmount <= BigInt(0)) {
                 return {
                     success: false,
-                    error: "Amount must be greater than zero."
+                    error: "Amount must be greater than zero.",
                 }
             }
 
@@ -345,7 +281,7 @@ export default defineTool({
             if (balance < parsedAmount) {
                 return {
                     success: false,
-                    error: `Insufficient token balance. Available: ${formatUnits(balance, decimals)}${tokenSymbol ? ` ${tokenSymbol}` : ""}, requested: ${amount}${tokenSymbol ? ` ${tokenSymbol}` : ""}.`
+                    error: `Insufficient token balance. Available: ${formatUnits(balance, decimals)}${tokenSymbol ? ` ${tokenSymbol}` : ""}, requested: ${amount}${tokenSymbol ? ` ${tokenSymbol}` : ""}.`,
                 }
             }
 
@@ -360,7 +296,7 @@ export default defineTool({
 
             const gasUsed = receipt.gasUsed.toString()
             const gasPriceGwei = receipt.effectiveGasPrice ? formatGwei(receipt.effectiveGasPrice) : "0"
-            const gasFeeEth = formatEther(receipt.gasUsed * (receipt.effectiveGasPrice || BigInt(0)))
+            const gasFeeNative = formatEther(receipt.gasUsed * (receipt.effectiveGasPrice || BigInt(0)))
 
             return {
                 success: true,
@@ -375,15 +311,17 @@ export default defineTool({
                 decimals,
                 gasUsed,
                 gasPriceGwei,
-                gasFeeEth,
+                gasFeeEth: gasFeeNative,
+                gasFeeNative,
+                nativeSymbol,
                 status: receipt.status,
                 network: activeNetwork,
             }
         } catch (error: any) {
             return {
                 success: false,
-                error: error.message || "An error occurred while sending the ERC-20 transfer."
+                error: error.message || "An error occurred while sending the ERC-20 transfer.",
             }
         }
-    }
+    },
 })

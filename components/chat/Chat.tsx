@@ -10,6 +10,8 @@ import AgentAnalysisPanel, { getStepMetrics, getToolMetrics } from './AgentAnaly
 import { addMessage, updateChatSession, createChat, updateChatModel } from '../../app/actions/chat/chat'
 import { useWalletStore } from '../../hooks/useWalletStore'
 import { useAuthModalStore } from '../../hooks/useAuthModalStore'
+import { createClient } from '../../lib/supabase/client'
+import { normalizeNetworkId } from '../../lib/web3/config'
 
 interface SessionState {
     sessionId?: string
@@ -216,12 +218,21 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
 
         const activeWallet = useWalletStore.getState().selectedAddress || ''
 
+        let networkForTurn = normalizeNetworkId(activeNetwork)
+        try {
+            const supabase = createClient()
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user?.user_metadata?.activeNetwork) {
+                networkForTurn = normalizeNetworkId(user.user_metadata.activeNetwork)
+            }
+        } catch { }
+
         await agent.send({
             message: input.trim(),
             headers: {
                 'x-model-name': selectedModel,
                 'x-chat-id': targetChatId || '',
-                'x-active-network': activeNetwork,
+                'x-active-network': networkForTurn,
                 'x-active-wallet': activeWallet,
             }
         })

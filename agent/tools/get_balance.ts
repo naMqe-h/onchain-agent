@@ -1,30 +1,41 @@
 import { defineTool } from "eve/tools"
 import { z } from "zod"
 import { createPublicClient, http, formatEther } from "viem"
-import { getChainConfig } from "../../lib/web3/config"
+import {
+    getChainConfig,
+    getNativeCurrencySymbol,
+    normalizeNetworkId,
+} from "../../lib/web3/config"
 import { resolveActingWallet } from "../../lib/web3/resolveActiveWallet"
 import db from "../../lib/db"
 
 export default defineTool({
     description:
-        "Get the ETH balance of an address, a wallet name, or (if omitted) the user's active wallet from the chat UI selector. " +
-        "For 'my wallet' / 'my balance' / generic balance checks, omit address — do not ask the user which wallet.",
+        "Get the native currency balance (ETH on Robinhood/Ethereum, POL on Polygon) of an address, a wallet name, " +
+        "or (if omitted) the user's active wallet from the chat UI selector. Uses the session active network. " +
+        "CRITICAL: If the user message includes a 0x address or a wallet name to check, you MUST pass it as address — never omit it in that case. " +
+        "Only omit address for 'my wallet' / 'my balance' / generic own-balance checks with no address/name in the message. " +
+        "Always call this tool again when the user asks for a balance — do not reuse an earlier answer; the active network may have changed mid-chat.",
     inputSchema: z.object({
         address: z.string().optional().describe(
-            "EVM address or custom wallet name to check. Omit entirely to use the chat UI active wallet (preferred for 'my wallet' / balance checks)."
-        )
+            "REQUIRED when the user named a specific EVM address (0x…) or wallet name to inspect. " +
+            "Pass that value exactly. Only omit for 'my wallet' / generic own-balance checks so the chat UI active wallet is used."
+        ),
     }),
     async execute({ address }, ctx) {
         let targetAddress = address?.trim()
         const userId = ctx.session?.auth?.current?.principalId
         const activeNetworkAttr = ctx.session?.auth?.current?.attributes?.activeNetwork
-        const activeNetwork = (typeof activeNetworkAttr === 'string' ? activeNetworkAttr : activeNetworkAttr?.[0]) || "testnet"
+        const activeNetwork = normalizeNetworkId(
+            typeof activeNetworkAttr === "string" ? activeNetworkAttr : activeNetworkAttr?.[0]
+        )
+        const symbol = getNativeCurrencySymbol(activeNetwork)
 
         if (!targetAddress) {
             if (!userId || userId === "local-dev") {
                 return {
                     success: false,
-                    error: "No address was specified, and no authenticated database user could be identified from the session."
+                    error: "No address was specified, and no authenticated database user could be identified from the session.",
                 }
             }
             const resolved = await resolveActingWallet(userId, ctx)
@@ -32,11 +43,11 @@ export default defineTool({
                 return { success: false, error: resolved.error }
             }
             targetAddress = resolved.wallet.address
-        } else if (!targetAddress.startsWith('0x') || targetAddress.length !== 42) {
+        } else if (!targetAddress.startsWith("0x") || targetAddress.length !== 42) {
             if (!userId || userId === "local-dev") {
                 return {
                     success: false,
-                    error: "A wallet name was provided, but no authenticated database user could be identified from the session."
+                    error: "A wallet name was provided, but no authenticated database user could be identified from the session.",
                 }
             }
 
@@ -45,15 +56,15 @@ export default defineTool({
                     userId,
                     name: {
                         equals: targetAddress,
-                        mode: 'insensitive'
-                    }
-                }
+                        mode: "insensitive",
+                    },
+                },
             })
 
             if (!wallet) {
                 return {
                     success: false,
-                    error: `No wallet named "${targetAddress}" was found for your account.`
+                    error: `No wallet named "${targetAddress}" was found for your account.`,
                 }
             }
 
@@ -64,26 +75,28 @@ export default defineTool({
             const chain = getChainConfig(activeNetwork)
             const publicClient = createPublicClient({
                 chain,
-                transport: http()
+                transport: http(),
             })
 
             const balance = await publicClient.getBalance({
-                address: targetAddress as `0x${string}`
+                address: targetAddress as `0x${string}`,
             })
 
-            const balanceEth = formatEther(balance)
+            const balanceFormatted = formatEther(balance)
 
             return {
                 success: true,
                 address: targetAddress,
-                balance: balanceEth,
-                formatted: `${balanceEth} ETH`
+                balance: balanceFormatted,
+                symbol,
+                network: activeNetwork,
+                formatted: `${balanceFormatted} ${symbol}`,
             }
         } catch (error: any) {
             return {
                 success: false,
-                error: error.message || "Failed to retrieve balance"
+                error: error.message || "Failed to retrieve balance",
             }
         }
-    }
+    },
 })

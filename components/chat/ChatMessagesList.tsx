@@ -6,8 +6,8 @@ import TokenInfoCard from './tools/get_token_info/TokenInfoCard'
 import TokenInfoSkeleton from './tools/get_token_info/TokenInfoSkeleton'
 import SendErc20Card from './tools/send_erc20/SendErc20Card'
 import SendErc20Skeleton from './tools/send_erc20/SendErc20Skeleton'
-import SendEthCard from './tools/send_eth/SendEthCard'
-import SendEthSkeleton from './tools/send_eth/SendEthSkeleton'
+import SendNativeCard from './tools/send_native/SendNativeCard'
+import SendNativeSkeleton from './tools/send_native/SendNativeSkeleton'
 import { slideInUp, staggerContainer } from '../../lib/motion'
 
 interface Message {
@@ -47,7 +47,7 @@ function MessageItem({ message, isActive, onToggleReasoning, isLast, isBusy }: M
         const textParts = message.parts.filter(part => part.type === 'text')
         const tokenInfoParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_token_info')
         const sendErc20Parts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'send_erc20')
-        const sendEthParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'send_eth')
+        const sendNativeParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'send_native')
 
         return (
             <div className="flex flex-col gap-2 w-full">
@@ -77,12 +77,12 @@ function MessageItem({ message, isActive, onToggleReasoning, isLast, isBusy }: M
                     }
                     return null
                 })}
-                {sendEthParts.map((part, i) => {
+                {sendNativeParts.map((part, i) => {
                     if (part.state === 'executing' || part.state === 'requested') {
-                        return <SendEthSkeleton key={`send-eth-skeleton-${i}`} />
+                        return <SendNativeSkeleton key={`send-native-skeleton-${i}`} />
                     }
                     if (part.state === 'output-available' && part.output?.success === true) {
-                        return <SendEthCard key={`send-eth-card-${i}`} tx={part.output} />
+                        return <SendNativeCard key={`send-native-card-${i}`} tx={part.output} />
                     }
                     return null
                 })}
@@ -215,14 +215,14 @@ export default function ChatMessagesList({ chatId, messages, activeMessageId, on
                     messages[messages.length - 1]?.role === 'user' ||
                     (messages[messages.length - 1]?.role === 'assistant' && !hasTextContent(messages[messages.length - 1]))
                 ) && (
-                    <motion.div variants={slideInUp} className="flex flex-col items-start w-full gap-2">
-                        <div className="flex items-center gap-1.5 px-4 py-3 bg-[#1e1e20]/40 rounded-[20px] border border-white/5 shadow-sm">
-                            <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                            <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                            <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                        </div>
-                    </motion.div>
-                )}
+                        <motion.div variants={slideInUp} className="flex flex-col items-start w-full gap-2">
+                            <div className="flex items-center gap-1.5 px-4 py-3 bg-[#1e1e20]/40 rounded-[20px] border border-white/5 shadow-sm">
+                                <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                            </div>
+                        </motion.div>
+                    )}
             </motion.div>
         </div>
     )

@@ -1,4 +1,4 @@
-export default function SendEthSkeleton() {
+export default function SendNativeSkeleton() {
     return (
         <div className="w-full max-w-2xl bg-[#171719]/90 border border-zinc-800/80 rounded-2xl p-5 md:p-6 backdrop-blur-md shadow-xl my-3">
             <div className="grid grid-cols-3 gap-4 pb-5 animate-pulse">

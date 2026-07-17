@@ -3,6 +3,12 @@
 import { useState } from 'react'
 import { FiCopy, FiCheck, FiExternalLink } from 'react-icons/fi'
 import { formatCompactAmount } from '@/lib/format'
+import {
+    getExplorerBaseUrl,
+    getNativeCurrencySymbol,
+    getNetworkShortLabel,
+    normalizeNetworkId,
+} from '@/lib/web3/config'
 
 export interface SendErc20Tx {
     success: true
@@ -15,18 +21,14 @@ export interface SendErc20Tx {
     gasUsed: string
     gasPriceGwei: string
     gasFeeEth: string
+    gasFeeNative?: string
+    nativeSymbol?: string
     status: string
     network: string
 }
 
 interface SendErc20CardProps {
     tx: SendErc20Tx
-}
-
-function explorerBaseUrl(network: string): string {
-    return network === 'mainnet'
-        ? 'https://robinhoodchain.blockscout.com'
-        : 'https://explorer.testnet.chain.robinhood.com'
 }
 
 function shortAddress(addr: string): string {
@@ -93,9 +95,12 @@ function CopyableRow({
 export default function SendErc20Card({ tx }: SendErc20CardProps) {
     const [copiedKey, setCopiedKey] = useState<string | null>(null)
 
-    const base = explorerBaseUrl(tx.network)
+    const network = normalizeNetworkId(tx.network)
+    const base = getExplorerBaseUrl(network)
     const symbol = tx.tokenSymbol || 'TOKEN'
-    const networkLabel = tx.network === 'mainnet' ? 'Mainnet' : 'Testnet'
+    const networkLabel = getNetworkShortLabel(network)
+    const gasSymbol = tx.nativeSymbol || getNativeCurrencySymbol(network)
+    const gasFee = tx.gasFeeNative ?? tx.gasFeeEth
 
     const handleCopy = async (key: string, text: string) => {
         try {
@@ -135,8 +140,8 @@ export default function SendErc20Card({ tx }: SendErc20CardProps) {
                         Gas Fee
                     </span>
                     <span className="text-base font-bold text-zinc-100 break-all">
-                        {tx.gasFeeEth}{' '}
-                        <span className="text-sm font-semibold text-zinc-400">ETH</span>
+                        {gasFee}{' '}
+                        <span className="text-sm font-semibold text-zinc-400">{gasSymbol}</span>
                     </span>
                 </div>
             </div>

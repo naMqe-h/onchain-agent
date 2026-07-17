@@ -6,6 +6,18 @@ import { createClient } from '../../lib/supabase/client'
 import { useSettingsStore } from '../../hooks/useSettingsStore'
 import { useAuthModalStore } from '../../hooks/useAuthModalStore'
 import { PublicProfile } from '../../app/actions/profile/profile'
+import {
+    getNetworkShortLabel,
+    normalizeNetworkId,
+    type NetworkId,
+} from '../../lib/web3/config'
+
+const NETWORK_BADGE_CLASS: Record<NetworkId, string> = {
+    'robinhood-testnet': 'text-amber-500',
+    'robinhood-mainnet': 'text-indigo-400',
+    ethereum: 'text-blue-400',
+    polygon: 'text-violet-400',
+}
 
 export default function SidebarProfile({
     user,
@@ -125,14 +137,12 @@ export default function SidebarProfile({
                         </span>
                         <span
                             className={`text-[10px] font-medium leading-none mt-0.5 ${
-                                (user.user_metadata?.activeNetwork || 'testnet') === 'mainnet'
-                                    ? 'text-indigo-400'
-                                    : 'text-amber-500'
+                                NETWORK_BADGE_CLASS[
+                                    normalizeNetworkId(user.user_metadata?.activeNetwork)
+                                ]
                             }`}
                         >
-                            {(user.user_metadata?.activeNetwork || 'testnet') === 'mainnet'
-                                ? 'Robinhood Mainnet'
-                                : 'Robinhood Testnet'}
+                            {getNetworkShortLabel(user.user_metadata?.activeNetwork)}
                         </span>
                     </div>
                 </div>

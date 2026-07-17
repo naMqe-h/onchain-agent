@@ -3,28 +3,30 @@
 import { useState } from 'react'
 import { FiCopy, FiCheck, FiExternalLink } from 'react-icons/fi'
 import { formatCompactAmount } from '@/lib/format'
+import {
+    getExplorerBaseUrl,
+    getNativeCurrencySymbol,
+    getNetworkShortLabel,
+    normalizeNetworkId,
+} from '@/lib/web3/config'
 
-export interface SendEthTx {
+export interface SendNativeTx {
     success: true
     hash: string
     from: string
     to: string
     amount: string
+    symbol?: string
     gasUsed?: string
     gasPriceGwei?: string
     gasFeeEth: string
+    gasFeeNative?: string
     status: string
     network?: string
 }
 
-interface SendEthCardProps {
-    tx: SendEthTx
-}
-
-function explorerBaseUrl(network?: string): string {
-    return network === 'mainnet'
-        ? 'https://robinhoodchain.blockscout.com'
-        : 'https://explorer.testnet.chain.robinhood.com'
+interface SendNativeCardProps {
+    tx: SendNativeTx
 }
 
 function shortAddress(addr: string): string {
@@ -88,12 +90,14 @@ function CopyableRow({
     )
 }
 
-export default function SendEthCard({ tx }: SendEthCardProps) {
+export default function SendNativeCard({ tx }: SendNativeCardProps) {
     const [copiedKey, setCopiedKey] = useState<string | null>(null)
 
-    const network = tx.network || 'testnet'
-    const base = explorerBaseUrl(network)
-    const networkLabel = network === 'mainnet' ? 'Mainnet' : 'Testnet'
+    const network = normalizeNetworkId(tx.network)
+    const base = getExplorerBaseUrl(network)
+    const networkLabel = getNetworkShortLabel(network)
+    const symbol = tx.symbol || getNativeCurrencySymbol(network)
+    const gasFee = tx.gasFeeNative ?? tx.gasFeeEth
 
     const handleCopy = async (key: string, text: string) => {
         try {
@@ -125,7 +129,7 @@ export default function SendEthCard({ tx }: SendEthCardProps) {
                     </span>
                     <span className="text-base font-bold text-zinc-100 break-all" title={tx.amount}>
                         {formatCompactAmount(tx.amount)}{' '}
-                        <span className="text-sm font-semibold text-zinc-400">ETH</span>
+                        <span className="text-sm font-semibold text-zinc-400">{symbol}</span>
                     </span>
                 </div>
                 <div className="flex flex-col gap-1 min-w-0">
@@ -133,8 +137,8 @@ export default function SendEthCard({ tx }: SendEthCardProps) {
                         Gas Fee
                     </span>
                     <span className="text-base font-bold text-zinc-100 break-all">
-                        {tx.gasFeeEth}{' '}
-                        <span className="text-sm font-semibold text-zinc-400">ETH</span>
+                        {gasFee}{' '}
+                        <span className="text-sm font-semibold text-zinc-400">{symbol}</span>
                     </span>
                 </div>
             </div>

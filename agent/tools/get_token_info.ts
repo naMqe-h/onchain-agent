@@ -1,19 +1,37 @@
 import { defineTool } from "eve/tools"
 import { z } from "zod"
+import {
+    getDexScreenerChainIds,
+    getExplorerBaseUrl,
+    getNetworkLabel,
+    normalizeNetworkId,
+} from "../../lib/web3/config"
 
 export default defineTool({
-    description: "Search for ERC-20 token / memecoin metadata, price, 24h volume, and market cap on the Robinhood Chain using DEX Screener. Returns the single highest liquidity matching token.",
+    description:
+        "Search for ERC-20 token / memecoin metadata, price, 24h volume, and market cap on the user's active network " +
+        "(Robinhood, Ethereum, or Polygon) using DEX Screener. Returns the single highest-volume matching token on that chain.",
     inputSchema: z.object({
-        query: z.string().describe("The token name, ticker (symbol), or contract address to search for.")
+        query: z.string().describe("The token name, ticker (symbol), or contract address to search for."),
     }),
     async execute({ query }, ctx) {
         const trimmedQuery = query.trim()
         if (!trimmedQuery) {
             return {
                 success: false,
-                error: "Query string cannot be empty."
+                error: "Query string cannot be empty.",
             }
         }
+
+        const activeNetworkAttr = ctx.session?.auth?.current?.attributes?.activeNetwork
+        const activeNetwork = normalizeNetworkId(
+            typeof activeNetworkAttr === "string" ? activeNetworkAttr : activeNetworkAttr?.[0]
+        )
+        const networkLabel = getNetworkLabel(activeNetwork)
+        const allowedChainIds = new Set(
+            getDexScreenerChainIds(activeNetwork).map((id) => id.toLowerCase())
+        )
+        const explorerBaseUrl = getExplorerBaseUrl(activeNetwork)
 
         try {
             const url = `https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(trimmedQuery)}`
@@ -22,29 +40,30 @@ export default defineTool({
             if (!response.ok) {
                 return {
                     success: false,
-                    error: `Failed to fetch from DEX Screener API (Status: ${response.status} ${response.statusText})`
+                    error: `Failed to fetch from DEX Screener API (Status: ${response.status} ${response.statusText})`,
                 }
             }
 
             const data = await response.json()
             const pairs = Array.isArray(data?.pairs) ? data.pairs : []
 
-            const robinhoodPairs = pairs.filter((pair: any) => {
+            const networkPairs = pairs.filter((pair: any) => {
                 const chainId = String(pair?.chainId || "").toLowerCase()
-                return chainId === "robinhood" || chainId === "4663"
+                return allowedChainIds.has(chainId)
             })
 
-            if (robinhoodPairs.length === 0) {
+            if (networkPairs.length === 0) {
                 return {
                     success: true,
                     found: false,
-                    message: `No trading pairs found for "${trimmedQuery}" on Robinhood Chain on DEX Screener.`
+                    network: activeNetwork,
+                    message: `No trading pairs found for "${trimmedQuery}" on ${networkLabel} on DEX Screener.`,
                 }
             }
 
             const tokensMap = new Map<string, any>()
 
-            for (const pair of robinhoodPairs) {
+            for (const pair of networkPairs) {
                 const baseToken = pair?.baseToken
                 if (!baseToken || !baseToken.address) continue
 
@@ -57,7 +76,7 @@ export default defineTool({
                         imageUrl: undefined,
                         websites: [],
                         socials: [],
-                        pairs: []
+                        pairs: [],
                     })
                 }
 
@@ -78,7 +97,7 @@ export default defineTool({
                 }
             }
 
-            const tokens = Array.from(tokensMap.values()).map(tokenData => {
+            const tokens = Array.from(tokensMap.values()).map((tokenData) => {
                 let bestPair = tokenData.pairs[0]
                 let highestVolume = 0
 
@@ -105,15 +124,17 @@ export default defineTool({
                     volume24h: totalVolume24h,
                     fdv: bestPair?.fdv,
                     marketCap: bestPair?.marketCap,
+                    network: activeNetwork,
+                    explorerBaseUrl,
                     bestPair: {
                         dexId: bestPair?.dexId,
                         pairAddress: bestPair?.pairAddress,
                         quoteTokenSymbol: bestPair?.quoteToken?.symbol,
                         liquidityUsd: bestPair?.liquidity?.usd,
-                        url: bestPair?.url
+                        url: bestPair?.url,
                     },
                     websites: tokenData.websites,
-                    socials: tokenData.socials
+                    socials: tokenData.socials,
                 }
             })
 
@@ -126,13 +147,14 @@ export default defineTool({
             return {
                 success: true,
                 found: true,
-                token: tokens[0]
+                network: activeNetwork,
+                token: tokens[0],
             }
         } catch (error: any) {
             return {
                 success: false,
-                error: error.message || "Failed to search for token on DEX Screener"
+                error: error.message || "Failed to search for token on DEX Screener",
             }
         }
-    }
+    },
 })

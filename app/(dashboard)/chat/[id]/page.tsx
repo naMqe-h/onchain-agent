@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getChatWithMessages } from '../../../actions/chat/chat'
 import Chat from '../../../../components/chat/Chat'
+import { normalizeNetworkId } from '@/lib/web3/config'
 
 interface ChatPageProps {
     params: Promise<{ id: string }>
@@ -31,7 +32,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
         }
         : { streamIndex: 0 }
 
-    const activeNetwork = user?.user_metadata?.activeNetwork || 'testnet'
+    const activeNetwork = normalizeNetworkId(user?.user_metadata?.activeNetwork)
     const enabledModels = user?.user_metadata?.enabledModels as string[] | undefined
 
     return (

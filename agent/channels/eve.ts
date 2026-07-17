@@ -1,6 +1,7 @@
 import { eveChannel } from "eve/channels/eve"
 import { localDev, type AuthFn } from "eve/channels/auth"
 import { createServerClient } from "@supabase/ssr"
+import { normalizeNetworkId } from "../../lib/web3/config"
 
 function supabaseAuth(): AuthFn<Request> {
     return async (request) => {
@@ -36,9 +37,10 @@ function supabaseAuth(): AuthFn<Request> {
         if (!user) return null
 
         const metaNetwork = user.user_metadata?.activeNetwork
-        const activeNetwork =
+        const rawNetwork =
             networkHeader ||
-            (typeof metaNetwork === "string" ? metaNetwork : "testnet")
+            (typeof metaNetwork === "string" ? metaNetwork : "")
+        const activeNetwork = normalizeNetworkId(rawNetwork)
 
         const attributes: Record<string, string> = {
             modelName: modelHeader,

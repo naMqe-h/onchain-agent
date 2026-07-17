@@ -13,6 +13,8 @@ interface TokenInfo {
     volume24h?: number
     fdv?: number
     marketCap?: number
+    network?: string
+    explorerBaseUrl?: string
     bestPair?: {
         dexId?: string
         pairAddress?: string
@@ -156,7 +158,7 @@ export default function TokenInfoCard({ token }: TokenInfoCardProps) {
                     <div className="flex flex-col gap-0.5">
                         <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">Contract Address</span>
                         <a
-                            href={`https://robinhoodchain.blockscout.com/token/${token.address}`}
+                            href={`${token.explorerBaseUrl || 'https://robinhoodchain.blockscout.com'}/token/${token.address}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs font-mono text-zinc-300 hover:text-purple-400 flex items-center gap-1 transition-colors"
