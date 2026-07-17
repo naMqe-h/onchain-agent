@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { User } from '@supabase/supabase-js'
-import { FiPlus, FiCreditCard, FiCopy, FiCheck } from 'react-icons/fi'
-import { getUserWallets, createWallet } from '../../../app/actions/wallet'
+import { FiPlus, FiCreditCard, FiCopy, FiCheck, FiKey } from 'react-icons/fi'
+import { getUserWallets, createWallet, revealWalletPrivateKey } from '../../../app/actions/wallet'
 import { useWalletStore } from '../../../hooks/useWalletStore'
+import PasswordVerifyModal from './wallets/PasswordVerifyModal'
+import PrivateKeyDisplayModal from './wallets/PrivateKeyDisplayModal'
 
 interface WalletsTabProps {
     user: User
@@ -18,6 +20,9 @@ export default function WalletsTab({ user }: WalletsTabProps) {
     const [importedPrivateKey, setImportedPrivateKey] = useState('')
     const [isSubmittingWallet, setIsSubmittingWallet] = useState(false)
     const [copiedId, setCopiedId] = useState<string | null>(null)
+
+    const [selectedWalletForPk, setSelectedWalletForPk] = useState<{ id: string; name: string; address: string; type: string } | null>(null)
+    const [decryptedPrivateKey, setDecryptedPrivateKey] = useState<string | null>(null)
 
     const setStoreWallets = useWalletStore(s => s.setWallets)
 
@@ -194,18 +199,47 @@ export default function WalletsTab({ user }: WalletsTabProps) {
                                     <span className="text-xs text-zinc-500 font-mono truncate">{wallet.address}</span>
                                 </div>
 
-                                <button
-                                    onClick={() => handleCopy(wallet.id, wallet.address)}
-                                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer shrink-0"
-                                    title="Copy address"
-                                >
-                                    {copiedId === wallet.id ? <FiCheck size={14} className="text-emerald-400" /> : <FiCopy size={14} />}
-                                </button>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                    <button
+                                        onClick={() => setSelectedWalletForPk(wallet)}
+                                        className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer shrink-0"
+                                        title="Show private key"
+                                    >
+                                        <FiKey size={14} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleCopy(wallet.id, wallet.address)}
+                                        className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer shrink-0"
+                                        title="Copy address"
+                                    >
+                                        {copiedId === wallet.id ? <FiCheck size={14} className="text-emerald-400" /> : <FiCopy size={14} />}
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
                 )}
             </div>
+
+            <PasswordVerifyModal
+                isOpen={selectedWalletForPk !== null && decryptedPrivateKey === null}
+                onClose={() => setSelectedWalletForPk(null)}
+                walletName={selectedWalletForPk?.name || ''}
+                walletAddress={selectedWalletForPk?.address || ''}
+                onVerified={(pk) => setDecryptedPrivateKey(pk)}
+                verifyAction={revealWalletPrivateKey}
+            />
+
+            <PrivateKeyDisplayModal
+                isOpen={selectedWalletForPk !== null && decryptedPrivateKey !== null}
+                onClose={() => {
+                    setSelectedWalletForPk(null)
+                    setDecryptedPrivateKey(null)
+                }}
+                walletName={selectedWalletForPk?.name || ''}
+                privateKey={decryptedPrivateKey || ''}
+            />
         </div>
     )
 }
+

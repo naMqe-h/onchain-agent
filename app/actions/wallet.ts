@@ -3,6 +3,7 @@
 import db from '../../lib/db'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { createHash, randomBytes, createCipheriv, createDecipheriv } from 'crypto'
+import { createClient } from '../../lib/supabase/server'
 
 const getEncryptionKey = () => {
     const secret = process.env.WALLET_ENCRYPTION_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'default-fallback-key-secret-1234'
@@ -130,3 +131,33 @@ export async function getWalletPrivateKey(userId: string, address: string) {
         throw new Error("Failed to decrypt private key: " + (error instanceof Error ? error.message : String(error)))
     }
 }
+
+export async function revealWalletPrivateKey(address: string, password: string) {
+    try {
+        const supabase = await createClient()
+        const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+        if (userError || !user) {
+            return { error: 'Unauthorized' }
+        }
+
+        if (!user.email) {
+            return { error: 'Account has no email address' }
+        }
+
+        const { error: verifyError } = await supabase.auth.signInWithPassword({
+            email: user.email,
+            password
+        })
+
+        if (verifyError) {
+            return { error: 'Incorrect password' }
+        }
+
+        const privateKey = await getWalletPrivateKey(user.id, address)
+        return { privateKey }
+    } catch (err: unknown) {
+        return { error: err instanceof Error ? err.message : 'Failed to retrieve private key' }
+    }
+}
+
