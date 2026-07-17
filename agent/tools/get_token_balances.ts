@@ -29,42 +29,16 @@ export default defineTool({
         ),
     }),
     async execute({ walletAddressOrName }, ctx) {
-        let targetAddress = walletAddressOrName?.trim()
+        const input = walletAddressOrName?.trim()
         const userId = ctx.session?.auth?.current?.principalId
         const activeNetworkAttr = ctx.session?.auth?.current?.attributes?.activeNetwork
         const activeNetwork = normalizeNetworkId(
             typeof activeNetworkAttr === "string" ? activeNetworkAttr : activeNetworkAttr?.[0]
         )
 
-        if (targetAddress) {
-            if (!targetAddress.startsWith("0x") || targetAddress.length !== 42) {
-                if (!userId || userId === "local-dev") {
-                    return {
-                        success: false,
-                        error: "A wallet name was provided, but no authenticated database user could be identified from the session.",
-                    }
-                }
+        let targetAddress: string
 
-                const wallet = await db.wallet.findFirst({
-                    where: {
-                        userId,
-                        name: {
-                            equals: targetAddress,
-                            mode: "insensitive",
-                        },
-                    },
-                })
-
-                if (!wallet) {
-                    return {
-                        success: false,
-                        error: `No wallet named "${targetAddress}" was found for your account.`,
-                    }
-                }
-
-                targetAddress = wallet.address
-            }
-        } else {
+        if (!input) {
             if (!userId || userId === "local-dev") {
                 return {
                     success: false,
@@ -77,6 +51,34 @@ export default defineTool({
                 return { success: false, error: resolved.error }
             }
             targetAddress = resolved.wallet.address
+        } else if (!input.startsWith("0x") || input.length !== 42) {
+            if (!userId || userId === "local-dev") {
+                return {
+                    success: false,
+                    error: "A wallet name was provided, but no authenticated user could be identified from the session.",
+                }
+            }
+
+            const wallet = await db.wallet.findFirst({
+                where: {
+                    userId,
+                    name: {
+                        equals: input,
+                        mode: "insensitive",
+                    },
+                },
+            })
+
+            if (!wallet) {
+                return {
+                    success: false,
+                    error: `No wallet named "${input}" was found for your account.`,
+                }
+            }
+
+            targetAddress = wallet.address
+        } else {
+            targetAddress = input
         }
 
         try {

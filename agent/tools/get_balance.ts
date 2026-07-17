@@ -23,7 +23,7 @@ export default defineTool({
         ),
     }),
     async execute({ address }, ctx) {
-        let targetAddress = address?.trim()
+        const input = address?.trim()
         const userId = ctx.session?.auth?.current?.principalId
         const activeNetworkAttr = ctx.session?.auth?.current?.attributes?.activeNetwork
         const activeNetwork = normalizeNetworkId(
@@ -31,7 +31,9 @@ export default defineTool({
         )
         const symbol = getNativeCurrencySymbol(activeNetwork)
 
-        if (!targetAddress) {
+        let targetAddress: string
+
+        if (!input) {
             if (!userId || userId === "local-dev") {
                 return {
                     success: false,
@@ -43,7 +45,7 @@ export default defineTool({
                 return { success: false, error: resolved.error }
             }
             targetAddress = resolved.wallet.address
-        } else if (!targetAddress.startsWith("0x") || targetAddress.length !== 42) {
+        } else if (!input.startsWith("0x") || input.length !== 42) {
             if (!userId || userId === "local-dev") {
                 return {
                     success: false,
@@ -55,7 +57,7 @@ export default defineTool({
                 where: {
                     userId,
                     name: {
-                        equals: targetAddress,
+                        equals: input,
                         mode: "insensitive",
                     },
                 },
@@ -64,11 +66,13 @@ export default defineTool({
             if (!wallet) {
                 return {
                     success: false,
-                    error: `No wallet named "${targetAddress}" was found for your account.`,
+                    error: `No wallet named "${input}" was found for your account.`,
                 }
             }
 
             targetAddress = wallet.address
+        } else {
+            targetAddress = input
         }
 
         try {
