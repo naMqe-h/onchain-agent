@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type SettingsTab = 'profile' | 'wallets' | 'security' | 'network'
+export type SettingsTab = 'profile' | 'wallets' | 'security' | 'network' | 'models'
 
 interface SettingsStore {
     isOpen: boolean

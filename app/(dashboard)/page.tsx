@@ -11,15 +11,18 @@ export default async function DashboardPage() {
     }
 
     const activeNetwork = user?.user_metadata?.activeNetwork || 'testnet'
+    const defaultModel = user?.user_metadata?.defaultModel || 'gpt-4.1-nano'
+    const enabledModels = user?.user_metadata?.enabledModels as string[] | undefined
 
     return (
         <Chat
             chatId={null}
             initialMessages={[]}
             initialSession={{ streamIndex: 0 }}
-            initialModel="gpt-4.1-nano"
+            initialModel={defaultModel}
             activeNetwork={activeNetwork}
             userId={user.id}
+            enabledModels={enabledModels}
         />
     )
 }

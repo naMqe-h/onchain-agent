@@ -5,14 +5,7 @@ import { motion } from 'framer-motion'
 import { slideInUp } from '../../lib/motion'
 import { useWalletStore } from '../../hooks/useWalletStore'
 import { useSettingsStore } from '../../hooks/useSettingsStore'
-
-type ChatModelOption = {
-    id: string
-    name: string
-    shortName: string
-    provider: string
-    isReasoning: boolean
-}
+import { AVAILABLE_MODELS, ChatModelOption } from '../../lib/models'
 
 interface ChatInputProps {
     input: string
@@ -21,6 +14,7 @@ interface ChatInputProps {
     isBusy?: boolean
     selectedModel: string
     onModelChange: (model: string) => void
+    enabledModels?: string[]
 }
 
 function shortAddress(address: string) {
@@ -34,7 +28,8 @@ export default function ChatInput({
     handleSubmit,
     isBusy,
     selectedModel,
-    onModelChange
+    onModelChange,
+    enabledModels
 }: ChatInputProps) {
     const [isModelOpen, setIsModelOpen] = useState(false)
     const [isWalletOpen, setIsWalletOpen] = useState(false)
@@ -56,12 +51,11 @@ export default function ChatInput({
         }
     }, [isBusy])
 
-    const models: ChatModelOption[] = [
-        { id: 'gpt-4.1-nano', name: 'GPT-4.1 Nano', shortName: 'GPT-4.1', provider: 'OpenAI', isReasoning: false },
-        { id: 'cohere/north-mini-code:free', name: 'North Mini Code', shortName: 'North Mini', provider: 'Cohere', isReasoning: true },
-    ]
+    const models = AVAILABLE_MODELS.filter(
+        m => !enabledModels || enabledModels.length === 0 || enabledModels.includes(m.id) || m.id === selectedModel
+    )
 
-    const activeModel = models.find(m => m.id === selectedModel) || models[0]
+    const activeModel = AVAILABLE_MODELS.find(m => m.id === selectedModel) || AVAILABLE_MODELS[0]
 
     return (
         <motion.div
@@ -185,8 +179,18 @@ export default function ChatInput({
                             <>
                                 <div className="fixed inset-0 z-40" onClick={() => setIsModelOpen(false)} />
                                 <div className="absolute bottom-full mb-1.5 right-0 w-64 bg-[#1f1f22] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden py-1.5 flex flex-col">
-                                    <div className="px-3.5 py-1.5 text-[10px] font-bold text-zinc-500 uppercase tracking-wider border-b border-white/5 mb-1">
-                                        Select Model
+                                    <div className="px-3.5 py-1.5 flex items-center justify-between border-b border-white/5 mb-1">
+                                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Select Model</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setIsModelOpen(false)
+                                                openSettings('models')
+                                            }}
+                                            className="text-[10px] text-purple-400 hover:text-purple-300 transition-colors font-medium cursor-pointer"
+                                        >
+                                            Configure
+                                        </button>
                                     </div>
                                     {models.map((m) => (
                                         <button

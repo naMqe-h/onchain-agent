@@ -31,9 +31,10 @@ interface ChatProps {
     initialModel?: string
     activeNetwork: string
     userId: string
+    enabledModels?: string[]
 }
 
-export default function Chat({ chatId: initialChatId, initialMessages, initialSession, initialModel, activeNetwork, userId }: ChatProps) {
+export default function Chat({ chatId: initialChatId, initialMessages, initialSession, initialModel, activeNetwork, userId, enabledModels }: ChatProps) {
     const router = useRouter()
     const [input, setInput] = useState('')
     const [displayMessages, setDisplayMessages] = useState<StoredMessage[]>(initialMessages)
@@ -298,6 +299,7 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
                         isBusy={isBusy}
                         selectedModel={selectedModel}
                         onModelChange={handleModelChange}
+                        enabledModels={enabledModels}
                     />
                 </div>
             </div>

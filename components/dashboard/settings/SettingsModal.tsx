@@ -1,7 +1,7 @@
 'use client'
 
 import { ReactNode } from 'react'
-import { FiX, FiCreditCard, FiLock, FiGlobe, FiUser } from 'react-icons/fi'
+import { FiX, FiCreditCard, FiLock, FiGlobe, FiUser, FiCpu } from 'react-icons/fi'
 import { User } from '@supabase/supabase-js'
 import { useSettingsStore, SettingsTab } from '../../../hooks/useSettingsStore'
 import { PublicProfile } from '../../../app/actions/profile/profile'
@@ -9,6 +9,7 @@ import WalletsTab from './WalletsTab'
 import SecurityTab from './SecurityTab'
 import NetworkTab from './NetworkTab'
 import ProfileTab from './ProfileTab'
+import ModelsTab from './ModelsTab'
 
 interface SettingsModalProps {
     user: User | null
@@ -23,11 +24,10 @@ export default function SettingsModal({ user, profile }: SettingsModalProps) {
     const tabBtn = (tab: SettingsTab, label: string, icon: ReactNode) => (
         <button
             onClick={() => setActiveTab(tab)}
-            className={`flex items-center gap-1.5 md:gap-3 px-2.5 py-1.5 md:px-3 md:py-2.5 rounded-xl text-xs md:text-sm font-medium transition-colors cursor-pointer ${
-                activeTab === tab
+            className={`flex items-center gap-1.5 md:gap-3 px-2.5 py-1.5 md:px-3 md:py-2.5 rounded-xl text-xs md:text-sm font-medium transition-colors cursor-pointer ${activeTab === tab
                     ? 'bg-white/10 text-zinc-100'
                     : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
-            }`}
+                }`}
         >
             <span className={activeTab === tab ? 'text-zinc-200' : 'text-zinc-400'}>{icon}</span>
             <span>{label}</span>
@@ -49,6 +49,7 @@ export default function SettingsModal({ user, profile }: SettingsModalProps) {
                         {tabBtn('wallets', 'Wallets', <FiCreditCard size={16} />)}
                         {tabBtn('security', 'Security', <FiLock size={16} />)}
                         {tabBtn('network', 'Network', <FiGlobe size={16} />)}
+                        {tabBtn('models', 'Models', <FiCpu size={16} />)}
                     </div>
 
                     <div className="flex items-center md:mb-2 md:order-first">
@@ -68,6 +69,8 @@ export default function SettingsModal({ user, profile }: SettingsModalProps) {
                         <WalletsTab user={user} />
                     ) : activeTab === 'security' ? (
                         <SecurityTab user={user} />
+                    ) : activeTab === 'models' ? (
+                        <ModelsTab user={user} />
                     ) : (
                         <NetworkTab user={user} />
                     )}

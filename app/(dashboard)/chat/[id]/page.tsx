@@ -32,6 +32,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
         : { streamIndex: 0 }
 
     const activeNetwork = user?.user_metadata?.activeNetwork || 'testnet'
+    const enabledModels = user?.user_metadata?.enabledModels as string[] | undefined
 
     return (
         <Chat
@@ -44,6 +45,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
             initialModel={chat.model}
             activeNetwork={activeNetwork}
             userId={user.id}
+            enabledModels={enabledModels}
         />
     )
 }
