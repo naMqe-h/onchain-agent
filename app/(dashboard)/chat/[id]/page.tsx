@@ -38,9 +38,12 @@ export default async function ChatPage({ params }: ChatPageProps) {
     return (
         <Chat
             chatId={chat.id}
-            initialMessages={chat.messages.map(m => ({
-                ...m,
-                role: m.role as 'user' | 'assistant'
+            initialMessages={chat.messages.map((m) => ({
+                id: m.id,
+                role: m.role as 'user' | 'assistant',
+                content: m.content,
+                parts: m.parts,
+                createdAt: m.createdAt,
             }))}
             initialSession={initialSession}
             initialModel={chat.model}
