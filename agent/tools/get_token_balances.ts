@@ -12,11 +12,14 @@ export default defineTool({
     description:
         "Get ERC-20 token balances for a wallet on the session active network. " +
         `Returns at most the top ${ERC20_BALANCES_TOP_LIMIT} tokens by approximate USD value (balance * price), not by token amount. ` +
-        "Each token includes name, symbol, contract address, balance, decimals, and valueUsd. " +
+        "Each token includes name, symbol, contract address, balance, decimals, valueUsd, circulatingMarketCap, volume24h, and iconUrl (nullable when API omits them). " +
         "If the wallet holds more tokens, totalCount / truncated / note explain that only the most valuable ones were returned. " +
         "CRITICAL: If the user message includes a 0x address or a wallet name to check, you MUST pass it as walletAddressOrName — never omit it in that case (omitting queries the UI active wallet instead). " +
         "Only omit walletAddressOrName for 'my tokens' / 'my balances' with no address/name in the message. " +
-        "When presenting results to the user, list EVERY token in the returned tokens array — do not omit or summarize a subset. " +
+        "CRITICAL presentation: On success with a non-empty tokens array, output ONLY a very brief one-sentence intro in the user's language that points to the table below (e.g. 'ERC-20 balances are shown below:'). " +
+        "Do NOT list, enumerate, or summarize individual tokens (name, symbol, balance, valueUsd, address) in your text — the frontend renders a custom table. " +
+        "On success with an empty tokens array, tell the user clearly that this wallet holds no ERC-20 tokens on the active network (include address and network); do not invent a table. " +
+        "On failure, report the error in text. " +
         "Always call this tool again when the user asks for token balances, even if you answered earlier — the active network may have changed mid-chat. " +
         "For transfers by ticker/name, prefer send_erc20 which resolves the contract from sender balances automatically.",
     inputSchema: z.object({
@@ -103,6 +106,9 @@ export default defineTool({
                     balance: t.balance,
                     decimals: t.decimals,
                     valueUsd: t.valueUsd,
+                    circulatingMarketCap: t.circulatingMarketCap,
+                    volume24h: t.volume24h,
+                    iconUrl: t.iconUrl,
                 })),
             }
         } catch (error: any) {

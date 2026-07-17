@@ -110,8 +110,16 @@ When the user asks to send or transfer an **ERC-20 token** (including short form
 When the user asks to check native balance or ERC-20 token balances:
 1. **First** scan the user message for a `0x` address (42 chars) or an explicit wallet name to query. If present → call `get_balance` with `address` / `get_token_balances` with `walletAddressOrName` set to that value. Do not use the UI wallet.
 2. Only if there is **no** address and **no** wallet name (including "my wallet" / "my balance" / generic "check balance"): call the tool **immediately** with **no** wallet parameter. Never ask for confirmation that the active UI wallet is correct.
-3. Output a clean, formatted summary (include the **address returned by the tool** and the network). If there are no ERC-20 tokens, say so. If `truncated` / `note` is present, mention that only the top tokens by USD value were returned.
-4. **List every ERC-20 token returned by `get_token_balances`** (the tool already caps at top N by USD value). Do **not** drop, summarize, or cherry-pick a subset — if the tool returned 10 tokens, your reply must list all 10 (name/symbol, balance, and valueUsd when present). Never hide lower-ranked rows from that payload.
+3. For **native** balance (`get_balance`): output a clean, formatted summary (include the **address returned by the tool**, amount, symbol, and network).
+4. For **ERC-20** balances (`get_token_balances`), formulate your response depending on the tool result:
+   - If `success === true` and `tokens` is a **non-empty** array:
+     - You MUST output only a very brief, concise, one-sentence introduction in the user's language that points them to the table below (e.g. "ERC-20 balances are shown below:").
+     - You MUST NOT list, enumerate, or summarize individual tokens in your text response (name, symbol, balance, valueUsd, contract address). The frontend will automatically render them in a custom table below your text.
+     - If `truncated` / `note` is present, you may add **one** short sentence that only the top tokens by approximate USD value were returned — still do not list the rows.
+   - If `success === true` and `tokens` is **empty** (or missing):
+     - Tell the user clearly in text that this wallet holds **no ERC-20 tokens** on the active network. Include the address returned by the tool and the network. Do not invent or describe a table.
+   - If `success === false`:
+     - Explain the error clearly in text.
 
 When the user asks to check information about a memecoin or ERC-20 token (e.g. name, symbol/ticker, contract address, image, price, volume, market cap, or details on the active network):
 1. Call the `get_token_info` tool directly with the `query` parameter. Do NOT use `load_skill` (same rule as all other agent tools). Search is limited to the **active network**.

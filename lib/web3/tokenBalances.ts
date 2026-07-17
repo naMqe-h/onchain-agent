@@ -9,7 +9,10 @@ export type BalanceToken = {
     address: string
     balance: string
     decimals: number
-    valueUsd: number
+    valueUsd: number | null
+    circulatingMarketCap: number | null
+    volume24h: number | null
+    iconUrl: string | null
 }
 
 export type FetchWalletErc20Options = {
@@ -30,21 +33,33 @@ function formatBalance(rawValue: string, decimals: number): string {
     }
 }
 
+function parseOptionalNumber(raw: unknown): number | null {
+    if (raw === null || raw === undefined || raw === "") return null
+    const n = parseFloat(String(raw))
+    return Number.isFinite(n) ? n : null
+}
+
+function parseOptionalString(raw: unknown): string | null {
+    if (raw === null || raw === undefined) return null
+    const s = String(raw).trim()
+    return s.length > 0 ? s : null
+}
+
 function computeValueUsd(
     rawValue: string,
     decimals: number,
     exchangeRate: unknown
-): number {
-    const rate = parseFloat(String(exchangeRate ?? "0"))
-    if (!Number.isFinite(rate) || rate <= 0) return 0
+): number | null {
+    const rate = parseOptionalNumber(exchangeRate)
+    if (rate === null || rate <= 0) return null
 
     try {
         const human = Number(formatUnits(BigInt(rawValue || "0"), decimals))
-        if (!Number.isFinite(human)) return 0
+        if (!Number.isFinite(human)) return null
         const usd = human * rate
-        return Number.isFinite(usd) ? usd : 0
+        return Number.isFinite(usd) ? usd : null
     } catch {
-        return 0
+        return null
     }
 }
 
@@ -110,11 +125,14 @@ export async function fetchWalletErc20Tokens(
                 balance: formattedBalance,
                 decimals,
                 valueUsd,
+                circulatingMarketCap: parseOptionalNumber(tokenInfo.circulating_market_cap),
+                volume24h: parseOptionalNumber(tokenInfo.volume_24h),
+                iconUrl: parseOptionalString(tokenInfo.icon_url),
             }
         })
         .filter((t: BalanceToken) => /^0x[a-fA-F0-9]{40}$/.test(t.address))
 
-    tokens.sort((a, b) => b.valueUsd - a.valueUsd)
+    tokens.sort((a, b) => (b.valueUsd ?? 0) - (a.valueUsd ?? 0))
 
     const totalCount = tokens.length
     const limit =

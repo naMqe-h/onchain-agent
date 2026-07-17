@@ -4,6 +4,8 @@ import ReactMarkdown from 'react-markdown'
 import { motion } from 'framer-motion'
 import TokenInfoCard from './tools/get_token_info/TokenInfoCard'
 import TokenInfoSkeleton from './tools/get_token_info/TokenInfoSkeleton'
+import TokenBalancesTable from './tools/get_token_balances/TokenBalancesTable'
+import TokenBalancesSkeleton from './tools/get_token_balances/TokenBalancesSkeleton'
 import SendErc20Card from './tools/send_erc20/SendErc20Card'
 import SendErc20Skeleton from './tools/send_erc20/SendErc20Skeleton'
 import SendNativeCard from './tools/send_native/SendNativeCard'
@@ -46,6 +48,7 @@ function MessageItem({ message, isActive, onToggleReasoning, isLast, isBusy }: M
 
         const textParts = message.parts.filter(part => part.type === 'text')
         const tokenInfoParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_token_info')
+        const tokenBalancesParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_token_balances')
         const sendErc20Parts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'send_erc20')
         const sendNativeParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'send_native')
 
@@ -65,6 +68,20 @@ function MessageItem({ message, isActive, onToggleReasoning, isLast, isBusy }: M
                         if (tokenData) {
                             return <TokenInfoCard key={`token-card-${i}`} token={tokenData} />
                         }
+                    }
+                    return null
+                })}
+                {tokenBalancesParts.map((part, i) => {
+                    if (part.state === 'executing' || part.state === 'requested') {
+                        return <TokenBalancesSkeleton key={`token-balances-skeleton-${i}`} />
+                    }
+                    if (
+                        part.state === 'output-available' &&
+                        part.output?.success === true &&
+                        Array.isArray(part.output.tokens) &&
+                        part.output.tokens.length > 0
+                    ) {
+                        return <TokenBalancesTable key={`token-balances-table-${i}`} data={part.output} />
                     }
                     return null
                 })}
