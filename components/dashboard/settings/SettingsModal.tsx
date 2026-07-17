@@ -1,7 +1,7 @@
 'use client'
 
 import { ReactNode } from 'react'
-import { FiX, FiCreditCard, FiLock, FiGlobe, FiUser, FiCpu } from 'react-icons/fi'
+import { FiX, FiCreditCard, FiLock, FiGlobe, FiUser, FiCpu, FiArchive } from 'react-icons/fi'
 import { User } from '@supabase/supabase-js'
 import { useSettingsStore, SettingsTab } from '../../../hooks/useSettingsStore'
 import { PublicProfile } from '../../../app/actions/profile/profile'
@@ -10,6 +10,7 @@ import SecurityTab from './SecurityTab'
 import NetworkTab from './NetworkTab'
 import ProfileTab from './ProfileTab'
 import ModelsTab from './ModelsTab'
+import ArchivedTab from './ArchivedTab'
 
 interface SettingsModalProps {
     user: User | null
@@ -43,13 +44,14 @@ export default function SettingsModal({ user, profile }: SettingsModalProps) {
                 className="bg-[#18181b] w-full h-full rounded-none max-w-none border-none md:max-w-3xl md:h-[500px] md:rounded-[24px] md:border md:border-white/10 flex flex-col md:flex-row overflow-hidden shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="w-full md:w-[240px] p-4 md:p-5 flex flex-row md:flex-col justify-between md:justify-start gap-3 md:gap-4 bg-[#141416]/50 border-b border-white/5 md:border-b-0 md:border-r md:border-white/5 items-center md:items-stretch shrink-0">
-                    <div className="flex flex-row md:flex-col gap-1 flex-1 md:flex-initial overflow-x-auto">
+                <div className="w-full md:w-[240px] pt-4 px-4 pb-5 md:p-5 flex flex-row md:flex-col justify-between md:justify-start gap-3 md:gap-4 bg-[#141416]/50 border-b border-white/5 md:border-b-0 md:border-r md:border-white/5 items-center md:items-stretch shrink-0">
+                    <div className="flex flex-row md:flex-col gap-1 flex-1 md:flex-initial overflow-x-auto pb-3 md:pb-0 -mb-0.5 md:mb-0">
                         {tabBtn('profile', 'Profile', <FiUser size={16} />)}
                         {tabBtn('wallets', 'Wallets', <FiCreditCard size={16} />)}
                         {tabBtn('security', 'Security', <FiLock size={16} />)}
                         {tabBtn('network', 'Network', <FiGlobe size={16} />)}
                         {tabBtn('models', 'Models', <FiCpu size={16} />)}
+                        {tabBtn('archived', 'Archived', <FiArchive size={16} />)}
                     </div>
 
                     <div className="flex items-center md:mb-2 md:order-first">
@@ -71,6 +73,8 @@ export default function SettingsModal({ user, profile }: SettingsModalProps) {
                         <SecurityTab user={user} />
                     ) : activeTab === 'models' ? (
                         <ModelsTab user={user} />
+                    ) : activeTab === 'archived' ? (
+                        <ArchivedTab user={user} />
                     ) : (
                         <NetworkTab user={user} />
                     )}

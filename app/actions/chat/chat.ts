@@ -37,6 +37,20 @@ export async function getUserChats(userId: string) {
     return chats
 }
 
+export async function getArchivedChats(userId: string) {
+    const chats = await db.chat.findMany({
+        where: { userId, isArchived: true },
+        orderBy: { createdAt: 'desc' },
+        select: {
+            id: true,
+            title: true,
+            createdAt: true,
+            updatedAt: true,
+        }
+    })
+    return chats
+}
+
 export async function getChatWithMessages(chatId: string, userId: string) {
     const chat = await db.chat.findFirst({
         where: { id: chatId, userId },
@@ -101,6 +115,15 @@ export async function archiveChat(chatId: string) {
     await db.chat.update({
         where: { id: chatId },
         data: { isArchived: true }
+    })
+    revalidatePath('/')
+}
+
+export async function restoreChat(chatId: string) {
+    await getAuthenticatedUserAndChat(chatId)
+    await db.chat.update({
+        where: { id: chatId },
+        data: { isArchived: false }
     })
     revalidatePath('/')
 }
