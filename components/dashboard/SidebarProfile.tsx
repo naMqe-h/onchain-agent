@@ -7,6 +7,7 @@ import { useSettingsStore } from '../../hooks/useSettingsStore'
 import { useAuthModalStore } from '../../hooks/useAuthModalStore'
 import { PublicProfile } from '../../app/actions/profile/profile'
 import {
+    getNetworkIconSrc,
     getNetworkShortLabel,
     normalizeNetworkId,
     type NetworkId,
@@ -136,12 +137,18 @@ export default function SidebarProfile({
                             {displayName}
                         </span>
                         <span
-                            className={`text-[10px] font-medium leading-none mt-0.5 ${
-                                NETWORK_BADGE_CLASS[
-                                    normalizeNetworkId(user.user_metadata?.activeNetwork)
+                            className={`inline-flex items-center gap-1 text-[10px] font-medium leading-none mt-0.5 ${NETWORK_BADGE_CLASS[
+                                normalizeNetworkId(user.user_metadata?.activeNetwork)
                                 ]
-                            }`}
+                                }`}
                         >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src={getNetworkIconSrc(user.user_metadata?.activeNetwork)}
+                                alt=""
+                                className="w-3 h-3 object-contain shrink-0 rounded-sm"
+                                aria-hidden
+                            />
                             {getNetworkShortLabel(user.user_metadata?.activeNetwork)}
                         </span>
                     </div>

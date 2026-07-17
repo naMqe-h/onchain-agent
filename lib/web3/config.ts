@@ -242,6 +242,17 @@ export function getNetworkShortLabel(network?: string | null): string {
     return meta(network).shortLabel
 }
 
+const NETWORK_ICON_SRC: Record<NetworkId, string> = {
+    "robinhood-testnet": "/chains/robinhood.png",
+    "robinhood-mainnet": "/chains/robinhood.png",
+    ethereum: "/chains/ethereum.png",
+    polygon: "/chains/polygon.png",
+}
+
+export function getNetworkIconSrc(network?: string | null): string {
+    return NETWORK_ICON_SRC[normalizeNetworkId(network)]
+}
+
 export function getNativeCurrencySymbol(network?: string | null): string {
     return meta(network).nativeSymbol
 }

@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
-import { FiGlobe, FiCheck } from 'react-icons/fi'
+import { FiCheck } from 'react-icons/fi'
 import { createClient } from '../../../lib/supabase/client'
 import {
     NETWORK_OPTIONS,
+    getNetworkIconSrc,
     normalizeNetworkId,
     type NetworkId,
 } from '../../../lib/web3/config'
@@ -98,7 +99,13 @@ export default function NetworkTab({ user }: NetworkTabProps) {
                                             : 'bg-white/5 text-zinc-400'
                                             }`}
                                     >
-                                        <FiGlobe size={20} />
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                            src={getNetworkIconSrc(option.id)}
+                                            alt=""
+                                            className="w-5 h-5 object-contain"
+                                            aria-hidden
+                                        />
                                     </div>
                                     <div className="flex flex-col">
                                         <span className="text-sm font-semibold text-zinc-200">

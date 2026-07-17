@@ -14,5 +14,6 @@ services:
       - .env
     command: sh -c "npm install && npm run dev"
     environment:
-      - WATCHPACK_POLLING=false
-      - CHOKIDAR_USEPOLLING=false
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=300
