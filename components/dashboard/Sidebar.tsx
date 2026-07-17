@@ -87,7 +87,7 @@ export default function Sidebar({ user, chats, profile }: SidebarProps) {
         <>
             <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
                 <div className="flex items-center justify-between px-2">
-                    <span className="font-medium text-[17px] text-zinc-100 tracking-tight">Robinhood Agent</span>
+                    <span className="font-medium text-[17px] text-zinc-100 tracking-tight">Onchain Agent</span>
                 </div>
 
                 <button
@@ -222,7 +222,7 @@ export default function Sidebar({ user, chats, profile }: SidebarProps) {
                 >
                     <FiMenu size={20} />
                 </button>
-                <span className="font-medium text-[16px] text-zinc-100 tracking-tight">Robinhood Agent</span>
+                <span className="font-medium text-[16px] text-zinc-100 tracking-tight">Onchain Agent</span>
                 <button
                     onClick={handleNewChat}
                     className="p-2 -mr-2 text-zinc-400 hover:text-zinc-100 cursor-pointer"
@@ -250,7 +250,7 @@ export default function Sidebar({ user, chats, profile }: SidebarProps) {
                         className="fixed inset-0 z-50 bg-[#131314] flex flex-col h-full w-full"
                     >
                         <div className="flex items-center justify-between px-4 h-14 border-b border-white/5 bg-[#131314] shrink-0">
-                            <span className="font-medium text-[16px] text-zinc-100 tracking-tight">Robinhood Agent</span>
+                            <span className="font-medium text-[16px] text-zinc-100 tracking-tight">Onchain Agent</span>
                             <button
                                 onClick={() => setIsMobileMenuOpen(false)}
                                 className="p-2 rounded-lg hover:bg-white/5 text-zinc-400 hover:text-white transition-colors cursor-pointer"

@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Robinhood Agent",
+  title: "Onchain Agent",
   description:
-    "AI assistant for EVM wallets on Robinhood Chain - check balances, send ETH, and manage on-chain actions from chat.",
+    "AI assistant for EVM wallets across multiple chains - check balances, send tokens, and manage on-chain actions from chat.",
 };
 
 export default function RootLayout({
