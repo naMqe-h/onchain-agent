@@ -4,12 +4,13 @@ import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { User } from '@supabase/supabase-js'
-import { FiPlus, FiMessageSquare, FiMoreVertical, FiEdit2, FiArchive, FiTrash2, FiMenu, FiX } from 'react-icons/fi'
+import { FiPlus, FiMessageSquare, FiMoreVertical, FiEdit2, FiArchive, FiTrash2, FiMenu, FiX, FiLogIn } from 'react-icons/fi'
 import SidebarProfile from './SidebarProfile'
 import { updateChatTitle, archiveChat, deleteChat } from '../../app/actions/chat/chat'
 import { PublicProfile } from '../../app/actions/profile/profile'
 import { motion, AnimatePresence } from 'framer-motion'
 import { slideInLeft } from '../../lib/motion'
+import { useAuthModalStore } from '../../hooks/useAuthModalStore'
 
 interface Chat {
     id: string
@@ -33,6 +34,7 @@ export default function Sidebar({ user, chats, profile }: SidebarProps) {
     const [editingChatId, setEditingChatId] = useState<string | null>(null)
     const [editTitle, setEditTitle] = useState('')
     const [deleteConfirmationId, setDeleteConfirmationId] = useState<string | null>(null)
+    const openAuthModal = useAuthModalStore(s => s.open)
 
     const handleNewChat = () => {
         setIsMobileMenuOpen(false)
@@ -98,7 +100,7 @@ export default function Sidebar({ user, chats, profile }: SidebarProps) {
             </div>
 
             <div className="flex-1 px-4 pb-6 overflow-y-auto flex flex-col min-h-0">
-                {chats.length > 0 && (
+                {user && chats.length > 0 && (
                     <div className="flex flex-col gap-0.5">
                         <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider px-2 mb-1">Recent</p>
                         {chats.map((chat) => {
@@ -192,7 +194,22 @@ export default function Sidebar({ user, chats, profile }: SidebarProps) {
                 )}
             </div>
 
-            <SidebarProfile user={user} profile={profile} />
+            {user ? (
+                <SidebarProfile user={user} profile={profile} />
+            ) : (
+                <div className="px-3 pb-4">
+                    <button
+                        onClick={() => {
+                            setIsMobileMenuOpen(false)
+                            openAuthModal()
+                        }}
+                        className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-2xl hover:bg-[#1e1e20] transition-colors cursor-pointer group text-zinc-400 hover:text-zinc-100"
+                    >
+                        <FiLogIn size={16} className="shrink-0" />
+                        <span className="text-sm font-medium">Sign In</span>
+                    </button>
+                </div>
+            )}
         </>
     )
 

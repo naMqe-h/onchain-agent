@@ -4,6 +4,7 @@ import { User } from '@supabase/supabase-js'
 import { FiMoreHorizontal, FiSettings, FiLogOut } from 'react-icons/fi'
 import { createClient } from '../../lib/supabase/client'
 import { useSettingsStore } from '../../hooks/useSettingsStore'
+import { useAuthModalStore } from '../../hooks/useAuthModalStore'
 import { PublicProfile } from '../../app/actions/profile/profile'
 
 export default function SidebarProfile({
@@ -15,6 +16,7 @@ export default function SidebarProfile({
 }) {
     const [isOpen, setIsOpen] = useState(false)
     const openSettings = useSettingsStore((state) => state.openSettings)
+    const openAuthModal = useAuthModalStore((state) => state.open)
     const containerRef = useRef<HTMLDivElement>(null)
     const router = useRouter()
 
@@ -41,6 +43,7 @@ export default function SidebarProfile({
         const supabase = createClient()
         await supabase.auth.signOut()
         router.refresh()
+        openAuthModal()
     }
 
     const Avatar = ({ size = 'sm' }: { size?: 'sm' | 'md' }) => {

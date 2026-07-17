@@ -14,7 +14,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-        redirect('/login')
+        redirect('/')
     }
 
     const chat = await getChatWithMessages(id, user.id)

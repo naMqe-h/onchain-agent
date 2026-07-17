@@ -49,12 +49,24 @@ export async function getChatWithMessages(chatId: string, userId: string) {
     return chat
 }
 
+async function getAuthenticatedUserAndChat(chatId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const chat = await db.chat.findFirst({ where: { id: chatId, userId: user.id } })
+    if (!chat) throw new Error('Not found')
+
+    return { user, chat }
+}
+
 export async function addMessage(
     chatId: string,
     role: 'user' | 'assistant',
     content: string,
     parts?: unknown
 ) {
+    await getAuthenticatedUserAndChat(chatId)
     const message = await db.message.create({
         data: { chatId, role, content, parts: parts as any }
     })
@@ -67,6 +79,7 @@ export async function updateChatSession(
     eveContinuationToken: string,
     eveStreamIndex: number
 ) {
+    await getAuthenticatedUserAndChat(chatId)
     await db.chat.update({
         where: { id: chatId },
         data: { eveSessionId, eveContinuationToken, eveStreamIndex, updatedAt: new Date() }
@@ -75,6 +88,7 @@ export async function updateChatSession(
 }
 
 export async function updateChatTitle(chatId: string, title: string) {
+    await getAuthenticatedUserAndChat(chatId)
     await db.chat.update({
         where: { id: chatId },
         data: { title }
@@ -83,6 +97,7 @@ export async function updateChatTitle(chatId: string, title: string) {
 }
 
 export async function archiveChat(chatId: string) {
+    await getAuthenticatedUserAndChat(chatId)
     await db.chat.update({
         where: { id: chatId },
         data: { isArchived: true }
@@ -91,6 +106,7 @@ export async function archiveChat(chatId: string) {
 }
 
 export async function deleteChat(chatId: string) {
+    await getAuthenticatedUserAndChat(chatId)
     await db.chat.delete({
         where: { id: chatId }
     })
@@ -98,6 +114,7 @@ export async function deleteChat(chatId: string) {
 }
 
 export async function updateChatModel(chatId: string, model: string) {
+    await getAuthenticatedUserAndChat(chatId)
     await db.chat.update({
         where: { id: chatId },
         data: { model }

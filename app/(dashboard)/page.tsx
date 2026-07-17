@@ -1,14 +1,9 @@
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Chat from '@/components/chat/Chat'
 
 export default async function DashboardPage() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-        redirect('/login')
-    }
 
     const activeNetwork = user?.user_metadata?.activeNetwork || 'testnet'
     const defaultModel = user?.user_metadata?.defaultModel || 'gpt-4.1-nano'
@@ -21,7 +16,7 @@ export default async function DashboardPage() {
             initialSession={{ streamIndex: 0 }}
             initialModel={defaultModel}
             activeNetwork={activeNetwork}
-            userId={user.id}
+            userId={user?.id ?? null}
             enabledModels={enabledModels}
         />
     )

@@ -2,7 +2,6 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { validatePasswordStrength } from '@/lib/password'
-import { redirect } from 'next/navigation'
 
 export async function loginAction(formData: FormData) {
     const email = formData.get('email') as string
@@ -18,7 +17,7 @@ export async function loginAction(formData: FormData) {
         return { error: error.message }
     }
 
-    redirect('/')
+    return { success: true }
 }
 
 export async function signupAction(formData: FormData) {
@@ -42,7 +41,7 @@ export async function signupAction(formData: FormData) {
     }
 
     if (data.session) {
-        redirect('/')
+        return { success: true, loggedIn: true }
     }
 
     return { success: true }

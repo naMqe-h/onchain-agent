@@ -9,6 +9,7 @@ import ChatMessagesList from './ChatMessagesList'
 import AgentAnalysisPanel, { getStepMetrics, getToolMetrics } from './AgentAnalysisPanel'
 import { addMessage, updateChatSession, createChat, updateChatModel } from '../../app/actions/chat/chat'
 import { useWalletStore } from '../../hooks/useWalletStore'
+import { useAuthModalStore } from '../../hooks/useAuthModalStore'
 
 interface SessionState {
     sessionId?: string
@@ -30,7 +31,7 @@ interface ChatProps {
     initialSession: SessionState
     initialModel?: string
     activeNetwork: string
-    userId: string
+    userId: string | null
     enabledModels?: string[]
 }
 
@@ -46,6 +47,7 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
     const [selectedModel, setSelectedModel] = useState(initialModel || 'gpt-4.1-nano')
 
     const loadWallets = useWalletStore(s => s.loadWallets)
+    const openAuthModal = useAuthModalStore(s => s.open)
 
     useEffect(() => {
         if (userId) {
@@ -190,6 +192,10 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         if (!input.trim() || isBusy) return
+        if (!userId) {
+            openAuthModal()
+            return
+        }
 
         setStreamStartIndex(agent.data?.messages?.length || 0)
         setIsStreaming(true)
@@ -300,6 +306,7 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
                         selectedModel={selectedModel}
                         onModelChange={handleModelChange}
                         enabledModels={enabledModels}
+                        isAuthenticated={!!userId}
                     />
                 </div>
             </div>
