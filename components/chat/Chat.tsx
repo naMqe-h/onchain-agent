@@ -1,11 +1,14 @@
 'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useEveAgent } from 'eve/react'
 import { AnimatePresence } from 'framer-motion'
 import ChatInput from './ChatInput'
 import ChatMessagesList from './ChatMessagesList'
+import ChatTopbar from './ChatTopbar'
+import ChatMobileMetaFab from './ChatMobileMetaFab'
+import ChatTransactionsPanel from './ChatTransactionsPanel'
 import AgentAnalysisPanel, {
     getStepMetrics,
     getToolMetrics,
@@ -14,12 +17,13 @@ import AgentAnalysisPanel, {
     type AnalysisPanelMode,
 } from './AgentAnalysisPanel'
 import { addMessage, updateChatSession, createChat, updateChatModel } from '../../app/actions/chat/chat'
-import { checkMyUsageQuota } from '../../app/actions/usage/usage'
+import { checkMyUsageQuota, getChatTokenUsageAction } from '../../app/actions/usage/usage'
 import { useWalletStore } from '../../hooks/useWalletStore'
 import { useAuthModalStore } from '../../hooks/useAuthModalStore'
 import { createClient } from '../../lib/supabase/client'
 import { normalizeNetworkId } from '../../lib/web3/config'
 import { DEFAULT_MODEL_ID, isSupportedModelId } from '../../lib/models'
+import { extractOnchainTransactions } from '../../lib/chat/extractOnchainTransactions'
 import {
     writePendingChatSend,
     peekPendingChatSend,
@@ -62,12 +66,41 @@ interface ChatProps {
     initialMessages: StoredMessage[]
     initialSession: SessionState
     initialModel?: string
+    initialTitle?: string
     activeNetwork: string
     userId: string | null
     enabledModels?: string[]
 }
 
-export default function Chat({ chatId: initialChatId, initialMessages, initialSession, initialModel, activeNetwork, userId, enabledModels }: ChatProps) {
+function titleFromMessages(messages: readonly { parts?: unknown }[]): string | null {
+    for (let i = messages.length - 1; i >= 0; i--) {
+        const parts = messages[i]?.parts
+        if (!Array.isArray(parts)) continue
+        for (const part of parts as any[]) {
+            if (
+                part?.type === 'dynamic-tool' &&
+                part.toolName === 'update_chat_title' &&
+                part.state === 'output-available' &&
+                part.output?.success === true
+            ) {
+                const fromInput = typeof part.input?.title === 'string' ? part.input.title.trim() : ''
+                if (fromInput) return fromInput
+            }
+        }
+    }
+    return null
+}
+
+export default function Chat({
+    chatId: initialChatId,
+    initialMessages,
+    initialSession,
+    initialModel,
+    initialTitle = 'New Chat',
+    activeNetwork,
+    userId,
+    enabledModels,
+}: ChatProps) {
     const router = useRouter()
     const [input, setInput] = useState('')
     const [displayMessages, setDisplayMessages] = useState<StoredMessage[]>(initialMessages)
@@ -76,6 +109,9 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
     const [isStreaming, setIsStreaming] = useState(false)
     const [streamStartIndex, setStreamStartIndex] = useState(0)
     const [analysisPanel, setAnalysisPanel] = useState<{ messageId: string; mode: AnalysisPanelMode } | null>(null)
+    const [txPanelOpen, setTxPanelOpen] = useState(false)
+    const [chatTitle, setChatTitle] = useState(initialTitle)
+    const [totalTokens, setTotalTokens] = useState<number | null>(null)
     const [selectedModel, setSelectedModel] = useState(initialModel || DEFAULT_MODEL_ID)
     const [agentError, setAgentError] = useState(false)
 
@@ -94,6 +130,32 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
         }
     }, [initialModel])
 
+    useEffect(() => {
+        setChatTitle(initialTitle)
+    }, [initialChatId, initialTitle])
+
+    const refreshChatTokens = useCallback(async (chatId: string | null) => {
+        if (!chatId || !userId) {
+            setTotalTokens(null)
+            return
+        }
+        try {
+            const usage = await getChatTokenUsageAction(chatId)
+            setTotalTokens(usage.totalTokens)
+        } catch (err) {
+            console.warn('Failed to load chat token usage:', err)
+        }
+    }, [userId])
+
+    useEffect(() => {
+        if (!currentChatId || !userId) {
+            setTotalTokens(null)
+            return
+        }
+        setTotalTokens(null)
+        void refreshChatTokens(currentChatId)
+    }, [currentChatId, userId, refreshChatTokens])
+
     const handleModelChange = async (model: string) => {
         if (!isSupportedModelId(model)) return
         setSelectedModel(model)
@@ -103,6 +165,7 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
     }
 
     const handleToggleAnalysis = useCallback((id: string, mode: AnalysisPanelMode) => {
+        setTxPanelOpen(false)
         setAnalysisPanel(prev => {
             if (prev?.messageId === id && prev.mode === mode) return null
             return { messageId: id, mode }
@@ -111,6 +174,15 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
 
     const handleClosePanel = useCallback(() => {
         setAnalysisPanel(null)
+    }, [])
+
+    const handleOpenTransactions = useCallback(() => {
+        setAnalysisPanel(null)
+        setTxPanelOpen(true)
+    }, [])
+
+    const handleCloseTxPanel = useCallback(() => {
+        setTxPanelOpen(false)
     }, [])
 
     const chatIdRef = useRef<string | null>(initialChatId)
@@ -134,6 +206,7 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
         setStreamStartIndex(0)
         streamStartIndexRef.current = 0
         setAnalysisPanel(null)
+        setTxPanelOpen(false)
     }, [initialChatId])
 
     const lastIsPersistedError = (msgs: StoredMessage[]) => {
@@ -327,6 +400,7 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
                 )
             }
 
+            void refreshChatTokens(chatId)
             router.refresh()
         } catch (err) {
             console.error('Failed to persist chat turn:', err)
@@ -342,7 +416,7 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
                 }]
             })
         }
-    }, [router])
+    }, [router, refreshChatTokens])
 
     const agent = useEveAgent({
         initialSession,
@@ -720,27 +794,53 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
                 ...m,
                 aggregateMetrics: {
                     durationMs: totalDurationMs,
-                    totalTokens: totalTokens
+                    totalTokens,
                 }
             }
         }
         return m
     })
 
+    const onchainTxs = useMemo(
+        () => extractOnchainTransactions(enrichedMessages),
+        [enrichedMessages]
+    )
+
+    useEffect(() => {
+        const liveTitle = titleFromMessages(enrichedMessages)
+        if (liveTitle) setChatTitle(liveTitle)
+    }, [enrichedMessages])
+
+    const showChatMeta = Boolean(currentChatId)
+
     return (
         <div className="relative flex h-full w-full bg-[#131314] overflow-hidden">
             <div className="flex-1 flex flex-col h-full min-w-0">
+                {showChatMeta && (
+                    <ChatTopbar
+                        title={chatTitle}
+                        totalTokens={totalTokens}
+                        txCount={onchainTxs.length}
+                        onOpenTransactions={handleOpenTransactions}
+                    />
+                )}
                 <ChatMessagesList
                     chatId={currentChatId}
                     messages={enrichedMessages}
                     activeMessageId={activeMessageId}
                     activePanelMode={panelMode}
                     onToggleAnalysis={handleToggleAnalysis}
-
                     isBusy={isBusy}
                     showError={agentError || agent.status === 'error'}
                 />
-                <div className="w-full">
+                <div className="relative w-full">
+                    {showChatMeta && (
+                        <ChatMobileMetaFab
+                            totalTokens={totalTokens}
+                            txCount={onchainTxs.length}
+                            onOpenTransactions={handleOpenTransactions}
+                        />
+                    )}
                     <ChatInput
                         input={input}
                         handleInputChange={(e) => setInput(e.target.value)}
@@ -755,7 +855,13 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
             </div>
 
             <AnimatePresence mode="wait">
-                {activeMessage && panelMode && (
+                {txPanelOpen ? (
+                    <ChatTransactionsPanel
+                        key="tx-panel"
+                        transactions={onchainTxs}
+                        onClose={handleCloseTxPanel}
+                    />
+                ) : activeMessage && panelMode ? (
                     <AgentAnalysisPanel
                         key={`${analysisPanel?.messageId}-${panelMode}`}
                         activeMessage={activeMessage}
@@ -763,7 +869,7 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
                         agentEvents={agent.events}
                         mode={panelMode}
                     />
-                )}
+                ) : null}
             </AnimatePresence>
         </div>
     )

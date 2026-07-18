@@ -126,6 +126,8 @@ model LlmUsageEvent {
   @@index([userId, createdAt])
   @@index([userId, model, createdAt])
   @@index([eveSessionId])
+  @@index([chatId])
+  @@index([userId, chatId])
 }
 
 /// Daily rollup of LLM token usage for fast quota checks.

@@ -1,18 +1,62 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { User } from '@supabase/supabase-js'
-import { FiMoreHorizontal, FiSettings, FiLogOut } from 'react-icons/fi'
+import { FiMoreHorizontal, FiSettings, FiLogOut, FiAlertTriangle } from 'react-icons/fi'
 import { createClient } from '../../lib/supabase/client'
 import { useSettingsStore } from '../../hooks/useSettingsStore'
 import { useAuthModalStore } from '../../hooks/useAuthModalStore'
 import { useWalletStore } from '../../hooks/useWalletStore'
 import { PublicProfile } from '../../app/actions/profile/profile'
+import { checkMyUsageQuota } from '../../app/actions/usage/usage'
+import type { QuotaCheckResult } from '../../lib/usage/checkQuota'
 import {
     getNetworkIconSrc,
     getNetworkShortLabel,
     normalizeNetworkId,
     type NetworkId,
 } from '../../lib/web3/config'
+
+type DailyUsageAlert = {
+    level: 'soft' | 'hard'
+    percentUsed: number
+}
+
+function dailyUsageAlert(
+    quota: QuotaCheckResult | null
+): DailyUsageAlert | null {
+    if (!quota) return null
+    const { usage } = quota
+
+    const tokenPct =
+        usage.tokensPerDayLimit > 0
+            ? (usage.tokensToday / usage.tokensPerDayLimit) * 100
+            : 0
+    const requestPct =
+        usage.requestsPerDayLimit > 0
+            ? (usage.requestsToday / usage.requestsPerDayLimit) * 100
+            : 0
+    const percentUsed = Math.min(100, Math.round(Math.max(tokenPct, requestPct)))
+
+    if (
+        usage.tokensToday >= usage.tokensPerDayLimit ||
+        usage.requestsToday >= usage.requestsPerDayLimit
+    ) {
+        return { level: 'hard', percentUsed: Math.max(percentUsed, 100) }
+    }
+    if (usage.tokensToday >= usage.softTokenThreshold) {
+        return { level: 'soft', percentUsed }
+    }
+    const softRequestThreshold = Math.floor(
+        usage.requestsPerDayLimit *
+        (usage.tokensPerDayLimit > 0
+            ? usage.softTokenThreshold / usage.tokensPerDayLimit
+            : 0)
+    )
+    if (softRequestThreshold > 0 && usage.requestsToday >= softRequestThreshold) {
+        return { level: 'soft', percentUsed }
+    }
+    return null
+}
 
 const NETWORK_BADGE_CLASS: Record<NetworkId, string> = {
     'robinhood-testnet': 'text-amber-500',
@@ -32,10 +76,48 @@ export default function SidebarProfile({
     collapsed?: boolean
 }) {
     const [isOpen, setIsOpen] = useState(false)
+    const [usageAlert, setUsageAlert] = useState<DailyUsageAlert | null>(null)
     const openSettings = useSettingsStore((state) => state.openSettings)
     const openAuthModal = useAuthModalStore((state) => state.open)
     const containerRef = useRef<HTMLDivElement>(null)
     const router = useRouter()
+
+    const refreshUsageAlert = useCallback(async () => {
+        if (!user) {
+            setUsageAlert(null)
+            return
+        }
+        try {
+            const timeZone =
+                typeof Intl !== 'undefined'
+                    ? Intl.DateTimeFormat().resolvedOptions().timeZone
+                    : undefined
+            const quota = await checkMyUsageQuota(timeZone)
+            setUsageAlert(dailyUsageAlert(quota))
+        } catch { }
+    }, [user])
+
+    useEffect(() => {
+        void refreshUsageAlert()
+    }, [refreshUsageAlert])
+
+    useEffect(() => {
+        if (isOpen) void refreshUsageAlert()
+    }, [isOpen, refreshUsageAlert])
+
+    useEffect(() => {
+        function onVisible() {
+            if (document.visibilityState === 'visible') {
+                void refreshUsageAlert()
+            }
+        }
+        document.addEventListener('visibilitychange', onVisible)
+        window.addEventListener('focus', onVisible)
+        return () => {
+            document.removeEventListener('visibilitychange', onVisible)
+            window.removeEventListener('focus', onVisible)
+        }
+    }, [refreshUsageAlert])
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -194,15 +276,36 @@ export default function SidebarProfile({
                         </span>
                     </div>
                 </div>
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation()
-                        setIsOpen(!isOpen)
-                    }}
-                    className="text-zinc-500 hover:text-zinc-200 transition-colors cursor-pointer"
-                >
-                    <FiMoreHorizontal size={18} />
-                </button>
+                <div className="flex items-center gap-1.5 shrink-0">
+                    {usageAlert && (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                openSettings('usage')
+                            }}
+                            className={`p-0.5 rounded-md transition-colors cursor-pointer ${usageAlert.level === 'hard'
+                                ? 'text-rose-400 hover:text-rose-300'
+                                : 'text-amber-400 hover:text-amber-300'
+                                }`}
+                            title={`Used ${usageAlert.percentUsed}% of daily limit`}
+                            aria-label={`Used ${usageAlert.percentUsed}% of daily limit`}
+                        >
+                            <FiAlertTriangle size={16} />
+                        </button>
+                    )}
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            setIsOpen(!isOpen)
+                        }}
+                        className="text-zinc-500 hover:text-zinc-200 transition-colors cursor-pointer"
+                        aria-label="Open profile menu"
+                    >
+                        <FiMoreHorizontal size={18} />
+                    </button>
+                </div>
             </div>
         </div>
     )
