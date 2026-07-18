@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Sidebar from '@/components/dashboard/Sidebar'
-import { getUserChats } from '@/app/actions/chat/chat'
+import { getUserChats, getUserFolders } from '@/app/actions/chat/chat'
 import { getOrCreateProfile } from '@/app/actions/profile/profile'
 import { fetchModelCatalog } from '@/app/actions/models/models'
 import SettingsModal from '../../components/dashboard/settings/SettingsModal'
@@ -16,15 +16,20 @@ export default async function DashboardLayout({
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [chats, profile, modelCatalog] = user
-    ? await Promise.all([getUserChats(user.id), getOrCreateProfile(), fetchModelCatalog()])
-    : [[], null, []]
+  const [chats, folders, profile, modelCatalog] = user
+    ? await Promise.all([
+        getUserChats(user.id),
+        getUserFolders(user.id),
+        getOrCreateProfile(),
+        fetchModelCatalog(),
+      ])
+    : [[], [], null, []]
 
   return (
     <div className="flex flex-col md:flex-row h-screen w-full overflow-hidden">
       <AuthSessionWatcher />
       <ModelsBootstrap initialModels={modelCatalog} />
-      <Sidebar user={user} chats={chats} profile={profile} />
+      <Sidebar user={user} chats={chats} folders={folders} profile={profile} />
       <main className="flex-1 flex flex-col overflow-hidden">
         {children}
       </main>

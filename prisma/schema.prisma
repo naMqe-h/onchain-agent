@@ -24,18 +24,40 @@ model Wallet {
   @@unique([userId, name])
 }
 
+model ChatFolder {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  chats     Chat[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
 model Chat {
-  id                   String    @id @default(uuid())
+  id                   String      @id @default(uuid())
   userId               String
-  title                String    @default("New Chat")
+  title                String      @default("New Chat")
   eveSessionId         String?
   eveContinuationToken String?
-  eveStreamIndex       Int       @default(0)
-  isArchived           Boolean   @default(false)
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  eveStreamIndex       Int         @default(0)
+  isArchived           Boolean     @default(false)
+  isPinned             Boolean     @default(false)
+  pinnedAt             DateTime?
+  folderId             String?
+  folder               ChatFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  createdAt            DateTime    @default(now())
+  // Manual only: bumped on conversation activity (messages / session), not pin/rename/folder/etc.
+  updatedAt            DateTime    @default(now())
   messages             Message[]
-  model                String    @default("gpt-4.1-nano")
+  model                String      @default("gpt-4.1-nano")
+
+  @@index([userId, isArchived])
+  @@index([userId, isPinned])
+  @@index([folderId])
 }
 
 model Message {

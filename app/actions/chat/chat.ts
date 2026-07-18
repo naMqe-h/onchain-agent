@@ -36,10 +36,25 @@ export async function getUserChats(userId: string) {
             title: true,
             createdAt: true,
             updatedAt: true,
+            isPinned: true,
+            pinnedAt: true,
+            folderId: true,
             _count: { select: { messages: true } }
         }
     })
     return chats
+}
+
+export async function getUserFolders(userId: string) {
+    return db.chatFolder.findMany({
+        where: { userId },
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        select: {
+            id: true,
+            name: true,
+            sortOrder: true,
+        },
+    })
 }
 
 export async function getArchivedChats(userId: string) {
@@ -88,15 +103,41 @@ export async function getChatWithMessagesAndResolvedModel(
     return { ...chat, model: resolvedModel }
 }
 
-async function getAuthenticatedUserAndChat(chatId: string) {
+const FOLDER_NAME_MAX = 40
+const FOLDER_COUNT_MAX = 20
+
+async function getAuthenticatedUser() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Unauthorized')
+    return user
+}
+
+async function getAuthenticatedUserAndChat(chatId: string) {
+    const user = await getAuthenticatedUser()
 
     const chat = await db.chat.findFirst({ where: { id: chatId, userId: user.id } })
     if (!chat) throw new Error('Not found')
 
     return { user, chat }
+}
+
+async function getAuthenticatedUserAndFolder(folderId: string) {
+    const user = await getAuthenticatedUser()
+
+    const folder = await db.chatFolder.findFirst({ where: { id: folderId, userId: user.id } })
+    if (!folder) throw new Error('Not found')
+
+    return { user, folder }
+}
+
+function normalizeFolderName(name: string): string {
+    const trimmed = name.trim().replace(/\s+/g, ' ')
+    if (!trimmed) throw new Error('Folder name is required')
+    if (trimmed.length > FOLDER_NAME_MAX) {
+        throw new Error(`Folder name must be at most ${FOLDER_NAME_MAX} characters`)
+    }
+    return trimmed
 }
 
 export async function addMessage(
@@ -106,9 +147,15 @@ export async function addMessage(
     parts?: unknown
 ) {
     await getAuthenticatedUserAndChat(chatId)
-    const message = await db.message.create({
-        data: { chatId, role, content, parts: parts as any }
-    })
+    const [message] = await db.$transaction([
+        db.message.create({
+            data: { chatId, role, content, parts: parts as any },
+        }),
+        db.chat.update({
+            where: { id: chatId },
+            data: { updatedAt: new Date() },
+        }),
+    ])
     return message
 }
 
@@ -121,7 +168,12 @@ export async function updateChatSession(
     await getAuthenticatedUserAndChat(chatId)
     await db.chat.update({
         where: { id: chatId },
-        data: { eveSessionId, eveContinuationToken, eveStreamIndex, updatedAt: new Date() }
+        data: {
+            eveSessionId,
+            eveContinuationToken,
+            eveStreamIndex,
+            updatedAt: new Date(),
+        },
     })
 }
 
@@ -138,7 +190,115 @@ export async function archiveChat(chatId: string) {
     await getAuthenticatedUserAndChat(chatId)
     await db.chat.update({
         where: { id: chatId },
-        data: { isArchived: true }
+        data: { isArchived: true, isPinned: false, pinnedAt: null }
+    })
+    revalidatePath('/')
+}
+
+export async function togglePinChat(chatId: string) {
+    const { chat } = await getAuthenticatedUserAndChat(chatId)
+    if (chat.isArchived) {
+        throw new Error('Cannot pin an archived chat')
+    }
+
+    const nextPinned = !chat.isPinned
+    await db.chat.update({
+        where: { id: chatId },
+        data: {
+            isPinned: nextPinned,
+            pinnedAt: nextPinned ? new Date() : null,
+        },
+    })
+    revalidatePath('/')
+    return { isPinned: nextPinned }
+}
+
+export async function createFolder(name: string) {
+    const user = await getAuthenticatedUser()
+    const folderName = normalizeFolderName(name)
+
+    const count = await db.chatFolder.count({ where: { userId: user.id } })
+    if (count >= FOLDER_COUNT_MAX) {
+        throw new Error(`You can have at most ${FOLDER_COUNT_MAX} folders`)
+    }
+
+    const maxSort = await db.chatFolder.aggregate({
+        where: { userId: user.id },
+        _max: { sortOrder: true },
+    })
+
+    try {
+        const folder = await db.chatFolder.create({
+            data: {
+                userId: user.id,
+                name: folderName,
+                sortOrder: (maxSort._max.sortOrder ?? -1) + 1,
+            },
+        })
+        revalidatePath('/')
+        return folder
+    } catch (err: unknown) {
+        if (
+            typeof err === 'object' &&
+            err !== null &&
+            'code' in err &&
+            (err as { code?: string }).code === 'P2002'
+        ) {
+            throw new Error('Folder already exists')
+        }
+        throw err
+    }
+}
+
+export async function renameFolder(folderId: string, name: string) {
+    await getAuthenticatedUserAndFolder(folderId)
+    const folderName = normalizeFolderName(name)
+
+    try {
+        await db.chatFolder.update({
+            where: { id: folderId },
+            data: { name: folderName },
+        })
+        revalidatePath('/')
+    } catch (err: unknown) {
+        if (
+            typeof err === 'object' &&
+            err !== null &&
+            'code' in err &&
+            (err as { code?: string }).code === 'P2002'
+        ) {
+            throw new Error('Folder already exists')
+        }
+        throw err
+    }
+}
+
+export async function deleteFolder(folderId: string) {
+    await getAuthenticatedUserAndFolder(folderId)
+
+    await db.$transaction([
+        db.chat.updateMany({
+            where: { folderId },
+            data: { folderId: null },
+        }),
+        db.chatFolder.delete({ where: { id: folderId } }),
+    ])
+    revalidatePath('/')
+}
+
+export async function moveChatToFolder(chatId: string, folderId: string | null) {
+    const { user } = await getAuthenticatedUserAndChat(chatId)
+
+    if (folderId) {
+        const folder = await db.chatFolder.findFirst({
+            where: { id: folderId, userId: user.id },
+        })
+        if (!folder) throw new Error('Not found')
+    }
+
+    await db.chat.update({
+        where: { id: chatId },
+        data: { folderId },
     })
     revalidatePath('/')
 }
