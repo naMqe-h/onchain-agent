@@ -300,7 +300,7 @@ export default function ChatMessagesList({ chatId, messages, activeMessageId, on
             >
                 {messages.map((message, idx) => (
                     <MessageItem
-                        key={idx}
+                        key={message.id}
                         message={message}
                         isActive={activeMessageId === message.id}
                         onToggleReasoning={() => onToggleReasoning(message.id)}

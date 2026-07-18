@@ -198,93 +198,99 @@ export default function Sidebar({ user, chats, profile }: SidebarProps) {
                     {user && chats.length > 0 && (
                         <div className="flex flex-col gap-0.5">
                             <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider px-2 mb-1">Recent</p>
-                            {chats.map((chat) => {
-                                const isActive = pathname === `/chat/${chat.id}`
-                                return (
-                                    <div key={chat.id} className="relative">
-                                        <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all group ${isActive
-                                            ? 'bg-white/8 text-zinc-100'
-                                            : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
-                                            }`}>
-                                            <Link
-                                                href={`/chat/${chat.id}`}
-                                                onClick={() => setIsMobileMenuOpen(false)}
-                                                className="flex-1 min-w-0 flex items-start gap-2.5"
-                                            >
-                                                <FiMessageSquare size={14} className="shrink-0 mt-0.5 opacity-60" />
-                                                <div className="flex-1 min-w-0">
-                                                    {editingChatId === chat.id ? (
-                                                        <input
-                                                            type="text"
-                                                            value={editTitle}
-                                                            onChange={(e) => setEditTitle(e.target.value)}
-                                                            onBlur={() => handleRenameSubmit(chat.id)}
-                                                            onKeyDown={(e) => {
-                                                                if (e.key === 'Enter') handleRenameSubmit(chat.id)
-                                                                if (e.key === 'Escape') setEditingChatId(null)
-                                                            }}
-                                                            autoFocus
-                                                            className="w-full bg-transparent border-none outline-none text-zinc-100 p-0 m-0 text-sm leading-tight focus:ring-0"
-                                                            onClick={(e) => e.preventDefault()}
-                                                        />
-                                                    ) : (
-                                                        <p className="truncate leading-tight">{chat.title}</p>
-                                                    )}
-                                                    <p className="text-[11px] text-zinc-600 mt-0.5">{formatDate(chat.updatedAt)}</p>
-                                                </div>
-                                            </Link>
-
-                                            <button
-                                                onClick={(e) => {
-                                                    e.preventDefault()
-                                                    e.stopPropagation()
-                                                    setActiveDropdownId(activeDropdownId === chat.id ? null : chat.id)
-                                                }}
-                                                className={`p-1.5 rounded-md hover:bg-white/10 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer ${activeDropdownId === chat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                                            >
-                                                <FiMoreVertical size={14} />
-                                            </button>
-                                        </div>
-
-                                        {activeDropdownId === chat.id && (
-                                            <>
-                                                <div className="fixed inset-0 z-40" onClick={() => setActiveDropdownId(null)} />
-                                                <div className="absolute right-0 top-10 w-36 bg-[#1f1f22] border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden py-1">
-                                                    <button
-                                                        onClick={() => {
-                                                            setEditTitle(chat.title)
-                                                            setEditingChatId(chat.id)
-                                                            setActiveDropdownId(null)
-                                                        }}
-                                                        className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-zinc-100 flex items-center gap-2 cursor-pointer transition-colors"
-                                                    >
-                                                        <FiEdit2 size={12} />
-                                                        Rename
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleArchive(chat.id)}
-                                                        className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-zinc-100 flex items-center gap-2 cursor-pointer transition-colors"
-                                                    >
-                                                        <FiArchive size={12} />
-                                                        Archive
-                                                    </button>
-                                                    <div className="h-px bg-white/5 my-1" />
-                                                    <button
-                                                        onClick={() => {
-                                                            setDeleteConfirmationId(chat.id)
-                                                            setActiveDropdownId(null)
-                                                        }}
-                                                        className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 flex items-center gap-2 cursor-pointer transition-colors"
-                                                    >
-                                                        <FiTrash2 size={12} />
-                                                        Delete
-                                                    </button>
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
+                            {chats
+                                .filter(
+                                    (chat) =>
+                                        chat._count.messages > 0 ||
+                                        pathname === `/chat/${chat.id}`
                                 )
-                            })}
+                                .map((chat) => {
+                                    const isActive = pathname === `/chat/${chat.id}`
+                                    return (
+                                        <div key={chat.id} className="relative">
+                                            <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all group ${isActive
+                                                ? 'bg-white/8 text-zinc-100'
+                                                : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
+                                                }`}>
+                                                <Link
+                                                    href={`/chat/${chat.id}`}
+                                                    onClick={() => setIsMobileMenuOpen(false)}
+                                                    className="flex-1 min-w-0 flex items-start gap-2.5"
+                                                >
+                                                    <FiMessageSquare size={14} className="shrink-0 mt-0.5 opacity-60" />
+                                                    <div className="flex-1 min-w-0">
+                                                        {editingChatId === chat.id ? (
+                                                            <input
+                                                                type="text"
+                                                                value={editTitle}
+                                                                onChange={(e) => setEditTitle(e.target.value)}
+                                                                onBlur={() => handleRenameSubmit(chat.id)}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') handleRenameSubmit(chat.id)
+                                                                    if (e.key === 'Escape') setEditingChatId(null)
+                                                                }}
+                                                                autoFocus
+                                                                className="w-full bg-transparent border-none outline-none text-zinc-100 p-0 m-0 text-sm leading-tight focus:ring-0"
+                                                                onClick={(e) => e.preventDefault()}
+                                                            />
+                                                        ) : (
+                                                            <p className="truncate leading-tight">{chat.title}</p>
+                                                        )}
+                                                        <p className="text-[11px] text-zinc-600 mt-0.5">{formatDate(chat.updatedAt)}</p>
+                                                    </div>
+                                                </Link>
+
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault()
+                                                        e.stopPropagation()
+                                                        setActiveDropdownId(activeDropdownId === chat.id ? null : chat.id)
+                                                    }}
+                                                    className={`p-1.5 rounded-md hover:bg-white/10 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer ${activeDropdownId === chat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                                >
+                                                    <FiMoreVertical size={14} />
+                                                </button>
+                                            </div>
+
+                                            {activeDropdownId === chat.id && (
+                                                <>
+                                                    <div className="fixed inset-0 z-40" onClick={() => setActiveDropdownId(null)} />
+                                                    <div className="absolute right-0 top-10 w-36 bg-[#1f1f22] border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden py-1">
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditTitle(chat.title)
+                                                                setEditingChatId(chat.id)
+                                                                setActiveDropdownId(null)
+                                                            }}
+                                                            className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-zinc-100 flex items-center gap-2 cursor-pointer transition-colors"
+                                                        >
+                                                            <FiEdit2 size={12} />
+                                                            Rename
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleArchive(chat.id)}
+                                                            className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-zinc-100 flex items-center gap-2 cursor-pointer transition-colors"
+                                                        >
+                                                            <FiArchive size={12} />
+                                                            Archive
+                                                        </button>
+                                                        <div className="h-px bg-white/5 my-1" />
+                                                        <button
+                                                            onClick={() => {
+                                                                setDeleteConfirmationId(chat.id)
+                                                                setActiveDropdownId(null)
+                                                            }}
+                                                            className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 flex items-center gap-2 cursor-pointer transition-colors"
+                                                        >
+                                                            <FiTrash2 size={12} />
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    )
+                                })}
                         </div>
                     )}
                 </div>

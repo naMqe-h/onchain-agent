@@ -123,7 +123,6 @@ export async function updateChatSession(
         where: { id: chatId },
         data: { eveSessionId, eveContinuationToken, eveStreamIndex, updatedAt: new Date() }
     })
-    revalidatePath('/')
 }
 
 export async function updateChatTitle(chatId: string, title: string) {

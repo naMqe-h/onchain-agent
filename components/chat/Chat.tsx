@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useEveAgent } from 'eve/react'
 import { AnimatePresence } from 'framer-motion'
 import ChatInput from './ChatInput'
@@ -12,6 +13,12 @@ import { useAuthModalStore } from '../../hooks/useAuthModalStore'
 import { createClient } from '../../lib/supabase/client'
 import { normalizeNetworkId } from '../../lib/web3/config'
 import { DEFAULT_MODEL_ID, isSupportedModelId } from '../../lib/models'
+import {
+    writePendingChatSend,
+    peekPendingChatSend,
+    consumePendingChatSend,
+    type PendingChatSend,
+} from '../../lib/pendingChatSend'
 
 export const AGENT_ERROR_TEXT = 'Something went wrong'
 
@@ -54,6 +61,7 @@ interface ChatProps {
 }
 
 export default function Chat({ chatId: initialChatId, initialMessages, initialSession, initialModel, activeNetwork, userId, enabledModels }: ChatProps) {
+    const router = useRouter()
     const [input, setInput] = useState('')
     const [displayMessages, setDisplayMessages] = useState<StoredMessage[]>(initialMessages)
     const [currentChatId, setCurrentChatId] = useState<string | null>(initialChatId)
@@ -95,25 +103,40 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
         setActiveMessageId(null)
     }, [])
 
-    useEffect(() => {
-        setDisplayMessages(initialMessages)
-    }, [initialMessages])
-
     const chatIdRef = useRef<string | null>(initialChatId)
+    const streamStartIndexRef = useRef(0)
+    const displayMessagesRef = useRef(displayMessages)
+
     useEffect(() => {
         chatIdRef.current = currentChatId
     }, [currentChatId])
 
-    const displayMessagesRef = useRef(displayMessages)
     useEffect(() => {
         displayMessagesRef.current = displayMessages
     }, [displayMessages])
 
-    const streamStartIndexRef = useRef(0)
+    useEffect(() => {
+        setDisplayMessages(initialMessages)
+        setCurrentChatId(initialChatId)
+        chatIdRef.current = initialChatId
+        setAgentError(false)
+        setIsStreaming(false)
+        setStreamStartIndex(0)
+        streamStartIndexRef.current = 0
+        setActiveMessageId(null)
+    }, [initialChatId])
+
+    const lastIsPersistedError = (msgs: StoredMessage[]) => {
+        const last = msgs[msgs.length - 1]
+        return (
+            last?.role === 'assistant' &&
+            last.content === AGENT_ERROR_TEXT &&
+            Array.isArray(last.parts) &&
+            (last.parts as any[]).some((p: any) => p.type === 'error')
+        )
+    }
 
     const persistTurn = useCallback(async (snapshot: any, forceError = false) => {
-        setIsStreaming(false)
-
         const chatId = chatIdRef.current
         const allMessages: any[] = snapshot?.data?.messages ?? []
         const turnMessages = allMessages.slice(streamStartIndexRef.current)
@@ -197,35 +220,56 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
             })
         }
 
-        if (!chatId) return
+        const localErrorId = `local-error-${Date.now()}`
+        const errorParts = createAgentErrorParts()
 
-        const lastIsPersistedError = (msgs: StoredMessage[]) => {
-            const last = msgs[msgs.length - 1]
-            return (
-                last?.role === 'assistant' &&
-                last.content === AGENT_ERROR_TEXT &&
-                Array.isArray(last.parts) &&
-                (last.parts as any[]).some((p: any) => p.type === 'error')
-            )
-        }
+        setDisplayMessages(prev => {
+            let next = prev
+
+            if (turnFailed) {
+                if (!lastIsPersistedError(next)) {
+                    next = [...next, {
+                        id: localErrorId,
+                        role: 'assistant' as const,
+                        content: AGENT_ERROR_TEXT,
+                        parts: errorParts,
+                        createdAt: new Date(),
+                    }]
+                }
+            } else if (lastAssistant && assistantHasUsefulContent(lastAssistant)) {
+                if (!next.some(m => m.id === lastAssistant.id)) {
+                    next = [...next, {
+                        id: lastAssistant.id,
+                        role: 'assistant' as const,
+                        content: assistantText,
+                        parts: enrichedParts,
+                        createdAt: lastAssistant.createdAt ?? new Date(),
+                    } as StoredMessage]
+                }
+            }
+
+            return next
+        })
+
+        setIsStreaming(false)
+
+        if (!chatId) return
 
         try {
             if (userText && hadUserThisTurn) {
-                const alreadyPersisted = displayMessagesRef.current.some(
-                    m => m.role === 'user' && m.content === userText && !String(m.id).startsWith('local-user-')
+                const pendingLocal = displayMessagesRef.current.find(
+                    m =>
+                        m.role === 'user' &&
+                        m.content === userText &&
+                        String(m.id).startsWith('local-user-')
                 )
-
-                if (!alreadyPersisted) {
+                if (pendingLocal) {
                     const savedUser = await addMessage(chatId, 'user', userText, userParts)
                     setDisplayMessages(prev => {
-                        const localIdx = prev.findIndex(
-                            m =>
-                                (lastUser && m.id === lastUser.id) ||
-                                (m.role === 'user' && m.content === userText && String(m.id).startsWith('local-user-'))
-                        )
-                        const saved = {
+                        const localIdx = prev.findIndex(m => m.id === pendingLocal.id)
+                        const saved: StoredMessage = {
                             id: savedUser.id,
-                            role: 'user' as const,
+                            role: 'user',
                             content: userText,
                             parts: userParts,
                             createdAt: savedUser.createdAt,
@@ -242,33 +286,25 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
             }
 
             if (turnFailed) {
-                if (!lastIsPersistedError(displayMessagesRef.current)) {
-                    const errorParts = createAgentErrorParts()
-                    const savedError = await addMessage(chatId, 'assistant', AGENT_ERROR_TEXT, errorParts)
-                    setDisplayMessages(prev => {
-                        if (lastIsPersistedError(prev)) return prev
-                        return [...prev, {
-                            id: savedError.id,
-                            role: 'assistant' as const,
-                            content: AGENT_ERROR_TEXT,
-                            parts: errorParts,
-                            createdAt: savedError.createdAt,
-                        }]
-                    })
+                const alreadyHasDbError = displayMessagesRef.current.some(
+                    m =>
+                        m.role === 'assistant' &&
+                        m.content === AGENT_ERROR_TEXT &&
+                        Array.isArray(m.parts) &&
+                        (m.parts as any[]).some((p: any) => p.type === 'error') &&
+                        !String(m.id).startsWith('local-error-')
+                )
+
+                if (!alreadyHasDbError) {
+                    await addMessage(chatId, 'assistant', AGENT_ERROR_TEXT, errorParts)
                 }
             } else if (lastAssistant && assistantHasUsefulContent(lastAssistant)) {
-                setDisplayMessages(prev => {
-                    if (prev.find(m => m.id === lastAssistant.id)) return prev
-                    return [...prev, {
-                        ...lastAssistant,
-                        content: assistantText,
-                        parts: enrichedParts,
-                        createdAt: lastAssistant.createdAt ?? new Date(),
-                    } as any]
-                })
-                if (assistantText) {
-                    await addMessage(chatId, 'assistant', assistantText, enrichedParts)
-                }
+                await addMessage(
+                    chatId,
+                    'assistant',
+                    assistantText || '',
+                    enrichedParts
+                )
             }
 
             const session = snapshot?.session
@@ -280,6 +316,8 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
                     session.streamIndex ?? 0
                 )
             }
+
+            router.refresh()
         } catch (err) {
             console.error('Failed to persist chat turn:', err)
             setAgentError(true)
@@ -294,7 +332,7 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
                 }]
             })
         }
-    }, [])
+    }, [router])
 
     const agent = useEveAgent({
         initialSession,
@@ -306,6 +344,200 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
             await persistTurn(snapshot, false)
         }, [persistTurn])
     })
+
+    const agentRef = useRef(agent)
+    useEffect(() => {
+        agentRef.current = agent
+    }, [agent])
+
+    const resolveNetworkForTurn = useCallback(async () => {
+        let networkForTurn = normalizeNetworkId(activeNetwork)
+        try {
+            const supabase = createClient()
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user?.user_metadata?.activeNetwork) {
+                networkForTurn = normalizeNetworkId(user.user_metadata.activeNetwork)
+            }
+        } catch { }
+        return networkForTurn
+    }, [activeNetwork])
+
+    const runAgentSend = useCallback(async (opts: {
+        messageText: string
+        targetChatId: string
+        model: string
+        network: string
+        wallet: string
+        userAlreadyShown: boolean
+        localUserId?: string
+        userSavedToDb?: boolean
+    }) => {
+        const {
+            messageText,
+            targetChatId,
+            model,
+            network,
+            wallet,
+            userAlreadyShown,
+        } = opts
+        let { localUserId, userSavedToDb = false } = opts
+        const userParts = [{ type: 'text', text: messageText }]
+
+        setAgentError(false)
+        const nextStreamStart = agentRef.current.data?.messages?.length || 0
+        streamStartIndexRef.current = nextStreamStart
+        setStreamStartIndex(nextStreamStart)
+        setIsStreaming(true)
+
+        if (!userAlreadyShown) {
+            localUserId = localUserId ?? `local-user-${Date.now()}`
+            setDisplayMessages(prev => [...prev, {
+                id: localUserId!,
+                role: 'user',
+                content: messageText,
+                parts: userParts,
+                createdAt: new Date(),
+            }])
+
+            try {
+                const savedUser = await addMessage(targetChatId, 'user', messageText, userParts)
+                userSavedToDb = true
+                setDisplayMessages(prev => {
+                    const idx = prev.findIndex(m => m.id === localUserId)
+                    const saved: StoredMessage = {
+                        id: savedUser.id,
+                        role: 'user',
+                        content: messageText,
+                        parts: userParts,
+                        createdAt: savedUser.createdAt,
+                    }
+                    if (idx >= 0) {
+                        const next = [...prev]
+                        next[idx] = saved
+                        return next
+                    }
+                    if (prev.some(m => m.id === savedUser.id)) return prev
+                    return [...prev, saved]
+                })
+            } catch (persistUserErr) {
+                console.error('Failed to persist user message on send:', persistUserErr)
+            }
+        } else {
+            setDisplayMessages(prev => {
+                const hasSame = prev.some(
+                    m => m.role === 'user' && m.content === messageText
+                )
+                if (hasSame) return prev
+                return [...prev, {
+                    id: `local-user-${Date.now()}`,
+                    role: 'user' as const,
+                    content: messageText,
+                    parts: userParts,
+                    createdAt: new Date(),
+                }]
+            })
+            userSavedToDb = true
+        }
+
+        try {
+            await agentRef.current.send({
+                message: messageText,
+                headers: {
+                    'x-model-name': model,
+                    'x-chat-id': targetChatId,
+                    'x-active-network': network,
+                    'x-active-wallet': wallet,
+                }
+            })
+        } catch {
+            setIsStreaming(false)
+            setAgentError(true)
+            try {
+                if (!userSavedToDb && localUserId) {
+                    const stillLocal = displayMessagesRef.current.some(m => m.id === localUserId)
+                    if (stillLocal) {
+                        const savedUser = await addMessage(targetChatId, 'user', messageText, userParts)
+                        setDisplayMessages(prev => {
+                            const idx = prev.findIndex(m => m.id === localUserId)
+                            const saved: StoredMessage = {
+                                id: savedUser.id,
+                                role: 'user',
+                                content: messageText,
+                                parts: userParts,
+                                createdAt: savedUser.createdAt,
+                            }
+                            if (idx >= 0) {
+                                const next = [...prev]
+                                next[idx] = saved
+                                return next
+                            }
+                            if (prev.some(m => m.id === savedUser.id)) return prev
+                            return [...prev, saved]
+                        })
+                    }
+                }
+
+                const errorParts = createAgentErrorParts()
+                const savedError = await addMessage(targetChatId, 'assistant', AGENT_ERROR_TEXT, errorParts)
+                setDisplayMessages(prev => {
+                    if (
+                        prev[prev.length - 1]?.role === 'assistant' &&
+                        prev[prev.length - 1]?.content === AGENT_ERROR_TEXT
+                    ) {
+                        return prev
+                    }
+                    return [...prev, {
+                        id: savedError.id,
+                        role: 'assistant' as const,
+                        content: AGENT_ERROR_TEXT,
+                        parts: errorParts,
+                        createdAt: savedError.createdAt,
+                    }]
+                })
+            } catch (persistErr) {
+                console.error('Failed to persist error turn:', persistErr)
+                setDisplayMessages(prev => {
+                    if (prev[prev.length - 1]?.content === AGENT_ERROR_TEXT) return prev
+                    return [...prev, {
+                        id: `local-error-${Date.now()}`,
+                        role: 'assistant',
+                        content: AGENT_ERROR_TEXT,
+                        parts: createAgentErrorParts(),
+                        createdAt: new Date(),
+                    }]
+                })
+            }
+        }
+    }, [])
+
+    useEffect(() => {
+        if (!initialChatId || !userId) return
+
+        const peeked = peekPendingChatSend(initialChatId)
+        if (!peeked) return
+
+        let cancelled = false
+
+        const timer = window.setTimeout(() => {
+            if (cancelled) return
+            const pending = consumePendingChatSend(initialChatId)
+            if (!pending) return
+
+            void runAgentSend({
+                messageText: pending.message,
+                targetChatId: pending.chatId,
+                model: pending.model || selectedModel,
+                network: pending.network,
+                wallet: pending.wallet,
+                userAlreadyShown: true,
+            })
+        }, 0)
+
+        return () => {
+            cancelled = true
+            window.clearTimeout(timer)
+        }
+    }, [initialChatId, userId, runAgentSend])
 
     const isBusy =
         agent.status !== 'error' &&
@@ -319,125 +551,49 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
             return
         }
 
-        setAgentError(false)
-        const nextStreamStart = agent.data?.messages?.length || 0
-        streamStartIndexRef.current = nextStreamStart
-        setStreamStartIndex(nextStreamStart)
-        setIsStreaming(true)
+        const messageText = input.trim()
+        const activeWallet = useWalletStore.getState().selectedAddress || ''
+        const networkForTurn = await resolveNetworkForTurn()
 
-        let targetChatId = currentChatId
-        if (!targetChatId) {
+        if (!currentChatId) {
             setIsCreatingDb(true)
+            setAgentError(false)
             try {
                 const chat = await createChat(selectedModel)
-                targetChatId = chat.id
-                setCurrentChatId(chat.id)
-                chatIdRef.current = chat.id
-                window.history.replaceState(null, '', `/chat/${chat.id}`)
-            } catch {
-                setIsStreaming(false)
+                const targetChatId = chat.id
+                const userParts = [{ type: 'text', text: messageText }]
+
+                await addMessage(targetChatId, 'user', messageText, userParts)
+
+                writePendingChatSend({
+                    chatId: targetChatId,
+                    message: messageText,
+                    model: selectedModel,
+                    network: networkForTurn,
+                    wallet: activeWallet,
+                    createdAt: Date.now(),
+                } satisfies PendingChatSend)
+
+                setInput('')
+                router.replace(`/chat/${targetChatId}`)
+            } catch (err) {
+                console.error('Failed to start new chat:', err)
                 setAgentError(true)
-                setIsCreatingDb(false)
-                return
             } finally {
                 setIsCreatingDb(false)
             }
+            return
         }
 
-        const activeWallet = useWalletStore.getState().selectedAddress || ''
-
-        let networkForTurn = normalizeNetworkId(activeNetwork)
-        try {
-            const supabase = createClient()
-            const { data: { user } } = await supabase.auth.getUser()
-            if (user?.user_metadata?.activeNetwork) {
-                networkForTurn = normalizeNetworkId(user.user_metadata.activeNetwork)
-            }
-        } catch { }
-
-        const messageText = input.trim()
         setInput('')
-
-        const localUserId = `local-user-${Date.now()}`
-        const userParts = [{ type: 'text', text: messageText }]
-        setDisplayMessages(prev => [...prev, {
-            id: localUserId,
-            role: 'user',
-            content: messageText,
-            parts: userParts,
-            createdAt: new Date(),
-        }])
-
-        try {
-            await agent.send({
-                message: messageText,
-                headers: {
-                    'x-model-name': selectedModel,
-                    'x-chat-id': targetChatId || '',
-                    'x-active-network': networkForTurn,
-                    'x-active-wallet': activeWallet,
-                }
-            })
-        } catch {
-            setIsStreaming(false)
-            setAgentError(true)
-            if (targetChatId) {
-                try {
-                    const savedUser = await addMessage(targetChatId, 'user', messageText, userParts)
-                    const errorParts = createAgentErrorParts()
-                    const savedError = await addMessage(targetChatId, 'assistant', AGENT_ERROR_TEXT, errorParts)
-                    setDisplayMessages(prev => {
-                        const withoutLocal = prev.filter(m => m.id !== localUserId)
-                        const next = [...withoutLocal]
-                        if (!next.some(m => m.id === savedUser.id || (m.role === 'user' && m.content === messageText && next[next.length - 1]?.content === messageText))) {
-                            next.push({
-                                id: savedUser.id,
-                                role: 'user',
-                                content: messageText,
-                                parts: userParts,
-                                createdAt: savedUser.createdAt,
-                            })
-                        } else {
-                            const idx = next.findIndex(m => m.id === localUserId || (m.role === 'user' && m.content === messageText))
-                            if (idx >= 0) {
-                                next[idx] = {
-                                    id: savedUser.id,
-                                    role: 'user',
-                                    content: messageText,
-                                    parts: userParts,
-                                    createdAt: savedUser.createdAt,
-                                }
-                            }
-                        }
-                        if (!(
-                            next[next.length - 1]?.role === 'assistant' &&
-                            next[next.length - 1]?.content === AGENT_ERROR_TEXT
-                        )) {
-                            next.push({
-                                id: savedError.id,
-                                role: 'assistant',
-                                content: AGENT_ERROR_TEXT,
-                                parts: errorParts,
-                                createdAt: savedError.createdAt,
-                            })
-                        }
-                        return next
-                    })
-                } catch (persistErr) {
-                    console.error('Failed to persist error turn:', persistErr)
-                    setDisplayMessages(prev => {
-                        if (prev[prev.length - 1]?.content === AGENT_ERROR_TEXT) return prev
-                        return [...prev, {
-                            id: `local-error-${Date.now()}`,
-                            role: 'assistant',
-                            content: AGENT_ERROR_TEXT,
-                            parts: createAgentErrorParts(),
-                            createdAt: new Date(),
-                        }]
-                    })
-                }
-            }
-        }
+        await runAgentSend({
+            messageText,
+            targetChatId: currentChatId,
+            model: selectedModel,
+            network: networkForTurn,
+            wallet: activeWallet,
+            userAlreadyShown: false,
+        })
     }
 
     const mappedDisplayMessages = displayMessages.map(m => ({
@@ -447,8 +603,15 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
         createdAt: m.createdAt
     }))
 
-    const streamMessages = isStreaming
-        ? (agent.data?.messages?.slice(streamStartIndex) || []).filter((m: any) => m.role !== 'user')
+    const displayIds = new Set(displayMessages.map(m => m.id))
+    const showStreamOverlay =
+        isStreaming ||
+        agent.status === 'streaming' ||
+        agent.status === 'submitted'
+    const streamMessages = showStreamOverlay
+        ? (agent.data?.messages?.slice(streamStartIndex) || []).filter(
+            (m: any) => m.role !== 'user' && !displayIds.has(m.id)
+        )
         : []
 
     const messages = [...mappedDisplayMessages, ...streamMessages] as any
