@@ -72,6 +72,21 @@ export async function createWallet(userId: string, name: string, type: 'burner' 
         throw new Error('A wallet with this name already exists')
     }
 
+    const addressBookConflict = await db.addressBookEntry.findFirst({
+        where: {
+            userId,
+            name: {
+                equals: name.trim(),
+                mode: 'insensitive',
+            },
+        },
+        select: { id: true },
+    })
+
+    if (addressBookConflict) {
+        throw new Error('An address book entry with this name already exists')
+    }
+
     let privateKey: string
     if (type === 'burner') {
         privateKey = generatePrivateKey()

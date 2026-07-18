@@ -7,18 +7,18 @@ import {
     normalizeNetworkId,
 } from "../../lib/web3/config"
 import { resolveActingWallet } from "../../lib/web3/resolveActiveWallet"
-import db from "../../lib/db"
+import { resolveNamedAddress } from "../../lib/web3/resolveNamedAddress"
 
 export default defineTool({
     description:
         "Get the native currency balance (ETH on Robinhood/Ethereum, POL on Polygon) of an address, a wallet name, " +
-        "or (if omitted) the user's active wallet from the chat UI selector. Uses the session active network. " +
-        "CRITICAL: If the user message includes a 0x address or a wallet name to check, you MUST pass it as address — never omit it in that case. " +
+        "an address book name, or (if omitted) the user's active wallet from the chat UI selector. Uses the session active network. " +
+        "CRITICAL: If the user message includes a 0x address or a name (wallet or address book) to check, you MUST pass it as address - never omit it in that case. " +
         "Only omit address for 'my wallet' / 'my balance' / generic own-balance checks with no address/name in the message. " +
-        "Always call this tool again when the user asks for a balance — do not reuse an earlier answer; the active network may have changed mid-chat.",
+        "Always call this tool again when the user asks for a balance - do not reuse an earlier answer; the active network may have changed mid-chat.",
     inputSchema: z.object({
         address: z.string().optional().describe(
-            "REQUIRED when the user named a specific EVM address (0x…) or wallet name to inspect. " +
+            "REQUIRED when the user named a specific EVM address (0x…), wallet name, or address book entry name to inspect. " +
             "Pass that value exactly. Only omit for 'my wallet' / generic own-balance checks so the chat UI active wallet is used."
         ),
     }),
@@ -45,34 +45,26 @@ export default defineTool({
                 return { success: false, error: resolved.error }
             }
             targetAddress = resolved.wallet.address
-        } else if (!input.startsWith("0x") || input.length !== 42) {
-            if (!userId || userId === "local-dev") {
-                return {
-                    success: false,
-                    error: "A wallet name was provided, but no authenticated database user could be identified from the session.",
-                }
-            }
-
-            const wallet = await db.wallet.findFirst({
-                where: {
-                    userId,
-                    name: {
-                        equals: input,
-                        mode: "insensitive",
-                    },
-                },
-            })
-
-            if (!wallet) {
-                return {
-                    success: false,
-                    error: `No wallet named "${input}" was found for your account.`,
-                }
-            }
-
-            targetAddress = wallet.address
         } else {
-            targetAddress = input
+            if (!userId || userId === "local-dev") {
+                const looksLikeAddress = input.startsWith("0x") && input.length === 42
+                if (!looksLikeAddress) {
+                    return {
+                        success: false,
+                        error: "A name was provided, but no authenticated database user could be identified from the session.",
+                    }
+                }
+            }
+
+            if (userId && userId !== "local-dev") {
+                const resolved = await resolveNamedAddress(userId, input)
+                if (!resolved.ok) {
+                    return { success: false, error: resolved.error }
+                }
+                targetAddress = resolved.address
+            } else {
+                targetAddress = input
+            }
         }
 
         try {

@@ -1,11 +1,12 @@
 'use client'
 
 import { ReactNode } from 'react'
-import { FiX, FiCreditCard, FiLock, FiGlobe, FiUser, FiCpu, FiArchive } from 'react-icons/fi'
+import { FiX, FiCreditCard, FiLock, FiGlobe, FiUser, FiCpu, FiArchive, FiBook } from 'react-icons/fi'
 import { User } from '@supabase/supabase-js'
 import { useSettingsStore, SettingsTab } from '../../../hooks/useSettingsStore'
 import { PublicProfile } from '../../../app/actions/profile/profile'
 import WalletsTab from './WalletsTab'
+import AddressBookTab from './AddressBookTab'
 import SecurityTab from './SecurityTab'
 import NetworkTab from './NetworkTab'
 import ProfileTab from './ProfileTab'
@@ -48,6 +49,7 @@ export default function SettingsModal({ user, profile }: SettingsModalProps) {
                     <div className="flex flex-row md:flex-col gap-1 flex-1 md:flex-initial overflow-x-auto pb-3 md:pb-0 -mb-0.5 md:mb-0">
                         {tabBtn('profile', 'Profile', <FiUser size={16} />)}
                         {tabBtn('wallets', 'Wallets', <FiCreditCard size={16} />)}
+                        {tabBtn('addressBook', 'Address Book', <FiBook size={16} />)}
                         {tabBtn('security', 'Security', <FiLock size={16} />)}
                         {tabBtn('network', 'Network', <FiGlobe size={16} />)}
                         {tabBtn('models', 'Models', <FiCpu size={16} />)}
@@ -69,6 +71,8 @@ export default function SettingsModal({ user, profile }: SettingsModalProps) {
                         <ProfileTab user={user} profile={profile} />
                     ) : activeTab === 'wallets' ? (
                         <WalletsTab user={user} />
+                    ) : activeTab === 'addressBook' ? (
+                        <AddressBookTab />
                     ) : activeTab === 'security' ? (
                         <SecurityTab user={user} />
                     ) : activeTab === 'models' ? (

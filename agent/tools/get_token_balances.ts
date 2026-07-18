@@ -1,7 +1,7 @@
 import { defineTool } from "eve/tools"
 import { z } from "zod"
-import db from "../../lib/db"
 import { resolveActingWallet } from "../../lib/web3/resolveActiveWallet"
+import { resolveNamedAddress } from "../../lib/web3/resolveNamedAddress"
 import { normalizeNetworkId } from "../../lib/web3/config"
 import {
     ERC20_BALANCES_TOP_LIMIT,
@@ -14,17 +14,17 @@ export default defineTool({
         `Returns at most the top ${ERC20_BALANCES_TOP_LIMIT} tokens by approximate USD value (balance * price), not by token amount. ` +
         "Each token includes name, symbol, contract address, balance, decimals, valueUsd, circulatingMarketCap, volume24h, and iconUrl (nullable when API omits them). " +
         "If the wallet holds more tokens, totalCount / truncated / note explain that only the most valuable ones were returned. " +
-        "CRITICAL: If the user message includes a 0x address or a wallet name to check, you MUST pass it as walletAddressOrName — never omit it in that case (omitting queries the UI active wallet instead). " +
+        "CRITICAL: If the user message includes a 0x address, a wallet name, or an address book name to check, you MUST pass it as walletAddressOrName - never omit it in that case (omitting queries the UI active wallet instead). " +
         "Only omit walletAddressOrName for 'my tokens' / 'my balances' with no address/name in the message. " +
         "CRITICAL presentation: On success with a non-empty tokens array, output ONLY a very brief one-sentence intro in the user's language that points to the table below (e.g. 'ERC-20 balances are shown below:'). " +
-        "Do NOT list, enumerate, or summarize individual tokens (name, symbol, balance, valueUsd, address) in your text — the frontend renders a custom table. " +
+        "Do NOT list, enumerate, or summarize individual tokens (name, symbol, balance, valueUsd, address) in your text - the frontend renders a custom table. " +
         "On success with an empty tokens array, tell the user clearly that this wallet holds no ERC-20 tokens on the active network (include address and network); do not invent a table. " +
         "On failure, report the error in text. " +
-        "Always call this tool again when the user asks for token balances, even if you answered earlier — the active network may have changed mid-chat. " +
+        "Always call this tool again when the user asks for token balances, even if you answered earlier - the active network may have changed mid-chat. " +
         "For transfers by ticker/name, prefer send_erc20 which resolves the contract from sender balances automatically.",
     inputSchema: z.object({
         walletAddressOrName: z.string().optional().describe(
-            "REQUIRED when the user named a specific EVM address (0x…) or wallet name to inspect. " +
+            "REQUIRED when the user named a specific EVM address (0x…), wallet name, or address book entry name to inspect. " +
             "Pass that value exactly. Only omit for 'my tokens' / generic own-balance checks so the chat UI active wallet is used."
         ),
     }),
@@ -51,34 +51,23 @@ export default defineTool({
                 return { success: false, error: resolved.error }
             }
             targetAddress = resolved.wallet.address
-        } else if (!input.startsWith("0x") || input.length !== 42) {
-            if (!userId || userId === "local-dev") {
-                return {
-                    success: false,
-                    error: "A wallet name was provided, but no authenticated user could be identified from the session.",
-                }
-            }
-
-            const wallet = await db.wallet.findFirst({
-                where: {
-                    userId,
-                    name: {
-                        equals: input,
-                        mode: "insensitive",
-                    },
-                },
-            })
-
-            if (!wallet) {
-                return {
-                    success: false,
-                    error: `No wallet named "${input}" was found for your account.`,
-                }
-            }
-
-            targetAddress = wallet.address
         } else {
-            targetAddress = input
+            if (!userId || userId === "local-dev") {
+                const looksLikeAddress = input.startsWith("0x") && input.length === 42
+                if (!looksLikeAddress) {
+                    return {
+                        success: false,
+                        error: "A name was provided, but no authenticated user could be identified from the session.",
+                    }
+                }
+                targetAddress = input
+            } else {
+                const resolved = await resolveNamedAddress(userId, input)
+                if (!resolved.ok) {
+                    return { success: false, error: resolved.error }
+                }
+                targetAddress = resolved.address
+            }
         }
 
         try {

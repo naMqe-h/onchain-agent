@@ -8,6 +8,7 @@ import {
     normalizeNetworkId,
 } from "../../lib/web3/config"
 import { resolveActingWallet } from "../../lib/web3/resolveActiveWallet"
+import { resolveNamedAddress } from "../../lib/web3/resolveNamedAddress"
 import { createHash, createDecipheriv } from "crypto"
 
 const getEncryptionKey = () => {
@@ -31,16 +32,22 @@ function decryptKey(encryptedText: string): string {
 
 export default defineTool({
     description:
-        "Send native chain currency only (ETH on Robinhood/Ethereum, POL on Polygon) — not ERC-20 tokens. " +
+        "Send native chain currency only (ETH on Robinhood/Ethereum, POL on Polygon) - not ERC-20 tokens. " +
         "Uses the user's active wallet from the chat UI selector (session) unless fromAddressOrName is explicitly provided. " +
+        "Recipient (toAddress) may be a 0x address, a wallet name, or an address book name - the tool resolves names. " +
+        "Sender (fromAddressOrName) must be one of the user's own wallets (private key required) - never an address book entry. " +
         "Uses the session active network. " +
         "Use when the user means native currency (ETH / POL / Ether / native) or amount+recipient with no token contract and no token ticker. " +
         "Do NOT use this tool if the user provided a token contract address (0x…) together with amount and from/to wallets - use send_erc20 instead. " +
         "Do NOT use for USDC/USDT or any ERC-20 transfer.",
     inputSchema: z.object({
-        toAddress: z.string().describe("The recipient EVM address (must start with '0x' and be 42 characters long). Resolve wallet names to addresses first."),
+        toAddress: z.string().describe(
+            "Recipient: EVM address (0x…), wallet name, or address book entry name (e.g. 'exchange', 'Mom'). The tool resolves names to addresses."
+        ),
         amount: z.string().describe("The amount of native currency to send (e.g. '0.01'). Never pass an ERC-20 token amount here."),
-        fromAddressOrName: z.string().optional().describe("Optional override: sender wallet address or name. If omitted, uses the active wallet selected in the chat UI."),
+        fromAddressOrName: z.string().optional().describe(
+            "Optional override: sender wallet address or name (user's own wallet only). If omitted, uses the active wallet selected in the chat UI."
+        ),
     }),
     async execute({ toAddress, amount, fromAddressOrName }, ctx) {
         const userId = ctx.session?.auth?.current?.principalId
@@ -57,14 +64,13 @@ export default defineTool({
             }
         }
 
-        if (!toAddress.startsWith("0x") || toAddress.length !== 42) {
-            return {
-                success: false,
-                error: "Invalid recipient address format. It must start with '0x' and be 42 characters long.",
-            }
-        }
-
         try {
+            const recipientResult = await resolveNamedAddress(userId, toAddress)
+            if (!recipientResult.ok) {
+                return { success: false, error: recipientResult.error }
+            }
+            const recipientAddress = recipientResult.address
+
             const resolved = await resolveActingWallet(userId, ctx, fromAddressOrName)
             if (!resolved.ok) {
                 return { success: false, error: resolved.error }
@@ -86,7 +92,7 @@ export default defineTool({
             })
 
             const hash = await walletClient.sendTransaction({
-                to: toAddress as `0x${string}`,
+                to: recipientAddress as `0x${string}`,
                 value: parseEther(amount),
             })
 
@@ -100,7 +106,7 @@ export default defineTool({
                 success: true,
                 hash,
                 from: wallet.address,
-                to: toAddress,
+                to: recipientAddress,
                 amount,
                 symbol,
                 gasUsed,

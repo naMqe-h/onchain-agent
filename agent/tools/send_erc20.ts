@@ -17,8 +17,8 @@ import {
     normalizeNetworkId,
 } from "../../lib/web3/config"
 import { resolveActingWallet } from "../../lib/web3/resolveActiveWallet"
+import { resolveNamedAddress } from "../../lib/web3/resolveNamedAddress"
 import { fetchWalletErc20Tokens, type BalanceToken } from "../../lib/web3/tokenBalances"
-import db from "../../lib/db"
 import { createHash, createDecipheriv } from "crypto"
 
 const getEncryptionKey = () => {
@@ -42,35 +42,6 @@ function decryptKey(encryptedText: string): string {
 
 function isValidEvmAddress(address: string): boolean {
     return /^0x[a-fA-F0-9]{40}$/.test(address)
-}
-
-async function resolveRecipientAddress(
-    userId: string,
-    toAddressOrName: string
-): Promise<{ ok: true; address: string } | { ok: false; error: string }> {
-    const trimmed = toAddressOrName.trim()
-    if (isValidEvmAddress(trimmed)) {
-        return { ok: true, address: trimmed }
-    }
-
-    const wallet = await db.wallet.findFirst({
-        where: {
-            userId,
-            OR: [
-                { address: { equals: trimmed, mode: "insensitive" } },
-                { name: { equals: trimmed, mode: "insensitive" } },
-            ],
-        },
-    })
-
-    if (!wallet) {
-        return {
-            ok: false,
-            error: `Recipient "${toAddressOrName}" is not a valid EVM address and no wallet with that name was found on your account.`,
-        }
-    }
-
-    return { ok: true, address: wallet.address }
 }
 
 function resolveTokenFromBalances(
@@ -130,21 +101,23 @@ export default defineTool({
     description:
         "Send an ERC-20 token (not native ETH/POL) from a user wallet on the session active network. " +
         "Pass token as either a contract address (0x…) OR a ticker/name held on the sender wallet (e.g. USDC, USDT, or any other symbol/name the user provides). " +
-        "When a ticker/name is passed, this tool automatically loads the sender's ERC-20 balances and resolves the contract — no prior get_token_balances call is required. " +
+        "When a ticker/name is passed, this tool automatically loads the sender's ERC-20 balances and resolves the contract - no prior get_token_balances call is required. " +
         "Any user-provided ticker/name may be a valid ERC-20 on this chain if it appears in the wallet balances; do not refuse based on off-chain assumptions. " +
         "Uses the chat UI active wallet as sender unless fromAddressOrName is set. " +
-        "Recipient may be a 0x address or a wallet name. Never use send_native for these transfers.",
+        "Recipient may be a 0x address, a wallet name, or an address book name (tool resolves names). " +
+        "Sender must be one of the user's own wallets - never an address book entry. " +
+        "Never use send_native for these transfers.",
     inputSchema: z.object({
         token: z.string().describe(
             "ERC-20 contract address (0x…) OR token ticker/name as the user said it (e.g. 'USDC', 'USDT', or any other symbol/name). " +
-                "Do not refuse tickers based on off-chain assumptions — resolve them against the sender wallet balances."
+            "Do not refuse tickers based on off-chain assumptions - resolve them against the sender wallet balances."
         ),
         toAddress: z.string().describe(
-            "Recipient EVM address (0x…) or the recipient wallet name (e.g. 'secondary', 'secondary wallet')."
+            "Recipient: EVM address (0x…), wallet name, or address book entry name (e.g. 'secondary', 'exchange', 'Mom')."
         ),
         amount: z.string().describe("Amount of tokens in human-readable units (e.g. '2' or '10.5'), not raw wei."),
         fromAddressOrName: z.string().optional().describe(
-            "Optional sender override (address or name). If omitted, uses the active wallet selected in the chat UI."
+            "Optional sender override (user wallet address or name only). If omitted, uses the active wallet selected in the chat UI."
         ),
     }),
     async execute({ token, toAddress, amount, fromAddressOrName }, ctx) {
@@ -174,7 +147,7 @@ export default defineTool({
             }
             const wallet = walletResult.wallet
 
-            const recipientResult = await resolveRecipientAddress(userId, toAddress)
+            const recipientResult = await resolveNamedAddress(userId, toAddress)
             if (!recipientResult.ok) {
                 return { success: false, error: recipientResult.error }
             }
