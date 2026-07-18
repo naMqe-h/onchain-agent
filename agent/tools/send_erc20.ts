@@ -106,7 +106,9 @@ export default defineTool({
         "Uses the chat UI active wallet as sender unless fromAddressOrName is set. " +
         "Recipient may be a 0x address, a wallet name, or an address book name (tool resolves names). " +
         "Sender must be one of the user's own wallets - never an address book entry. " +
-        "Never use send_native for these transfers.",
+        "Never use send_native for these transfers. " +
+        "Whether you must confirm with the user before calling this tool is controlled by the session TX confirmation policy " +
+        "(always / agent_decides / never). Read-only tools are unaffected.",
     inputSchema: z.object({
         token: z.string().describe(
             "ERC-20 contract address (0x…) OR token ticker/name as the user said it (e.g. 'USDC', 'USDT', or any other symbol/name). " +

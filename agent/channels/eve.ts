@@ -2,6 +2,7 @@ import { eveChannel } from "eve/channels/eve"
 import { localDev, type AuthFn } from "eve/channels/auth"
 import { createServerClient } from "@supabase/ssr"
 import { normalizeNetworkId } from "../../lib/web3/config"
+import { normalizeTxConfirmationMode } from "../../lib/security"
 
 function supabaseAuth(): AuthFn<Request> {
     return async (request) => {
@@ -41,12 +42,16 @@ function supabaseAuth(): AuthFn<Request> {
             networkHeader ||
             (typeof metaNetwork === "string" ? metaNetwork : "")
         const activeNetwork = normalizeNetworkId(rawNetwork)
+        const txConfirmationMode = normalizeTxConfirmationMode(
+            user.user_metadata?.txConfirmationMode
+        )
 
         const attributes: Record<string, string> = {
             modelName: modelHeader,
             chatId: chatIdHeader,
             activeNetwork,
             activeWalletAddress: walletHeader,
+            txConfirmationMode,
         }
 
         return {

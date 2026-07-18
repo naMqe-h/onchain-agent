@@ -39,7 +39,9 @@ export default defineTool({
         "Uses the session active network. " +
         "Use when the user means native currency (ETH / POL / Ether / native) or amount+recipient with no token contract and no token ticker. " +
         "Do NOT use this tool if the user provided a token contract address (0x…) together with amount and from/to wallets - use send_erc20 instead. " +
-        "Do NOT use for USDC/USDT or any ERC-20 transfer.",
+        "Do NOT use for USDC/USDT or any ERC-20 transfer. " +
+        "Whether you must confirm with the user before calling this tool is controlled by the session TX confirmation policy " +
+        "(always / agent_decides / never). Read-only tools are unaffected.",
     inputSchema: z.object({
         toAddress: z.string().describe(
             "Recipient: EVM address (0x…), wallet name, or address book entry name (e.g. 'exchange', 'Mom'). The tool resolves names to addresses."
