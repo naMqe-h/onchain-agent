@@ -1,12 +1,15 @@
-import { TbBrain } from 'react-icons/tb'
+import { TbBrain, TbTool } from 'react-icons/tb'
 import { FiX } from 'react-icons/fi'
 import { motion } from 'framer-motion'
 import { slideInRight } from '../../lib/motion'
+
+export type AnalysisPanelMode = 'reasoning' | 'tools'
 
 interface AgentAnalysisPanelProps {
     activeMessage: any
     onClose: () => void
     agentEvents: readonly any[] | undefined
+    mode: AnalysisPanelMode
 }
 
 export const getStepMetrics = (stepIndex: number | undefined, agentEvents: readonly any[] | undefined) => {
@@ -83,7 +86,24 @@ export const getToolMetrics = (toolCallId: string, agentEvents: readonly any[] |
     return metrics
 }
 
-export default function AgentAnalysisPanel({ activeMessage, onClose, agentEvents }: AgentAnalysisPanelProps) {
+export function messageHasReasoning(message: { parts?: readonly any[] } | null | undefined): boolean {
+    return Boolean(message?.parts?.some(part => part.type === 'reasoning'))
+}
+
+export function messageHasTools(message: { parts?: readonly any[] } | null | undefined): boolean {
+    return Boolean(
+        message?.parts?.some(
+            part => part.type === 'dynamic-tool' && part.toolName !== 'update_chat_title'
+        )
+    )
+}
+
+export default function AgentAnalysisPanel({ activeMessage, onClose, agentEvents, mode }: AgentAnalysisPanelProps) {
+    const isReasoning = mode === 'reasoning'
+    const title = isReasoning ? 'Reasoning' : 'Tools'
+    const Icon = isReasoning ? TbBrain : TbTool
+    const iconClass = isReasoning ? 'text-purple-400 shrink-0' : 'text-sky-400 shrink-0'
+
     return (
         <motion.div
             variants={slideInRight}
@@ -94,8 +114,8 @@ export default function AgentAnalysisPanel({ activeMessage, onClose, agentEvents
         >
             <div className="flex items-center justify-between p-4 border-b border-zinc-800 shrink-0 min-w-0">
                 <div className="flex items-center gap-2 font-semibold text-zinc-100 min-w-0">
-                    <TbBrain size={18} className="text-purple-400 shrink-0" />
-                    <span className="truncate">Agent Analysis</span>
+                    <Icon size={18} className={iconClass} />
+                    <span className="truncate">{title}</span>
                 </div>
                 <button
                     onClick={onClose}
@@ -106,12 +126,12 @@ export default function AgentAnalysisPanel({ activeMessage, onClose, agentEvents
             </div>
             <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden p-4 space-y-6">
                 {activeMessage.parts?.map((p: any, i: number) => {
-                    if (p.type === 'reasoning') {
+                    if (isReasoning && p.type === 'reasoning') {
                         const stepMetrics = p.metrics || getStepMetrics(p.stepIndex, agentEvents)
                         return (
                             <div key={i} className="space-y-2 min-w-0 max-w-full">
                                 <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Thought Process</h4>
-                                <div className="text-[14px] leading-relaxed text-zinc-300 whitespace-pre-wrap bg-zinc-900/40 p-3 rounded-xl border border-zinc-800/50 min-w-0 max-w-full overflow-hidden break-words [overflow-wrap:anywhere]">
+                                <div className="text-[14px] leading-relaxed text-zinc-300 whitespace-pre-wrap bg-zinc-900/40 p-3 rounded-xl border border-zinc-800/50 min-w-0 max-w-full overflow-hidden wrap-break-words wrap-anywhere">
                                     {p.text}
                                 </div>
                                 {stepMetrics && (
@@ -136,7 +156,7 @@ export default function AgentAnalysisPanel({ activeMessage, onClose, agentEvents
                             </div>
                         )
                     }
-                    if (p.type === 'dynamic-tool') {
+                    if (!isReasoning && p.type === 'dynamic-tool') {
                         if (p.toolName === 'update_chat_title') return null
                         const toolMetrics = p.metrics || getToolMetrics(p.toolCallId, agentEvents)
                         return (
@@ -144,11 +164,11 @@ export default function AgentAnalysisPanel({ activeMessage, onClose, agentEvents
                                 <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Tool Execution</h4>
                                 <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-3.5 space-y-3 min-w-0 max-w-full overflow-hidden">
                                     <div className="flex items-start justify-between gap-2 min-w-0">
-                                        <span className="font-mono text-sm font-semibold text-purple-300 min-w-0 break-all [overflow-wrap:anywhere]">{p.toolName}</span>
+                                        <span className="font-mono text-sm font-semibold text-sky-300 min-w-0 break-all wrap-anywhere">{p.toolName}</span>
                                         <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium shrink-0 max-w-[45%] truncate ${p.state === 'output-available' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                                                p.state === 'output-error' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
-                                                    p.state === 'output-denied' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-                                                        'bg-zinc-800 text-zinc-400'
+                                            p.state === 'output-error' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+                                                p.state === 'output-denied' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                                                    'bg-zinc-800 text-zinc-400'
                                             }`}>
                                             {p.state}
                                         </span>
@@ -157,7 +177,7 @@ export default function AgentAnalysisPanel({ activeMessage, onClose, agentEvents
                                     {p.input && (
                                         <div className="space-y-1 min-w-0 max-w-full">
                                             <span className="text-[11px] text-zinc-500 font-medium">Arguments:</span>
-                                            <pre className="text-xs bg-[#1a1a1c] p-2.5 rounded-lg border border-zinc-800/80 max-w-full min-w-0 overflow-x-auto text-zinc-300 font-mono whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
+                                            <pre className="text-xs bg-[#1a1a1c] p-2.5 rounded-lg border border-zinc-800/80 max-w-full min-w-0 overflow-x-auto text-zinc-300 font-mono whitespace-pre-wrap break-all wrap-anywhere">
                                                 {JSON.stringify(p.input, null, 2)}
                                             </pre>
                                         </div>
@@ -166,7 +186,7 @@ export default function AgentAnalysisPanel({ activeMessage, onClose, agentEvents
                                     {p.output && (
                                         <div className="space-y-1 min-w-0 max-w-full">
                                             <span className="text-[11px] text-zinc-500 font-medium">Result:</span>
-                                            <pre className="text-xs bg-[#1a1a1c] p-2.5 rounded-lg border border-zinc-800/80 max-w-full min-w-0 overflow-x-auto text-zinc-300 font-mono whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
+                                            <pre className="text-xs bg-[#1a1a1c] p-2.5 rounded-lg border border-zinc-800/80 max-w-full min-w-0 overflow-x-auto text-zinc-300 font-mono whitespace-pre-wrap break-all wrap-anywhere">
                                                 {typeof p.output === 'object' ? JSON.stringify(p.output, null, 2) : String(p.output)}
                                             </pre>
                                         </div>
@@ -175,7 +195,7 @@ export default function AgentAnalysisPanel({ activeMessage, onClose, agentEvents
                                     {p.errorText && (
                                         <div className="space-y-1 min-w-0 max-w-full">
                                             <span className="text-[11px] text-rose-400 font-medium">Error:</span>
-                                            <pre className="text-xs bg-rose-950/20 border border-rose-900/30 p-2.5 rounded-lg max-w-full min-w-0 overflow-x-auto text-rose-300 font-mono whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
+                                            <pre className="text-xs bg-rose-950/20 border border-rose-900/30 p-2.5 rounded-lg max-w-full min-w-0 overflow-x-auto text-rose-300 font-mono whitespace-pre-wrap break-all wrap-anywhere">
                                                 {p.errorText}
                                             </pre>
                                         </div>

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { TbBrain } from 'react-icons/tb'
+import { TbBrain, TbTool } from 'react-icons/tb'
 import { FiCopy, FiCheck } from 'react-icons/fi'
 import ReactMarkdown from 'react-markdown'
 import { motion } from 'framer-motion'
@@ -13,6 +13,7 @@ import SendNativeCard from './tools/send_native/SendNativeCard'
 import SendNativeSkeleton from './tools/send_native/SendNativeSkeleton'
 import SwapCard from './tools/swap_tokens/SwapCard'
 import SwapSkeleton from './tools/swap_tokens/SwapSkeleton'
+import { messageHasReasoning, messageHasTools, type AnalysisPanelMode } from './AgentAnalysisPanel'
 import { slideInUp, staggerContainer } from '../../lib/motion'
 
 interface Message {
@@ -25,15 +26,18 @@ interface ChatMessagesListProps {
     chatId: string | null
     messages: readonly Message[]
     activeMessageId: string | null
-    onToggleReasoning: (id: string) => void
+    activePanelMode: AnalysisPanelMode | null
+    onToggleAnalysis: (id: string, mode: AnalysisPanelMode) => void
     isBusy?: boolean
     showError?: boolean
 }
 
 interface MessageItemProps {
     message: Message
-    isActive: boolean
+    isReasoningActive: boolean
+    isToolsActive: boolean
     onToggleReasoning: () => void
+    onToggleTools: () => void
     isLast: boolean
     isBusy?: boolean
 }
@@ -82,7 +86,7 @@ function CopyMessageButton({ text }: { text: string }) {
     )
 }
 
-function MessageItem({ message, isActive, onToggleReasoning, isLast, isBusy }: MessageItemProps) {
+function MessageItem({ message, isReasoningActive, isToolsActive, onToggleReasoning, onToggleTools, isLast, isBusy }: MessageItemProps) {
     const [time] = useState(() => {
         const d = (message as any).createdAt || (message as any).timestamp
         if (d) return new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -94,11 +98,8 @@ function MessageItem({ message, isActive, onToggleReasoning, isLast, isBusy }: M
     const plainText = getMessagePlainText(message)
     const canCopy = plainText.trim().length > 0
 
-    const hasReasoning =
-        !isErrorMessage && (
-            message.parts?.some(part => part.type === 'reasoning') ||
-            message.parts?.some(part => part.type === 'dynamic-tool' && part.toolName !== 'update_chat_title')
-        )
+    const hasReasoning = !isErrorMessage && messageHasReasoning(message)
+    const hasTools = !isErrorMessage && messageHasTools(message)
 
     const renderContent = () => {
         if (!message.parts || message.parts.length === 0) return null
@@ -215,17 +216,30 @@ function MessageItem({ message, isActive, onToggleReasoning, isLast, isBusy }: M
                 <div className="flex items-center gap-2 mt-1 text-zinc-500">
                     <span className="text-[11px] font-medium">{time}</span>
                     {canCopy && <CopyMessageButton text={plainText} />}
-                    {!isErrorMessage && hasReasoning && (
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={onToggleReasoning}
-                                className={`p-1.5 rounded-full transition-colors cursor-pointer flex items-center gap-2 ${isActive ? 'bg-zinc-800 text-white' : 'hover:bg-[#1e1e20] hover:text-zinc-200'}`}
-                                title="Toggle reasoning panel"
-                            >
-                                <TbBrain size={16} />
-                            </button>
+                    {!isErrorMessage && (hasReasoning || hasTools) && (
+                        <div className="flex items-center gap-1.5">
+                            {hasReasoning && (
+                                <button
+                                    onClick={onToggleReasoning}
+                                    className={`p-1.5 rounded-full transition-colors cursor-pointer ${isReasoningActive ? 'bg-zinc-800 text-white' : 'hover:bg-[#1e1e20] hover:text-zinc-200'}`}
+                                    title="Toggle reasoning panel"
+                                    aria-label="Toggle reasoning panel"
+                                >
+                                    <TbBrain size={16} />
+                                </button>
+                            )}
+                            {hasTools && (
+                                <button
+                                    onClick={onToggleTools}
+                                    className={`p-1.5 rounded-full transition-colors cursor-pointer ${isToolsActive ? 'bg-zinc-800 text-white' : 'hover:bg-[#1e1e20] hover:text-zinc-200'}`}
+                                    title="Toggle tools panel"
+                                    aria-label="Toggle tools panel"
+                                >
+                                    <TbTool size={16} />
+                                </button>
+                            )}
                             {(message as any).aggregateMetrics && (
-                                <span className="text-[11px] text-zinc-500 font-mono">
+                                <span className="text-[11px] text-zinc-500 font-mono ml-0.5">
                                     (took {((message as any).aggregateMetrics.durationMs < 1000) ? `${(message as any).aggregateMetrics.durationMs}ms` : `${((message as any).aggregateMetrics.durationMs / 1000).toFixed(1)}s`}{(message as any).aggregateMetrics.totalTokens > 0 ? `, used ${(message as any).aggregateMetrics.totalTokens} tkn` : ''})
                                 </span>
                             )}
@@ -242,7 +256,7 @@ const hasTextContent = (message: Message) => {
     return message.parts.some(part => part.type === 'text' && part.text && part.text.trim().length > 0)
 }
 
-export default function ChatMessagesList({ chatId, messages, activeMessageId, onToggleReasoning, isBusy, showError }: ChatMessagesListProps) {
+export default function ChatMessagesList({ chatId, messages, activeMessageId, activePanelMode, onToggleAnalysis, isBusy, showError }: ChatMessagesListProps) {
     const containerRef = useRef<HTMLDivElement>(null)
     const isAtBottomRef = useRef(true)
 
@@ -302,8 +316,10 @@ export default function ChatMessagesList({ chatId, messages, activeMessageId, on
                     <MessageItem
                         key={message.id}
                         message={message}
-                        isActive={activeMessageId === message.id}
-                        onToggleReasoning={() => onToggleReasoning(message.id)}
+                        isReasoningActive={activeMessageId === message.id && activePanelMode === 'reasoning'}
+                        isToolsActive={activeMessageId === message.id && activePanelMode === 'tools'}
+                        onToggleReasoning={() => onToggleAnalysis(message.id, 'reasoning')}
+                        onToggleTools={() => onToggleAnalysis(message.id, 'tools')}
                         isLast={idx === messages.length - 1}
                         isBusy={isBusy}
                     />

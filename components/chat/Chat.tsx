@@ -6,7 +6,13 @@ import { useEveAgent } from 'eve/react'
 import { AnimatePresence } from 'framer-motion'
 import ChatInput from './ChatInput'
 import ChatMessagesList from './ChatMessagesList'
-import AgentAnalysisPanel, { getStepMetrics, getToolMetrics } from './AgentAnalysisPanel'
+import AgentAnalysisPanel, {
+    getStepMetrics,
+    getToolMetrics,
+    messageHasReasoning,
+    messageHasTools,
+    type AnalysisPanelMode,
+} from './AgentAnalysisPanel'
 import { addMessage, updateChatSession, createChat, updateChatModel } from '../../app/actions/chat/chat'
 import { useWalletStore } from '../../hooks/useWalletStore'
 import { useAuthModalStore } from '../../hooks/useAuthModalStore'
@@ -68,7 +74,7 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
     const [isCreatingDb, setIsCreatingDb] = useState(false)
     const [isStreaming, setIsStreaming] = useState(false)
     const [streamStartIndex, setStreamStartIndex] = useState(0)
-    const [activeMessageId, setActiveMessageId] = useState<string | null>(null)
+    const [analysisPanel, setAnalysisPanel] = useState<{ messageId: string; mode: AnalysisPanelMode } | null>(null)
     const [selectedModel, setSelectedModel] = useState(initialModel || DEFAULT_MODEL_ID)
     const [agentError, setAgentError] = useState(false)
 
@@ -95,12 +101,15 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
         }
     }
 
-    const handleToggleReasoning = useCallback((id: string) => {
-        setActiveMessageId(prev => prev === id ? null : id)
+    const handleToggleAnalysis = useCallback((id: string, mode: AnalysisPanelMode) => {
+        setAnalysisPanel(prev => {
+            if (prev?.messageId === id && prev.mode === mode) return null
+            return { messageId: id, mode }
+        })
     }, [])
 
     const handleClosePanel = useCallback(() => {
-        setActiveMessageId(null)
+        setAnalysisPanel(null)
     }, [])
 
     const chatIdRef = useRef<string | null>(initialChatId)
@@ -123,7 +132,7 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
         setIsStreaming(false)
         setStreamStartIndex(0)
         streamStartIndexRef.current = 0
-        setActiveMessageId(null)
+        setAnalysisPanel(null)
     }, [initialChatId])
 
     const lastIsPersistedError = (msgs: StoredMessage[]) => {
@@ -616,7 +625,19 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
 
     const messages = [...mappedDisplayMessages, ...streamMessages] as any
 
-    const activeMessage = activeMessageId ? messages.find((m: any) => m.id === activeMessageId) : null
+    const activeMessage = analysisPanel
+        ? messages.find((m: any) => m.id === analysisPanel.messageId)
+        : null
+
+    const panelMode = analysisPanel && activeMessage
+        ? (analysisPanel.mode === 'reasoning' && messageHasReasoning(activeMessage)
+            ? 'reasoning' as const
+            : analysisPanel.mode === 'tools' && messageHasTools(activeMessage)
+                ? 'tools' as const
+                : null)
+        : null
+
+    const activeMessageId = panelMode ? analysisPanel?.messageId ?? null : null
 
     const enrichedMessages = messages.map((m: any) => {
         if (m.role !== 'assistant') return m
@@ -669,7 +690,9 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
                     chatId={currentChatId}
                     messages={enrichedMessages}
                     activeMessageId={activeMessageId}
-                    onToggleReasoning={handleToggleReasoning}
+                    activePanelMode={panelMode}
+                    onToggleAnalysis={handleToggleAnalysis}
+
                     isBusy={isBusy}
                     showError={agentError || agent.status === 'error'}
                 />
@@ -687,12 +710,14 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
                 </div>
             </div>
 
-            <AnimatePresence>
-                {activeMessage && (
+            <AnimatePresence mode="wait">
+                {activeMessage && panelMode && (
                     <AgentAnalysisPanel
+                        key={`${analysisPanel?.messageId}-${panelMode}`}
                         activeMessage={activeMessage}
                         onClose={handleClosePanel}
                         agentEvents={agent.events}
+                        mode={panelMode}
                     />
                 )}
             </AnimatePresence>
