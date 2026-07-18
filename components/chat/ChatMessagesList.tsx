@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { TbBrain } from 'react-icons/tb'
+import { FiCopy, FiCheck } from 'react-icons/fi'
 import ReactMarkdown from 'react-markdown'
 import { motion } from 'framer-motion'
 import TokenInfoCard from './tools/get_token_info/TokenInfoCard'
@@ -37,6 +38,50 @@ interface MessageItemProps {
     isBusy?: boolean
 }
 
+function getMessagePlainText(message: Message): string {
+    if (!message.parts || message.parts.length === 0) {
+        return typeof (message as any).content === 'string' ? (message as any).content : ''
+    }
+
+    const textFromParts = message.parts
+        .filter(part => part.type === 'text' && typeof part.text === 'string')
+        .map(part => part.text.trim())
+        .filter(Boolean)
+        .join('\n\n')
+
+    if (textFromParts) return textFromParts
+
+    const errorText = message.parts.find(part => part.type === 'error' && typeof part.text === 'string')?.text
+    if (errorText) return errorText
+
+    return typeof (message as any).content === 'string' ? (message as any).content : ''
+}
+
+function CopyMessageButton({ text }: { text: string }) {
+    const [copied, setCopied] = useState(false)
+
+    const handleCopy = async () => {
+        if (!text.trim()) return
+        try {
+            await navigator.clipboard.writeText(text)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 1500)
+        } catch { }
+    }
+
+    return (
+        <button
+            type="button"
+            onClick={handleCopy}
+            className="p-1.5 rounded-full transition-colors cursor-pointer hover:bg-[#1e1e20] hover:text-zinc-200"
+            title={copied ? 'Copied' : 'Copy message'}
+            aria-label={copied ? 'Copied' : 'Copy message'}
+        >
+            {copied ? <FiCheck size={14} className="text-emerald-400" /> : <FiCopy size={14} />}
+        </button>
+    )
+}
+
 function MessageItem({ message, isActive, onToggleReasoning, isLast, isBusy }: MessageItemProps) {
     const [time] = useState(() => {
         const d = (message as any).createdAt || (message as any).timestamp
@@ -46,6 +91,8 @@ function MessageItem({ message, isActive, onToggleReasoning, isLast, isBusy }: M
 
     const errorParts = message.parts?.filter(part => part.type === 'error') ?? []
     const isErrorMessage = errorParts.length > 0 || (message as any).content === 'Something went wrong'
+    const plainText = getMessagePlainText(message)
+    const canCopy = plainText.trim().length > 0
 
     const hasReasoning =
         !isErrorMessage && (
@@ -145,7 +192,10 @@ function MessageItem({ message, isActive, onToggleReasoning, isLast, isBusy }: M
                 <div className="bg-[#1e1e20] text-zinc-200 px-5 py-3 rounded-[24px] max-w-[85%] text-[15px] leading-relaxed">
                     {renderContent()}
                 </div>
-                <span className="text-[11px] text-zinc-500 px-2">{time}</span>
+                <div className="flex items-center gap-1 px-1 text-zinc-500">
+                    <span className="text-[11px] px-1">{time}</span>
+                    {canCopy && <CopyMessageButton text={plainText} />}
+                </div>
             </motion.div>
         )
     }
@@ -162,8 +212,9 @@ function MessageItem({ message, isActive, onToggleReasoning, isLast, isBusy }: M
             </div>
 
             {!isWriting && (
-                <div className="flex items-center gap-3 mt-1 text-zinc-500">
+                <div className="flex items-center gap-2 mt-1 text-zinc-500">
                     <span className="text-[11px] font-medium">{time}</span>
+                    {canCopy && <CopyMessageButton text={plainText} />}
                     {!isErrorMessage && hasReasoning && (
                         <div className="flex items-center gap-2">
                             <button
@@ -273,12 +324,12 @@ export default function ChatMessagesList({ chatId, messages, activeMessageId, on
                     m.parts?.some((p: any) => p.type === 'error') ||
                     (m as any).content === 'Something went wrong'
                 ) && (
-                    <motion.div variants={slideInUp} className="flex flex-col items-start w-full">
-                        <p className="text-sm text-rose-400/90 px-1">
-                            Something went wrong
-                        </p>
-                    </motion.div>
-                )}
+                        <motion.div variants={slideInUp} className="flex flex-col items-start w-full">
+                            <p className="text-sm text-rose-400/90 px-1">
+                                Something went wrong
+                            </p>
+                        </motion.div>
+                    )}
             </motion.div>
         </div>
     )
