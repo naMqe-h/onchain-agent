@@ -1,3 +1,5 @@
+import moment from 'moment'
+
 const compactNumberFormatter = new Intl.NumberFormat('en-US', {
     notation: 'compact',
     compactDisplay: 'short',
@@ -97,4 +99,10 @@ export function formatDisplayText(value: string | null | undefined): string {
 export function formatShortAddress(addr: string | null | undefined): string {
     if (!addr || addr.length < 12) return addr || EMPTY_VALUE
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`
+}
+
+export function formatRelativeTime(date: Date | string | number): string {
+    const m = moment(date)
+    if (!m.isValid()) return EMPTY_VALUE
+    return m.fromNow()
 }

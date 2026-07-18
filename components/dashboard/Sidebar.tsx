@@ -16,13 +16,16 @@ import {
     FiLogIn,
     FiChevronsLeft,
     FiChevronsRight,
+    FiSearch,
 } from 'react-icons/fi'
 import SidebarProfile from './SidebarProfile'
+import ChatSearchModal from './ChatSearchModal'
 import { updateChatTitle, archiveChat, deleteChat } from '../../app/actions/chat/chat'
 import { PublicProfile } from '../../app/actions/profile/profile'
 import { motion, AnimatePresence } from 'framer-motion'
 import { slideInLeft } from '../../lib/motion'
 import { useAuthModalStore } from '../../hooks/useAuthModalStore'
+import { formatRelativeTime } from '../../lib/format'
 
 const SIDEBAR_COLLAPSED_KEY = 'sidebar-collapsed'
 
@@ -49,6 +52,7 @@ export default function Sidebar({ user, chats, profile }: SidebarProps) {
     const [editingChatId, setEditingChatId] = useState<string | null>(null)
     const [editTitle, setEditTitle] = useState('')
     const [deleteConfirmationId, setDeleteConfirmationId] = useState<string | null>(null)
+    const [isSearchOpen, setIsSearchOpen] = useState(false)
     const openAuthModal = useAuthModalStore(s => s.open)
 
     useEffect(() => {
@@ -76,17 +80,6 @@ export default function Sidebar({ user, chats, profile }: SidebarProps) {
     const handleNewChat = () => {
         setIsMobileMenuOpen(false)
         router.push('/')
-    }
-
-    const formatDate = (date: Date) => {
-        const d = new Date(date)
-        const now = new Date()
-        const diff = now.getTime() - d.getTime()
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-        if (days === 0) return 'Today'
-        if (days === 1) return 'Yesterday'
-        if (days < 7) return `${days}d ago`
-        return d.toLocaleDateString('en', { month: 'short', day: 'numeric' })
     }
 
     const handleRenameSubmit = async (chatId: string) => {
@@ -143,6 +136,17 @@ export default function Sidebar({ user, chats, profile }: SidebarProps) {
                         >
                             <FiPlus size={16} className="shrink-0 group-hover:rotate-90 transition-transform duration-200" />
                         </button>
+                        {user && (
+                            <button
+                                type="button"
+                                onClick={() => setIsSearchOpen(true)}
+                                className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 text-zinc-300 hover:text-zinc-100 transition-all cursor-pointer"
+                                aria-label="Search chats"
+                                title="Search chats"
+                            >
+                                <FiSearch size={16} className="shrink-0" />
+                            </button>
+                        )}
                     </div>
 
                     <div className="flex-1 min-h-0" />
@@ -192,6 +196,16 @@ export default function Sidebar({ user, chats, profile }: SidebarProps) {
                         <FiPlus size={16} className="shrink-0 group-hover:rotate-90 transition-transform duration-200" />
                         <span>New Chat</span>
                     </button>
+                    {user && (
+                        <button
+                            type="button"
+                            onClick={() => setIsSearchOpen(true)}
+                            className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl hover:bg-white/5 border border-transparent text-zinc-400 hover:text-zinc-100 text-sm font-medium transition-all cursor-pointer"
+                        >
+                            <FiSearch size={16} className="shrink-0" />
+                            <span>Search chats</span>
+                        </button>
+                    )}
                 </div>
 
                 <div className="flex-1 px-4 pb-6 overflow-y-auto flex flex-col min-h-0">
@@ -236,7 +250,7 @@ export default function Sidebar({ user, chats, profile }: SidebarProps) {
                                                         ) : (
                                                             <p className="truncate leading-tight">{chat.title}</p>
                                                         )}
-                                                        <p className="text-[11px] text-zinc-600 mt-0.5">{formatDate(chat.updatedAt)}</p>
+                                                        <p className="text-[11px] text-zinc-600 mt-0.5">{formatRelativeTime(chat.updatedAt)}</p>
                                                     </div>
                                                 </Link>
 
@@ -390,6 +404,12 @@ export default function Sidebar({ user, chats, profile }: SidebarProps) {
                     </div>
                 </div>
             )}
+
+            <ChatSearchModal
+                isOpen={isSearchOpen}
+                onClose={() => setIsSearchOpen(false)}
+                onSelectChat={() => setIsMobileMenuOpen(false)}
+            />
         </>
     )
 }
