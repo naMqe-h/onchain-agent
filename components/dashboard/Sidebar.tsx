@@ -1,16 +1,30 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { User } from '@supabase/supabase-js'
-import { FiPlus, FiMessageSquare, FiMoreVertical, FiEdit2, FiArchive, FiTrash2, FiMenu, FiX, FiLogIn } from 'react-icons/fi'
+import {
+    FiPlus,
+    FiMessageSquare,
+    FiMoreVertical,
+    FiEdit2,
+    FiArchive,
+    FiTrash2,
+    FiMenu,
+    FiX,
+    FiLogIn,
+    FiChevronsLeft,
+    FiChevronsRight,
+} from 'react-icons/fi'
 import SidebarProfile from './SidebarProfile'
 import { updateChatTitle, archiveChat, deleteChat } from '../../app/actions/chat/chat'
 import { PublicProfile } from '../../app/actions/profile/profile'
 import { motion, AnimatePresence } from 'framer-motion'
 import { slideInLeft } from '../../lib/motion'
 import { useAuthModalStore } from '../../hooks/useAuthModalStore'
+
+const SIDEBAR_COLLAPSED_KEY = 'sidebar-collapsed'
 
 interface Chat {
     id: string
@@ -30,11 +44,34 @@ export default function Sidebar({ user, chats, profile }: SidebarProps) {
     const router = useRouter()
     const pathname = usePathname()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const [isCollapsed, setIsCollapsed] = useState(false)
     const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null)
     const [editingChatId, setEditingChatId] = useState<string | null>(null)
     const [editTitle, setEditTitle] = useState('')
     const [deleteConfirmationId, setDeleteConfirmationId] = useState<string | null>(null)
     const openAuthModal = useAuthModalStore(s => s.open)
+
+    useEffect(() => {
+        try {
+            if (localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1') {
+                setIsCollapsed(true)
+            }
+        } catch { }
+    }, [])
+
+    const toggleCollapse = () => {
+        setIsCollapsed((prev) => {
+            const next = !prev
+            try {
+                localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? '1' : '0')
+            } catch { }
+            if (next) {
+                setActiveDropdownId(null)
+                setEditingChatId(null)
+            }
+            return next
+        })
+    }
 
     const handleNewChat = () => {
         setIsMobileMenuOpen(false)
@@ -83,135 +120,194 @@ export default function Sidebar({ user, chats, profile }: SidebarProps) {
         }
     }
 
-    const renderSidebarContent = () => (
-        <>
-            <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
-                <div className="flex items-center justify-between px-2">
-                    <span className="font-medium text-[17px] text-zinc-100 tracking-tight">Onchain Agent</span>
-                </div>
-
-                <button
-                    onClick={handleNewChat}
-                    className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 text-zinc-300 hover:text-zinc-100 text-sm font-medium transition-all cursor-pointer group"
-                >
-                    <FiPlus size={16} className="shrink-0 group-hover:rotate-90 transition-transform duration-200" />
-                    <span>New Chat</span>
-                </button>
-            </div>
-
-            <div className="flex-1 px-4 pb-6 overflow-y-auto flex flex-col min-h-0">
-                {user && chats.length > 0 && (
-                    <div className="flex flex-col gap-0.5">
-                        <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider px-2 mb-1">Recent</p>
-                        {chats.map((chat) => {
-                            const isActive = pathname === `/chat/${chat.id}`
-                            return (
-                                <div key={chat.id} className="relative">
-                                    <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all group ${isActive
-                                        ? 'bg-white/8 text-zinc-100'
-                                        : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
-                                        }`}>
-                                        <Link
-                                            href={`/chat/${chat.id}`}
-                                            onClick={() => setIsMobileMenuOpen(false)}
-                                            className="flex-1 min-w-0 flex items-start gap-2.5"
-                                        >
-                                            <FiMessageSquare size={14} className="shrink-0 mt-0.5 opacity-60" />
-                                            <div className="flex-1 min-w-0">
-                                                {editingChatId === chat.id ? (
-                                                    <input
-                                                        type="text"
-                                                        value={editTitle}
-                                                        onChange={(e) => setEditTitle(e.target.value)}
-                                                        onBlur={() => handleRenameSubmit(chat.id)}
-                                                        onKeyDown={(e) => {
-                                                            if (e.key === 'Enter') handleRenameSubmit(chat.id)
-                                                            if (e.key === 'Escape') setEditingChatId(null)
-                                                        }}
-                                                        autoFocus
-                                                        className="w-full bg-transparent border-none outline-none text-zinc-100 p-0 m-0 text-sm leading-tight focus:ring-0"
-                                                        onClick={(e) => e.preventDefault()}
-                                                    />
-                                                ) : (
-                                                    <p className="truncate leading-tight">{chat.title}</p>
-                                                )}
-                                                <p className="text-[11px] text-zinc-600 mt-0.5">{formatDate(chat.updatedAt)}</p>
-                                            </div>
-                                        </Link>
-
-                                        <button
-                                            onClick={(e) => {
-                                                e.preventDefault()
-                                                e.stopPropagation()
-                                                setActiveDropdownId(activeDropdownId === chat.id ? null : chat.id)
-                                            }}
-                                            className={`p-1.5 rounded-md hover:bg-white/10 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer ${activeDropdownId === chat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                                        >
-                                            <FiMoreVertical size={14} />
-                                        </button>
-                                    </div>
-
-                                    {activeDropdownId === chat.id && (
-                                        <>
-                                            <div className="fixed inset-0 z-40" onClick={() => setActiveDropdownId(null)} />
-                                            <div className="absolute right-0 top-10 w-36 bg-[#1f1f22] border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden py-1">
-                                                <button
-                                                    onClick={() => {
-                                                        setEditTitle(chat.title)
-                                                        setEditingChatId(chat.id)
-                                                        setActiveDropdownId(null)
-                                                    }}
-                                                    className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-zinc-100 flex items-center gap-2 cursor-pointer transition-colors"
-                                                >
-                                                    <FiEdit2 size={12} />
-                                                    Rename
-                                                </button>
-                                                <button
-                                                    onClick={() => handleArchive(chat.id)}
-                                                    className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-zinc-100 flex items-center gap-2 cursor-pointer transition-colors"
-                                                >
-                                                    <FiArchive size={12} />
-                                                    Archive
-                                                </button>
-                                                <div className="h-px bg-white/5 my-1" />
-                                                <button
-                                                    onClick={() => {
-                                                        setDeleteConfirmationId(chat.id)
-                                                        setActiveDropdownId(null)
-                                                    }}
-                                                    className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 flex items-center gap-2 cursor-pointer transition-colors"
-                                                >
-                                                    <FiTrash2 size={12} />
-                                                    Delete
-                                                </button>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            )
-                        })}
+    const renderSidebarContent = (collapsed: boolean) => {
+        if (collapsed) {
+            return (
+                <>
+                    <div className="pt-4 pb-3 flex flex-col items-center gap-2 shrink-0">
+                        <button
+                            type="button"
+                            onClick={toggleCollapse}
+                            className="p-2 rounded-xl text-zinc-400 hover:text-zinc-100 hover:bg-white/5 transition-colors cursor-pointer"
+                            aria-label="Expand sidebar"
+                            title="Expand sidebar"
+                        >
+                            <FiChevronsRight size={18} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleNewChat}
+                            className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 text-zinc-300 hover:text-zinc-100 transition-all cursor-pointer group"
+                            aria-label="New Chat"
+                            title="New Chat"
+                        >
+                            <FiPlus size={16} className="shrink-0 group-hover:rotate-90 transition-transform duration-200" />
+                        </button>
                     </div>
-                )}
-            </div>
 
-            {user ? (
-                <SidebarProfile user={user} profile={profile} />
-            ) : (
-                <div className="px-3 pb-4">
+                    <div className="flex-1 min-h-0" />
+
+                    {user ? (
+                        <SidebarProfile user={user} profile={profile} collapsed />
+                    ) : (
+                        <div className="pb-4 flex justify-center">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsMobileMenuOpen(false)
+                                    openAuthModal()
+                                }}
+                                className="p-2.5 rounded-2xl hover:bg-[#1e1e20] transition-colors cursor-pointer text-zinc-400 hover:text-zinc-100"
+                                aria-label="Sign In"
+                                title="Sign In"
+                            >
+                                <FiLogIn size={16} />
+                            </button>
+                        </div>
+                    )}
+                </>
+            )
+        }
+
+        return (
+            <>
+                <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
+                    <div className="flex items-center justify-between px-2">
+                        <span className="font-medium text-[17px] text-zinc-100 tracking-tight">Onchain Agent</span>
+                        <button
+                            type="button"
+                            onClick={toggleCollapse}
+                            className="p-1.5 -mr-1 rounded-lg text-zinc-500 hover:text-zinc-100 hover:bg-white/5 transition-colors cursor-pointer"
+                            aria-label="Collapse sidebar"
+                            title="Collapse sidebar"
+                        >
+                            <FiChevronsLeft size={16} />
+                        </button>
+                    </div>
+
                     <button
-                        onClick={() => {
-                            setIsMobileMenuOpen(false)
-                            openAuthModal()
-                        }}
-                        className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-2xl hover:bg-[#1e1e20] transition-colors cursor-pointer group text-zinc-400 hover:text-zinc-100"
+                        onClick={handleNewChat}
+                        className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 text-zinc-300 hover:text-zinc-100 text-sm font-medium transition-all cursor-pointer group"
                     >
-                        <FiLogIn size={16} className="shrink-0" />
-                        <span className="text-sm font-medium">Sign In</span>
+                        <FiPlus size={16} className="shrink-0 group-hover:rotate-90 transition-transform duration-200" />
+                        <span>New Chat</span>
                     </button>
                 </div>
-            )}
-        </>
-    )
+
+                <div className="flex-1 px-4 pb-6 overflow-y-auto flex flex-col min-h-0">
+                    {user && chats.length > 0 && (
+                        <div className="flex flex-col gap-0.5">
+                            <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider px-2 mb-1">Recent</p>
+                            {chats.map((chat) => {
+                                const isActive = pathname === `/chat/${chat.id}`
+                                return (
+                                    <div key={chat.id} className="relative">
+                                        <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all group ${isActive
+                                            ? 'bg-white/8 text-zinc-100'
+                                            : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
+                                            }`}>
+                                            <Link
+                                                href={`/chat/${chat.id}`}
+                                                onClick={() => setIsMobileMenuOpen(false)}
+                                                className="flex-1 min-w-0 flex items-start gap-2.5"
+                                            >
+                                                <FiMessageSquare size={14} className="shrink-0 mt-0.5 opacity-60" />
+                                                <div className="flex-1 min-w-0">
+                                                    {editingChatId === chat.id ? (
+                                                        <input
+                                                            type="text"
+                                                            value={editTitle}
+                                                            onChange={(e) => setEditTitle(e.target.value)}
+                                                            onBlur={() => handleRenameSubmit(chat.id)}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') handleRenameSubmit(chat.id)
+                                                                if (e.key === 'Escape') setEditingChatId(null)
+                                                            }}
+                                                            autoFocus
+                                                            className="w-full bg-transparent border-none outline-none text-zinc-100 p-0 m-0 text-sm leading-tight focus:ring-0"
+                                                            onClick={(e) => e.preventDefault()}
+                                                        />
+                                                    ) : (
+                                                        <p className="truncate leading-tight">{chat.title}</p>
+                                                    )}
+                                                    <p className="text-[11px] text-zinc-600 mt-0.5">{formatDate(chat.updatedAt)}</p>
+                                                </div>
+                                            </Link>
+
+                                            <button
+                                                onClick={(e) => {
+                                                    e.preventDefault()
+                                                    e.stopPropagation()
+                                                    setActiveDropdownId(activeDropdownId === chat.id ? null : chat.id)
+                                                }}
+                                                className={`p-1.5 rounded-md hover:bg-white/10 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer ${activeDropdownId === chat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                            >
+                                                <FiMoreVertical size={14} />
+                                            </button>
+                                        </div>
+
+                                        {activeDropdownId === chat.id && (
+                                            <>
+                                                <div className="fixed inset-0 z-40" onClick={() => setActiveDropdownId(null)} />
+                                                <div className="absolute right-0 top-10 w-36 bg-[#1f1f22] border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden py-1">
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditTitle(chat.title)
+                                                            setEditingChatId(chat.id)
+                                                            setActiveDropdownId(null)
+                                                        }}
+                                                        className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-zinc-100 flex items-center gap-2 cursor-pointer transition-colors"
+                                                    >
+                                                        <FiEdit2 size={12} />
+                                                        Rename
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleArchive(chat.id)}
+                                                        className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-zinc-100 flex items-center gap-2 cursor-pointer transition-colors"
+                                                    >
+                                                        <FiArchive size={12} />
+                                                        Archive
+                                                    </button>
+                                                    <div className="h-px bg-white/5 my-1" />
+                                                    <button
+                                                        onClick={() => {
+                                                            setDeleteConfirmationId(chat.id)
+                                                            setActiveDropdownId(null)
+                                                        }}
+                                                        className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 flex items-center gap-2 cursor-pointer transition-colors"
+                                                    >
+                                                        <FiTrash2 size={12} />
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
+                </div>
+
+                {user ? (
+                    <SidebarProfile user={user} profile={profile} />
+                ) : (
+                    <div className="px-3 pb-4">
+                        <button
+                            onClick={() => {
+                                setIsMobileMenuOpen(false)
+                                openAuthModal()
+                            }}
+                            className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-2xl hover:bg-[#1e1e20] transition-colors cursor-pointer group text-zinc-400 hover:text-zinc-100"
+                        >
+                            <FiLogIn size={16} className="shrink-0" />
+                            <span className="text-sm font-medium">Sign In</span>
+                        </button>
+                    </div>
+                )}
+            </>
+        )
+    }
 
     return (
         <>
@@ -235,9 +331,10 @@ export default function Sidebar({ user, chats, profile }: SidebarProps) {
                 variants={slideInLeft}
                 initial="initial"
                 animate="animate"
-                className="hidden md:flex w-56 lg:w-64 h-screen border-r border-white/5 bg-[#131314] flex-col shrink-0"
+                className={`hidden md:flex h-screen border-r border-white/5 bg-[#131314] flex-col shrink-0 transition-[width] duration-200 ease-out ${isCollapsed ? 'w-14' : 'w-56 lg:w-64'
+                    }`}
             >
-                {renderSidebarContent()}
+                {renderSidebarContent(isCollapsed)}
             </motion.div>
 
             <AnimatePresence>
@@ -258,7 +355,7 @@ export default function Sidebar({ user, chats, profile }: SidebarProps) {
                                 <FiX size={20} />
                             </button>
                         </div>
-                        {renderSidebarContent()}
+                        {renderSidebarContent(false)}
                     </motion.div>
                 )}
             </AnimatePresence>
