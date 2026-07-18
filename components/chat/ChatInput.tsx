@@ -6,7 +6,8 @@ import { slideInUp } from '../../lib/motion'
 import { useWalletStore } from '../../hooks/useWalletStore'
 import { useSettingsStore } from '../../hooks/useSettingsStore'
 import { useAuthModalStore } from '../../hooks/useAuthModalStore'
-import { AVAILABLE_MODELS } from '../../lib/models'
+import { DEFAULT_MODEL_ID } from '../../lib/models'
+import { useModelsStore } from '../../hooks/useModelsStore'
 
 interface ChatInputProps {
     input: string
@@ -55,11 +56,21 @@ export default function ChatInput({
         }
     }, [isBusy])
 
-    const models = AVAILABLE_MODELS.filter(
+    const catalog = useModelsStore(s => s.models)
+
+    const models = catalog.filter(
         m => !enabledModels || enabledModels.length === 0 || enabledModels.includes(m.id) || m.id === selectedModel
     )
 
-    const activeModel = AVAILABLE_MODELS.find(m => m.id === selectedModel) || AVAILABLE_MODELS[0]
+    const activeModel = catalog.find(m => m.id === selectedModel) || models[0] || {
+        id: DEFAULT_MODEL_ID,
+        name: selectedModel,
+        shortName: selectedModel,
+        provider: '',
+        isReasoning: false,
+        latencyMs: 0,
+        contextTokens: 0,
+    }
 
     return (
         <motion.div
@@ -187,7 +198,7 @@ export default function ChatInput({
                                 <>
                                     <div className="fixed inset-0 z-40" onClick={() => setIsModelOpen(false)} />
                                     <div className="absolute bottom-full mb-1.5 right-0 w-64 bg-[#1f1f22] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden py-1.5 flex flex-col">
-                                        <div className="px-3.5 py-1.5 flex items-center justify-between border-b border-white/5 mb-1">
+                                        <div className="px-3.5 py-1.5 flex items-center justify-between border-b border-white/5 mb-1 shrink-0">
                                             <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Select Model</span>
                                             <button
                                                 type="button"
@@ -200,36 +211,38 @@ export default function ChatInput({
                                                 Configure
                                             </button>
                                         </div>
-                                        {models.map((m) => (
-                                            <button
-                                                key={m.id}
-                                                type="button"
-                                                onClick={() => {
-                                                    onModelChange(m.id)
-                                                    setIsModelOpen(false)
-                                                }}
-                                                className={`w-full text-left px-4 py-2.5 text-xs transition-colors flex flex-col gap-0.5 cursor-pointer ${selectedModel === m.id
-                                                    ? 'bg-white/5 text-zinc-100'
-                                                    : 'text-zinc-400 hover:bg-white/5'
-                                                    }`}
-                                            >
-                                                <span className="flex items-center gap-1.5 min-w-0">
-                                                    <span className={`font-medium truncate ${selectedModel === m.id ? 'text-zinc-100' : 'text-zinc-200'}`}>{m.name}</span>
-                                                    {m.isReasoning && (
-                                                        <TbBrain
-                                                            size={14}
-                                                            className="text-purple-400 shrink-0"
-                                                            title="Reasoning model"
-                                                            aria-label="Reasoning model"
-                                                        />
-                                                    )}
-                                                </span>
-                                                <span className="text-[10px] text-zinc-500">
-                                                    {m.provider}
-                                                    {m.isReasoning ? ' · Reasoning' : ''}
-                                                </span>
-                                            </button>
-                                        ))}
+                                        <div className="overflow-y-auto max-h-[230px]">
+                                            {models.map((m) => (
+                                                <button
+                                                    key={m.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        onModelChange(m.id)
+                                                        setIsModelOpen(false)
+                                                    }}
+                                                    className={`w-full text-left px-4 py-2.5 text-xs transition-colors flex flex-col gap-0.5 cursor-pointer ${selectedModel === m.id
+                                                        ? 'bg-white/5 text-zinc-100'
+                                                        : 'text-zinc-400 hover:bg-white/5'
+                                                        }`}
+                                                >
+                                                    <span className="flex items-center gap-1.5 min-w-0">
+                                                        <span className={`font-medium truncate ${selectedModel === m.id ? 'text-zinc-100' : 'text-zinc-200'}`}>{m.name}</span>
+                                                        {m.isReasoning && (
+                                                            <TbBrain
+                                                                size={14}
+                                                                className="text-purple-400 shrink-0"
+                                                                title="Reasoning model"
+                                                                aria-label="Reasoning model"
+                                                            />
+                                                        )}
+                                                    </span>
+                                                    <span className="text-[10px] text-zinc-500">
+                                                        {m.provider}
+                                                        {m.isReasoning ? ' · Reasoning' : ''}
+                                                    </span>
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                 </>
                             )}

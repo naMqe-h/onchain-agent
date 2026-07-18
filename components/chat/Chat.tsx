@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { useEveAgent } from 'eve/react'
 import { AnimatePresence } from 'framer-motion'
 import ChatInput from './ChatInput'
@@ -12,6 +11,23 @@ import { useWalletStore } from '../../hooks/useWalletStore'
 import { useAuthModalStore } from '../../hooks/useAuthModalStore'
 import { createClient } from '../../lib/supabase/client'
 import { normalizeNetworkId } from '../../lib/web3/config'
+import { DEFAULT_MODEL_ID, isSupportedModelId } from '../../lib/models'
+
+export const AGENT_ERROR_TEXT = 'Something went wrong'
+
+export function createAgentErrorParts() {
+    return [{ type: 'error' as const, text: AGENT_ERROR_TEXT }]
+}
+
+function assistantHasUsefulContent(message: any | undefined): boolean {
+    if (!message?.parts?.length) return false
+    return message.parts.some((p: any) => {
+        if (p.type === 'text' && typeof p.text === 'string' && p.text.trim().length > 0) return true
+        if (p.type === 'dynamic-tool' && p.state === 'output-available') return true
+        if (p.type === 'error') return true
+        return false
+    })
+}
 
 interface SessionState {
     sessionId?: string
@@ -38,7 +54,6 @@ interface ChatProps {
 }
 
 export default function Chat({ chatId: initialChatId, initialMessages, initialSession, initialModel, activeNetwork, userId, enabledModels }: ChatProps) {
-    const router = useRouter()
     const [input, setInput] = useState('')
     const [displayMessages, setDisplayMessages] = useState<StoredMessage[]>(initialMessages)
     const [currentChatId, setCurrentChatId] = useState<string | null>(initialChatId)
@@ -46,7 +61,8 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
     const [isStreaming, setIsStreaming] = useState(false)
     const [streamStartIndex, setStreamStartIndex] = useState(0)
     const [activeMessageId, setActiveMessageId] = useState<string | null>(null)
-    const [selectedModel, setSelectedModel] = useState(initialModel || 'gpt-4.1-nano')
+    const [selectedModel, setSelectedModel] = useState(initialModel || DEFAULT_MODEL_ID)
+    const [agentError, setAgentError] = useState(false)
 
     const loadWallets = useWalletStore(s => s.loadWallets)
     const openAuthModal = useAuthModalStore(s => s.open)
@@ -64,6 +80,7 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
     }, [initialModel])
 
     const handleModelChange = async (model: string) => {
+        if (!isSupportedModelId(model)) return
         setSelectedModel(model)
         if (currentChatId) {
             await updateChatModel(currentChatId, model)
@@ -87,96 +104,174 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
         chatIdRef.current = currentChatId
     }, [currentChatId])
 
-    const agent = useEveAgent({
-        initialSession,
-        onFinish: useCallback(async (snapshot: any) => {
-            const chatId = chatIdRef.current
-            if (!chatId) return
+    const displayMessagesRef = useRef(displayMessages)
+    useEffect(() => {
+        displayMessagesRef.current = displayMessages
+    }, [displayMessages])
 
-            const messages = snapshot?.data?.messages
-            if (!messages || messages.length < 2) return
+    const streamStartIndexRef = useRef(0)
 
-            const lastUser = [...messages].reverse().find((m: any) => m.role === 'user')
-            const lastAssistant = [...messages].reverse().find((m: any) => m.role === 'assistant')
+    const persistTurn = useCallback(async (snapshot: any, forceError = false) => {
+        setIsStreaming(false)
 
-            const userText = lastUser?.parts?.find((p: any) => p.type === 'text')?.text ?? ''
-            const assistantText = lastAssistant?.parts?.find((p: any) => p.type === 'text')?.text ?? ''
+        const chatId = chatIdRef.current
+        const allMessages: any[] = snapshot?.data?.messages ?? []
+        const turnMessages = allMessages.slice(streamStartIndexRef.current)
+        const lastUser = [...turnMessages].reverse().find((m: any) => m.role === 'user')
+        const lastAssistant = [...turnMessages].reverse().find((m: any) => m.role === 'assistant')
+        const pendingLocalUser = [...displayMessagesRef.current].reverse().find(
+            m => m.role === 'user' && String(m.id).startsWith('local-user-')
+        )
 
-            let enrichedParts = lastAssistant?.parts
-            if (enrichedParts && snapshot.events) {
-                enrichedParts = lastAssistant.parts.map((p: any) => {
-                    if (p.type === 'reasoning') {
-                        const stepIndex = p.stepIndex
-                        const startedEvent = snapshot.events.find(
-                            (e: any) => e.type === 'step.started' && e.data?.stepIndex === stepIndex
-                        )
-                        const completedEvent = snapshot.events.find(
-                            (e: any) => e.type === 'step.completed' && e.data?.stepIndex === stepIndex
-                        )
-                        if (startedEvent) {
-                            const metrics: any = {}
-                            const started = startedEvent as any
-                            const completed = completedEvent as any
-                            if (completedEvent) {
-                                if (completed.meta?.at && started.meta?.at) {
-                                    metrics.durationMs = new Date(completed.meta.at).getTime() - new Date(started.meta.at).getTime()
-                                }
-                                if (completed.data?.usage) {
-                                    metrics.inputTokens = completed.data.usage.inputTokens
-                                    metrics.outputTokens = completed.data.usage.outputTokens
-                                    metrics.cacheReadTokens = completed.data.usage.cacheReadTokens
-                                    metrics.cacheWriteTokens = completed.data.usage.cacheWriteTokens
-                                }
+        const userText =
+            lastUser?.parts?.find((p: any) => p.type === 'text')?.text ??
+            pendingLocalUser?.content ??
+            ''
+        const assistantText = lastAssistant?.parts?.find((p: any) => p.type === 'text')?.text ?? ''
+        const userParts = lastUser?.parts ?? pendingLocalUser?.parts ?? [{ type: 'text', text: userText }]
+
+        const explicitError =
+            forceError ||
+            snapshot?.status === 'error' ||
+            Boolean(snapshot?.error) ||
+            lastUser?.metadata?.status === 'failed'
+
+        const hadUserThisTurn = Boolean(lastUser) || Boolean(pendingLocalUser)
+        const silentFailure = hadUserThisTurn && !assistantHasUsefulContent(lastAssistant)
+        const turnFailed = explicitError || silentFailure
+
+        if (turnFailed) {
+            setAgentError(true)
+        }
+
+        let enrichedParts = lastAssistant?.parts
+        if (!turnFailed && enrichedParts && snapshot?.events) {
+            enrichedParts = lastAssistant.parts.map((p: any) => {
+                if (p.type === 'reasoning') {
+                    const stepIndex = p.stepIndex
+                    const startedEvent = snapshot.events.find(
+                        (e: any) => e.type === 'step.started' && e.data?.stepIndex === stepIndex
+                    )
+                    const completedEvent = snapshot.events.find(
+                        (e: any) => e.type === 'step.completed' && e.data?.stepIndex === stepIndex
+                    )
+                    if (startedEvent) {
+                        const metrics: any = {}
+                        const started = startedEvent as any
+                        const completed = completedEvent as any
+                        if (completedEvent) {
+                            if (completed.meta?.at && started.meta?.at) {
+                                metrics.durationMs = new Date(completed.meta.at).getTime() - new Date(started.meta.at).getTime()
                             }
-                            return { ...p, metrics }
-                        }
-                    }
-                    if (p.type === 'dynamic-tool') {
-                        const toolCallId = p.toolCallId
-                        const requestEvent = snapshot.events.find(
-                            (e: any) => e.type === 'actions.requested' && e.data?.actions?.some((a: any) => a.callId === toolCallId)
-                        )
-                        const resultEvent = snapshot.events.find(
-                            (e: any) => e.type === 'action.result' && e.data?.result?.callId === toolCallId
-                        )
-                        if (requestEvent) {
-                            const metrics: any = {}
-                            const req = requestEvent as any
-                            const res = resultEvent as any
-                            if (resultEvent) {
-                                if (res.meta?.at && req.meta?.at) {
-                                    metrics.durationMs = new Date(res.meta.at).getTime() - new Date(req.meta.at).getTime()
-                                }
+                            if (completed.data?.usage) {
+                                metrics.inputTokens = completed.data.usage.inputTokens
+                                metrics.outputTokens = completed.data.usage.outputTokens
+                                metrics.cacheReadTokens = completed.data.usage.cacheReadTokens
+                                metrics.cacheWriteTokens = completed.data.usage.cacheWriteTokens
                             }
-                            return { ...p, metrics }
                         }
+                        return { ...p, metrics }
                     }
-                    return p
-                })
-            }
-
-            setDisplayMessages(prev => {
-                const newMsgs = [...prev]
-                if (lastUser && !prev.find(m => m.id === lastUser.id)) newMsgs.push(lastUser as any)
-                if (lastAssistant && !prev.find(m => m.id === lastAssistant.id)) {
-                    newMsgs.push({
-                        ...lastAssistant,
-                        parts: enrichedParts
-                    } as any)
                 }
-                return newMsgs
+                if (p.type === 'dynamic-tool') {
+                    const toolCallId = p.toolCallId
+                    const requestEvent = snapshot.events.find(
+                        (e: any) => e.type === 'actions.requested' && e.data?.actions?.some((a: any) => a.callId === toolCallId)
+                    )
+                    const resultEvent = snapshot.events.find(
+                        (e: any) => e.type === 'action.result' && e.data?.result?.callId === toolCallId
+                    )
+                    if (requestEvent) {
+                        const metrics: any = {}
+                        const req = requestEvent as any
+                        const res = resultEvent as any
+                        if (resultEvent) {
+                            if (res.meta?.at && req.meta?.at) {
+                                metrics.durationMs = new Date(res.meta.at).getTime() - new Date(req.meta.at).getTime()
+                            }
+                        }
+                        return { ...p, metrics }
+                    }
+                }
+                return p
             })
+        }
 
-            setIsStreaming(false)
+        if (!chatId) return
 
-            if (userText) {
-                await addMessage(chatId, 'user', userText, lastUser.parts)
+        const lastIsPersistedError = (msgs: StoredMessage[]) => {
+            const last = msgs[msgs.length - 1]
+            return (
+                last?.role === 'assistant' &&
+                last.content === AGENT_ERROR_TEXT &&
+                Array.isArray(last.parts) &&
+                (last.parts as any[]).some((p: any) => p.type === 'error')
+            )
+        }
+
+        try {
+            if (userText && hadUserThisTurn) {
+                const alreadyPersisted = displayMessagesRef.current.some(
+                    m => m.role === 'user' && m.content === userText && !String(m.id).startsWith('local-user-')
+                )
+
+                if (!alreadyPersisted) {
+                    const savedUser = await addMessage(chatId, 'user', userText, userParts)
+                    setDisplayMessages(prev => {
+                        const localIdx = prev.findIndex(
+                            m =>
+                                (lastUser && m.id === lastUser.id) ||
+                                (m.role === 'user' && m.content === userText && String(m.id).startsWith('local-user-'))
+                        )
+                        const saved = {
+                            id: savedUser.id,
+                            role: 'user' as const,
+                            content: userText,
+                            parts: userParts,
+                            createdAt: savedUser.createdAt,
+                        }
+                        if (localIdx >= 0) {
+                            const next = [...prev]
+                            next[localIdx] = saved
+                            return next
+                        }
+                        if (prev.some(m => m.id === savedUser.id)) return prev
+                        return [...prev, saved]
+                    })
+                }
             }
-            if (assistantText) {
-                await addMessage(chatId, 'assistant', assistantText, enrichedParts)
+
+            if (turnFailed) {
+                if (!lastIsPersistedError(displayMessagesRef.current)) {
+                    const errorParts = createAgentErrorParts()
+                    const savedError = await addMessage(chatId, 'assistant', AGENT_ERROR_TEXT, errorParts)
+                    setDisplayMessages(prev => {
+                        if (lastIsPersistedError(prev)) return prev
+                        return [...prev, {
+                            id: savedError.id,
+                            role: 'assistant' as const,
+                            content: AGENT_ERROR_TEXT,
+                            parts: errorParts,
+                            createdAt: savedError.createdAt,
+                        }]
+                    })
+                }
+            } else if (lastAssistant && assistantHasUsefulContent(lastAssistant)) {
+                setDisplayMessages(prev => {
+                    if (prev.find(m => m.id === lastAssistant.id)) return prev
+                    return [...prev, {
+                        ...lastAssistant,
+                        content: assistantText,
+                        parts: enrichedParts,
+                        createdAt: lastAssistant.createdAt ?? new Date(),
+                    } as any]
+                })
+                if (assistantText) {
+                    await addMessage(chatId, 'assistant', assistantText, enrichedParts)
+                }
             }
 
-            const session = snapshot.session
+            const session = snapshot?.session
             if (session?.sessionId) {
                 await updateChatSession(
                     chatId,
@@ -184,12 +279,37 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
                     session.continuationToken ?? '',
                     session.streamIndex ?? 0
                 )
-                router.refresh()
             }
-        }, [])
+        } catch (err) {
+            console.error('Failed to persist chat turn:', err)
+            setAgentError(true)
+            setDisplayMessages(prev => {
+                if (lastIsPersistedError(prev)) return prev
+                return [...prev, {
+                    id: `local-error-${Date.now()}`,
+                    role: 'assistant' as const,
+                    content: AGENT_ERROR_TEXT,
+                    parts: createAgentErrorParts(),
+                    createdAt: new Date(),
+                }]
+            })
+        }
+    }, [])
+
+    const agent = useEveAgent({
+        initialSession,
+        onError: useCallback(() => {
+            setIsStreaming(false)
+            setAgentError(true)
+        }, []),
+        onFinish: useCallback(async (snapshot: any) => {
+            await persistTurn(snapshot, false)
+        }, [persistTurn])
     })
 
-    const isBusy = agent.status === 'submitted' || agent.status === 'streaming' || isCreatingDb || isStreaming
+    const isBusy =
+        agent.status !== 'error' &&
+        (agent.status === 'submitted' || agent.status === 'streaming' || isCreatingDb || isStreaming)
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -199,7 +319,10 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
             return
         }
 
-        setStreamStartIndex(agent.data?.messages?.length || 0)
+        setAgentError(false)
+        const nextStreamStart = agent.data?.messages?.length || 0
+        streamStartIndexRef.current = nextStreamStart
+        setStreamStartIndex(nextStreamStart)
         setIsStreaming(true)
 
         let targetChatId = currentChatId
@@ -211,6 +334,11 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
                 setCurrentChatId(chat.id)
                 chatIdRef.current = chat.id
                 window.history.replaceState(null, '', `/chat/${chat.id}`)
+            } catch {
+                setIsStreaming(false)
+                setAgentError(true)
+                setIsCreatingDb(false)
+                return
             } finally {
                 setIsCreatingDb(false)
             }
@@ -227,16 +355,89 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
             }
         } catch { }
 
-        await agent.send({
-            message: input.trim(),
-            headers: {
-                'x-model-name': selectedModel,
-                'x-chat-id': targetChatId || '',
-                'x-active-network': networkForTurn,
-                'x-active-wallet': activeWallet,
-            }
-        })
+        const messageText = input.trim()
         setInput('')
+
+        const localUserId = `local-user-${Date.now()}`
+        const userParts = [{ type: 'text', text: messageText }]
+        setDisplayMessages(prev => [...prev, {
+            id: localUserId,
+            role: 'user',
+            content: messageText,
+            parts: userParts,
+            createdAt: new Date(),
+        }])
+
+        try {
+            await agent.send({
+                message: messageText,
+                headers: {
+                    'x-model-name': selectedModel,
+                    'x-chat-id': targetChatId || '',
+                    'x-active-network': networkForTurn,
+                    'x-active-wallet': activeWallet,
+                }
+            })
+        } catch {
+            setIsStreaming(false)
+            setAgentError(true)
+            if (targetChatId) {
+                try {
+                    const savedUser = await addMessage(targetChatId, 'user', messageText, userParts)
+                    const errorParts = createAgentErrorParts()
+                    const savedError = await addMessage(targetChatId, 'assistant', AGENT_ERROR_TEXT, errorParts)
+                    setDisplayMessages(prev => {
+                        const withoutLocal = prev.filter(m => m.id !== localUserId)
+                        const next = [...withoutLocal]
+                        if (!next.some(m => m.id === savedUser.id || (m.role === 'user' && m.content === messageText && next[next.length - 1]?.content === messageText))) {
+                            next.push({
+                                id: savedUser.id,
+                                role: 'user',
+                                content: messageText,
+                                parts: userParts,
+                                createdAt: savedUser.createdAt,
+                            })
+                        } else {
+                            const idx = next.findIndex(m => m.id === localUserId || (m.role === 'user' && m.content === messageText))
+                            if (idx >= 0) {
+                                next[idx] = {
+                                    id: savedUser.id,
+                                    role: 'user',
+                                    content: messageText,
+                                    parts: userParts,
+                                    createdAt: savedUser.createdAt,
+                                }
+                            }
+                        }
+                        if (!(
+                            next[next.length - 1]?.role === 'assistant' &&
+                            next[next.length - 1]?.content === AGENT_ERROR_TEXT
+                        )) {
+                            next.push({
+                                id: savedError.id,
+                                role: 'assistant',
+                                content: AGENT_ERROR_TEXT,
+                                parts: errorParts,
+                                createdAt: savedError.createdAt,
+                            })
+                        }
+                        return next
+                    })
+                } catch (persistErr) {
+                    console.error('Failed to persist error turn:', persistErr)
+                    setDisplayMessages(prev => {
+                        if (prev[prev.length - 1]?.content === AGENT_ERROR_TEXT) return prev
+                        return [...prev, {
+                            id: `local-error-${Date.now()}`,
+                            role: 'assistant',
+                            content: AGENT_ERROR_TEXT,
+                            parts: createAgentErrorParts(),
+                            createdAt: new Date(),
+                        }]
+                    })
+                }
+            }
+        }
     }
 
     const mappedDisplayMessages = displayMessages.map(m => ({
@@ -247,7 +448,7 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
     }))
 
     const streamMessages = isStreaming
-        ? (agent.data?.messages?.slice(streamStartIndex) || [])
+        ? (agent.data?.messages?.slice(streamStartIndex) || []).filter((m: any) => m.role !== 'user')
         : []
 
     const messages = [...mappedDisplayMessages, ...streamMessages] as any
@@ -307,6 +508,7 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
                     activeMessageId={activeMessageId}
                     onToggleReasoning={handleToggleReasoning}
                     isBusy={isBusy}
+                    showError={agentError || agent.status === 'error'}
                 />
                 <div className="w-full">
                     <ChatInput

@@ -1,8 +1,9 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getChatWithMessages } from '../../../actions/chat/chat'
+import { getChatWithMessagesAndResolvedModel } from '../../../actions/chat/chat'
 import Chat from '../../../../components/chat/Chat'
 import { normalizeNetworkId } from '@/lib/web3/config'
+import { getUserModelPreferences } from '@/app/actions/models/models'
 
 interface ChatPageProps {
     params: Promise<{ id: string }>
@@ -18,7 +19,8 @@ export default async function ChatPage({ params }: ChatPageProps) {
         redirect('/')
     }
 
-    const chat = await getChatWithMessages(id, user.id)
+    const prefs = await getUserModelPreferences()
+    const chat = await getChatWithMessagesAndResolvedModel(id, user.id, prefs.defaultModelId)
 
     if (!chat) {
         redirect('/')
@@ -33,7 +35,6 @@ export default async function ChatPage({ params }: ChatPageProps) {
         : { streamIndex: 0 }
 
     const activeNetwork = normalizeNetworkId(user?.user_metadata?.activeNetwork)
-    const enabledModels = user?.user_metadata?.enabledModels as string[] | undefined
 
     return (
         <Chat
@@ -49,7 +50,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
             initialModel={chat.model}
             activeNetwork={activeNetwork}
             userId={user.id}
-            enabledModels={enabledModels}
+            enabledModels={prefs.enabledModelIds}
         />
     )
 }

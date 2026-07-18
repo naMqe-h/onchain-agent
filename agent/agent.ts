@@ -2,6 +2,7 @@ import { defineAgent, defineDynamic } from "eve"
 import { createOpenRouter } from "@openrouter/ai-sdk-provider"
 import { createOpenAI } from "@ai-sdk/openai"
 import db from "../lib/db"
+import { DEFAULT_MODEL_ID, SUPPORTED_MODELS, type SupportedModelId } from "../lib/models"
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -11,12 +12,19 @@ const openai = createOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
-const defaultModel = openai("gpt-4.1-nano")
-
-const MODELS: Record<string, any> = {
-  "cohere/north-mini-code:free": openrouter("cohere/north-mini-code:free"),
-  "gpt-4.1-nano": defaultModel,
+function resolveLanguageModel(id: SupportedModelId) {
+  const config = SUPPORTED_MODELS[id]
+  if (config.provider === "openai") {
+    return openai(config.modelId)
+  }
+  return openrouter(config.modelId)
 }
+
+const defaultModel = resolveLanguageModel(DEFAULT_MODEL_ID)
+
+const MODELS: Record<string, ReturnType<typeof resolveLanguageModel>> = Object.fromEntries(
+  (Object.keys(SUPPORTED_MODELS) as SupportedModelId[]).map((id) => [id, resolveLanguageModel(id)])
+)
 
 export default defineAgent({
   model: defineDynamic({

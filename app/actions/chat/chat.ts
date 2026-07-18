@@ -3,6 +3,9 @@
 import db from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
+import { ensureChatModelAllowed, getEnabledModelCatalog } from "@/lib/modelCatalog"
+import { clampToSupportedModelId } from "@/lib/modelPreferences"
+import { DEFAULT_MODEL_ID, isSupportedModelId } from "@/lib/models"
 
 export async function createChat(model?: string, userId?: string) {
     let resolvedUserId = userId
@@ -12,11 +15,13 @@ export async function createChat(model?: string, userId?: string) {
         if (!user) throw new Error('Unauthorized')
         resolvedUserId = user.id
     }
-    
+
+    const safeModel = clampToSupportedModelId(model)
+
     const chat = await db.chat.create({
-        data: { 
+        data: {
             userId: resolvedUserId,
-            model: model || "gpt-4.1-nano"
+            model: safeModel
         }
     })
     return chat
@@ -61,6 +66,26 @@ export async function getChatWithMessages(chatId: string, userId: string) {
         }
     })
     return chat
+}
+
+export async function getChatWithMessagesAndResolvedModel(
+    chatId: string,
+    userId: string,
+    defaultModelId: string
+) {
+    const chat = await getChatWithMessages(chatId, userId)
+    if (!chat) return null
+
+    const catalog = await getEnabledModelCatalog()
+    const catalogIds = catalog.map((m) => m.id)
+    const resolvedModel = await ensureChatModelAllowed(
+        chat.id,
+        chat.model,
+        catalogIds,
+        defaultModelId || DEFAULT_MODEL_ID
+    )
+
+    return { ...chat, model: resolvedModel }
 }
 
 async function getAuthenticatedUserAndChat(chatId: string) {
@@ -138,6 +163,9 @@ export async function deleteChat(chatId: string) {
 
 export async function updateChatModel(chatId: string, model: string) {
     await getAuthenticatedUserAndChat(chatId)
+    if (!isSupportedModelId(model)) {
+        throw new Error('Unsupported model')
+    }
     await db.chat.update({
         where: { id: chatId },
         data: { model }

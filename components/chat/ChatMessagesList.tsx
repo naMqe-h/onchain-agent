@@ -26,6 +26,7 @@ interface ChatMessagesListProps {
     activeMessageId: string | null
     onToggleReasoning: (id: string) => void
     isBusy?: boolean
+    showError?: boolean
 }
 
 interface MessageItemProps {
@@ -43,10 +44,26 @@ function MessageItem({ message, isActive, onToggleReasoning, isLast, isBusy }: M
         return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     })
 
-    const hasReasoning = message.parts?.some(part => part.type === 'reasoning') || message.parts?.some(part => part.type === 'dynamic-tool' && part.toolName !== 'update_chat_title')
+    const errorParts = message.parts?.filter(part => part.type === 'error') ?? []
+    const isErrorMessage = errorParts.length > 0 || (message as any).content === 'Something went wrong'
+
+    const hasReasoning =
+        !isErrorMessage && (
+            message.parts?.some(part => part.type === 'reasoning') ||
+            message.parts?.some(part => part.type === 'dynamic-tool' && part.toolName !== 'update_chat_title')
+        )
 
     const renderContent = () => {
         if (!message.parts || message.parts.length === 0) return null
+
+        if (isErrorMessage) {
+            const text = errorParts[0]?.text || (message as any).content || 'Something went wrong'
+            return (
+                <p className="text-sm text-rose-400/90">
+                    {text}
+                </p>
+            )
+        }
 
         const textParts = message.parts.filter(part => part.type === 'text')
         const tokenInfoParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_token_info')
@@ -133,21 +150,21 @@ function MessageItem({ message, isActive, onToggleReasoning, isLast, isBusy }: M
         )
     }
 
-    const isWriting = message.role === 'assistant' && isLast && isBusy
+    const isWriting = message.role === 'assistant' && isLast && isBusy && !isErrorMessage
 
     return (
         <motion.div
             variants={slideInUp}
             className="flex flex-col items-start w-full gap-2"
         >
-            <div className="text-zinc-200 text-[15px] leading-relaxed w-full">
+            <div className={`text-[15px] leading-relaxed w-full ${isErrorMessage ? '' : 'text-zinc-200'}`}>
                 {renderContent()}
             </div>
 
             {!isWriting && (
                 <div className="flex items-center gap-3 mt-1 text-zinc-500">
                     <span className="text-[11px] font-medium">{time}</span>
-                    {hasReasoning && (
+                    {!isErrorMessage && hasReasoning && (
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={onToggleReasoning}
@@ -174,7 +191,7 @@ const hasTextContent = (message: Message) => {
     return message.parts.some(part => part.type === 'text' && part.text && part.text.trim().length > 0)
 }
 
-export default function ChatMessagesList({ chatId, messages, activeMessageId, onToggleReasoning, isBusy }: ChatMessagesListProps) {
+export default function ChatMessagesList({ chatId, messages, activeMessageId, onToggleReasoning, isBusy, showError }: ChatMessagesListProps) {
     const containerRef = useRef<HTMLDivElement>(null)
     const isAtBottomRef = useRef(true)
 
@@ -202,7 +219,7 @@ export default function ChatMessagesList({ chatId, messages, activeMessageId, on
         if (isAtBottomRef.current && containerRef.current) {
             containerRef.current.scrollTop = containerRef.current.scrollHeight
         }
-    }, [messages])
+    }, [messages, showError])
 
     useEffect(() => {
         if (isBusy && containerRef.current) {
@@ -210,7 +227,7 @@ export default function ChatMessagesList({ chatId, messages, activeMessageId, on
         }
     }, [isBusy])
 
-    if (!messages || messages.length === 0) {
+    if ((!messages || messages.length === 0) && !showError) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center text-zinc-500">
                 <span className="text-xl">What can I help with?</span>
@@ -252,6 +269,16 @@ export default function ChatMessagesList({ chatId, messages, activeMessageId, on
                             </div>
                         </motion.div>
                     )}
+                {showError && !isBusy && !messages.some(m =>
+                    m.parts?.some((p: any) => p.type === 'error') ||
+                    (m as any).content === 'Something went wrong'
+                ) && (
+                    <motion.div variants={slideInUp} className="flex flex-col items-start w-full">
+                        <p className="text-sm text-rose-400/90 px-1">
+                            Something went wrong
+                        </p>
+                    </motion.div>
+                )}
             </motion.div>
         </div>
     )
