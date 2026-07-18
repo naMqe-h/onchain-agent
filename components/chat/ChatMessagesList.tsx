@@ -18,7 +18,7 @@ import { slideInUp, staggerContainer } from '../../lib/motion'
 
 interface Message {
     id: string
-    role: 'user' | 'assistant'
+    role: 'user' | 'assistant' | 'system'
     parts?: readonly any[]
 }
 
@@ -54,6 +54,15 @@ function getMessagePlainText(message: Message): string {
         .join('\n\n')
 
     if (textFromParts) return textFromParts
+
+    const usageLimit = message.parts.find(
+        (part: any) => part.type === 'usage-limit' && typeof part.text === 'string'
+    ) as { text?: string; resetsIn?: string } | undefined
+    if (usageLimit?.text) {
+        return usageLimit.resetsIn
+            ? `${usageLimit.text}\n${usageLimit.resetsIn}`
+            : usageLimit.text
+    }
 
     const errorText = message.parts.find(part => part.type === 'error' && typeof part.text === 'string')?.text
     if (errorText) return errorText
@@ -93,13 +102,47 @@ function MessageItem({ message, isReasoningActive, isToolsActive, onToggleReason
         return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     })
 
-    const errorParts = message.parts?.filter(part => part.type === 'error') ?? []
-    const isErrorMessage = errorParts.length > 0 || (message as any).content === 'Something went wrong'
-    const plainText = getMessagePlainText(message)
-    const canCopy = plainText.trim().length > 0
+    const usageLimitPart = message.parts?.find((part: any) => part.type === 'usage-limit')
+    const isUsageLimitMessage = Boolean(usageLimitPart) || message.role === 'system'
 
-    const hasReasoning = !isErrorMessage && messageHasReasoning(message)
-    const hasTools = !isErrorMessage && messageHasTools(message)
+    const errorParts = message.parts?.filter(part => part.type === 'error') ?? []
+    const isErrorMessage =
+        !isUsageLimitMessage &&
+        (errorParts.length > 0 || (message as any).content === 'Something went wrong')
+    const plainText = getMessagePlainText(message)
+    const canCopy = !isUsageLimitMessage && plainText.trim().length > 0
+
+    const hasReasoning = !isErrorMessage && !isUsageLimitMessage && messageHasReasoning(message)
+    const hasTools = !isErrorMessage && !isUsageLimitMessage && messageHasTools(message)
+
+    if (isUsageLimitMessage) {
+        const title =
+            (typeof usageLimitPart?.title === 'string' && usageLimitPart.title) ||
+            'Limit reached'
+        const text =
+            (typeof usageLimitPart?.text === 'string' && usageLimitPart.text) ||
+            plainText ||
+            "You've reached today's AI usage limit."
+        const resetsIn =
+            typeof usageLimitPart?.resetsIn === 'string' && usageLimitPart.resetsIn
+                ? usageLimitPart.resetsIn
+                : null
+
+        return (
+            <motion.div
+                variants={slideInUp}
+                className="flex w-full flex-col items-center justify-center px-4 py-3 text-center"
+            >
+                <p className="text-sm font-medium text-zinc-400">{title}</p>
+                <p className="mt-1 max-w-md text-sm leading-relaxed text-zinc-500">{text}</p>
+                {resetsIn ? (
+                    <p className="mt-2 text-xs text-zinc-600">
+                        {resetsIn}
+                    </p>
+                ) : null}
+            </motion.div>
+        )
+    }
 
     const renderContent = () => {
         if (!message.parts || message.parts.length === 0) return null

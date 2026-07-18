@@ -14,6 +14,7 @@ import AgentAnalysisPanel, {
     type AnalysisPanelMode,
 } from './AgentAnalysisPanel'
 import { addMessage, updateChatSession, createChat, updateChatModel } from '../../app/actions/chat/chat'
+import { checkMyUsageQuota } from '../../app/actions/usage/usage'
 import { useWalletStore } from '../../hooks/useWalletStore'
 import { useAuthModalStore } from '../../hooks/useAuthModalStore'
 import { createClient } from '../../lib/supabase/client'
@@ -50,7 +51,7 @@ interface SessionState {
 
 interface StoredMessage {
     id: string
-    role: 'user' | 'assistant'
+    role: 'user' | 'assistant' | 'system'
     content: string
     parts: unknown
     createdAt: Date
@@ -456,6 +457,10 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
                     'x-chat-id': targetChatId,
                     'x-active-network': network,
                     'x-active-wallet': wallet,
+                    'x-timezone':
+                        typeof Intl !== 'undefined'
+                            ? Intl.DateTimeFormat().resolvedOptions().timeZone || ''
+                            : '',
                 }
             })
         } catch {
@@ -558,6 +563,45 @@ export default function Chat({ chatId: initialChatId, initialMessages, initialSe
         if (!userId) {
             openAuthModal()
             return
+        }
+
+        try {
+            const timeZone =
+                typeof Intl !== 'undefined'
+                    ? Intl.DateTimeFormat().resolvedOptions().timeZone
+                    : undefined
+            const quota = await checkMyUsageQuota(timeZone)
+            if (quota.blocked) {
+                const reason =
+                    quota.reasons[0] ||
+                    "You've reached today's AI usage limit."
+                setDisplayMessages(prev => {
+                    const last = prev[prev.length - 1] as StoredMessage | undefined
+                    const lastIsSameLimit =
+                        last?.role === 'system' &&
+                        Array.isArray(last.parts) &&
+                        (last.parts as any[]).some((p: any) => p.type === 'usage-limit')
+                    if (lastIsSameLimit) return prev
+                    return [
+                        ...prev,
+                        {
+                            id: `local-quota-${Date.now()}`,
+                            role: 'system',
+                            content: reason,
+                            parts: [{
+                                type: 'usage-limit',
+                                title: 'Limit reached',
+                                text: reason,
+                                resetsIn: quota.resetsInLabel,
+                            }],
+                            createdAt: new Date(),
+                        },
+                    ]
+                })
+                return
+            }
+        } catch (quotaErr) {
+            console.warn('Usage quota check failed:', quotaErr)
         }
 
         const messageText = input.trim()

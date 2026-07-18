@@ -104,3 +104,42 @@ model ChatModel {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
+
+/// Append-only ledger of one LLM model step (provider or estimated tokens).
+model LlmUsageEvent {
+  id               String   @id @default(uuid())
+  userId           String
+  chatId           String?
+  eveSessionId     String?
+  model            String
+  provider         String
+  stepIndex        Int?
+  inputTokens      Int      @default(0)
+  outputTokens     Int      @default(0)
+  cacheReadTokens  Int      @default(0)
+  cacheWriteTokens Int      @default(0)
+  totalTokens      Int      @default(0)
+  source           String
+  durationMs       Int?
+  createdAt        DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, model, createdAt])
+  @@index([eveSessionId])
+}
+
+/// Daily rollup of LLM token usage for fast quota checks.
+model UserUsageDaily {
+  id              String   @id @default(uuid())
+  userId          String
+  day             DateTime @db.Date
+  llmInputTokens  Int      @default(0)
+  llmOutputTokens Int      @default(0)
+  llmTotalTokens  Int      @default(0)
+  llmRequests     Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, day])
+  @@index([userId])
+}

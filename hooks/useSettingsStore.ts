@@ -8,6 +8,7 @@ export type SettingsTab =
     | 'sessions'
     | 'network'
     | 'models'
+    | 'usage'
     | 'archived'
 
 interface SettingsStore {

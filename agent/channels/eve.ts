@@ -11,6 +11,7 @@ function supabaseAuth(): AuthFn<Request> {
         const chatIdHeader = request.headers.get("x-chat-id") || ""
         const networkHeader = request.headers.get("x-active-network") || ""
         const walletHeader = request.headers.get("x-active-wallet") || ""
+        const timeZoneHeader = request.headers.get("x-timezone") || ""
 
         const supabase = createServerClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -52,6 +53,7 @@ function supabaseAuth(): AuthFn<Request> {
             activeNetwork,
             activeWalletAddress: walletHeader,
             txConfirmationMode,
+            timeZone: timeZoneHeader,
         }
 
         return {
