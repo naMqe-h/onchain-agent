@@ -37,6 +37,7 @@ interface WalletStore {
     setSelectedAddress: (address: string) => void
     setWallets: (wallets: PublicWallet[]) => void
     loadWallets: (userId: string) => Promise<void>
+    clearWallets: () => void
 }
 
 export const useWalletStore = create<WalletStore>((set, get) => ({
@@ -73,5 +74,15 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
         } catch {
             set({ isLoading: false })
         }
+    },
+
+    clearWallets: () => {
+        writeStoredAddress(null)
+        set({
+            wallets: [],
+            selectedAddress: null,
+            loadedForUserId: null,
+            isLoading: false,
+        })
     },
 }))

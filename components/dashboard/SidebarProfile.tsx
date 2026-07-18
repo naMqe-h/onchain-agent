@@ -5,6 +5,7 @@ import { FiMoreHorizontal, FiSettings, FiLogOut } from 'react-icons/fi'
 import { createClient } from '../../lib/supabase/client'
 import { useSettingsStore } from '../../hooks/useSettingsStore'
 import { useAuthModalStore } from '../../hooks/useAuthModalStore'
+import { useWalletStore } from '../../hooks/useWalletStore'
 import { PublicProfile } from '../../app/actions/profile/profile'
 import {
     getNetworkIconSrc,
@@ -58,7 +59,9 @@ export default function SidebarProfile({
 
     const handleLogout = async () => {
         const supabase = createClient()
-        await supabase.auth.signOut()
+        await supabase.auth.signOut({ scope: 'local' })
+        useWalletStore.getState().clearWallets()
+        useSettingsStore.getState().closeSettings()
         router.refresh()
         openAuthModal()
     }
@@ -177,7 +180,7 @@ export default function SidebarProfile({
                         <span
                             className={`inline-flex items-center gap-1 text-[10px] font-medium leading-none mt-0.5 ${NETWORK_BADGE_CLASS[
                                 normalizeNetworkId(activeNetwork)
-                                ]
+                            ]
                                 }`}
                         >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
