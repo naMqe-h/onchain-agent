@@ -6,9 +6,8 @@ import {
     http,
     parseUnits,
     formatUnits,
-    formatEther,
-    formatGwei,
     erc20Abi,
+    type Hash,
 } from "viem"
 import { privateKeyToAccount } from "viem/accounts"
 import {
@@ -19,6 +18,7 @@ import {
 import { resolveActingWallet } from "../../lib/web3/resolveActiveWallet"
 import { resolveNamedAddress } from "../../lib/web3/resolveNamedAddress"
 import { fetchWalletErc20Tokens, type BalanceToken } from "../../lib/web3/tokenBalances"
+import { gasFieldsFromReceipt, waitForTxReceipt } from "../../lib/web3/waitForTx"
 import { createHash, createDecipheriv } from "crypto"
 
 const getEncryptionKey = () => {
@@ -260,18 +260,40 @@ export default defineTool({
                 }
             }
 
-            const hash = await walletClient.writeContract({
+            const hash = (await walletClient.writeContract({
                 address: tokenAddr,
                 abi: erc20Abi,
                 functionName: "transfer",
                 args: [recipient, parsedAmount],
-            })
+            })) as Hash
 
-            const receipt = await publicClient.waitForTransactionReceipt({ hash })
+            const waited = await waitForTxReceipt(publicClient, hash)
 
-            const gasUsed = receipt.gasUsed.toString()
-            const gasPriceGwei = receipt.effectiveGasPrice ? formatGwei(receipt.effectiveGasPrice) : "0"
-            const gasFeeNative = formatEther(receipt.gasUsed * (receipt.effectiveGasPrice || BigInt(0)))
+            if (waited.status === "pending") {
+                return {
+                    success: true,
+                    hash,
+                    from: wallet.address,
+                    to: recipientAddress,
+                    tokenAddress: resolvedTokenAddress,
+                    tokenSymbol: tokenSymbol || null,
+                    tokenQuery,
+                    resolvedFromBalances,
+                    amount,
+                    decimals,
+                    gasUsed: null,
+                    gasPriceGwei: null,
+                    gasFeeEth: null,
+                    gasFeeNative: null,
+                    nativeSymbol,
+                    status: "pending",
+                    pendingReason: waited.reason,
+                    network: activeNetwork,
+                }
+            }
+
+            const receipt = waited.receipt
+            const { gasUsed, gasPriceGwei, gasFeeNative } = gasFieldsFromReceipt(receipt)
 
             return {
                 success: true,

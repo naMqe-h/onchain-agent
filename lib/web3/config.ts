@@ -1,16 +1,18 @@
 import { defineChain, type Chain } from "viem"
-import { mainnet, polygon } from "viem/chains"
+import { mainnet, polygon, sepolia } from "viem/chains"
 
 export type NetworkId =
     | "robinhood-testnet"
     | "robinhood-mainnet"
     | "ethereum"
+    | "ethereum-sepolia"
     | "polygon"
 
 export const NETWORK_IDS: NetworkId[] = [
     "robinhood-testnet",
     "robinhood-mainnet",
     "ethereum",
+    "ethereum-sepolia",
     "polygon",
 ]
 
@@ -22,6 +24,9 @@ const NETWORK_ALIASES: Record<string, NetworkId> = {
     "robinhood-testnet": "robinhood-testnet",
     "robinhood-mainnet": "robinhood-mainnet",
     ethereum: "ethereum",
+    "ethereum-sepolia": "ethereum-sepolia",
+    sepolia: "ethereum-sepolia",
+    "eth-sepolia": "ethereum-sepolia",
     polygon: "polygon",
 }
 
@@ -97,6 +102,16 @@ const ethereumMainnet: Chain = {
     },
 }
 
+const ethereumSepolia: Chain = {
+    ...sepolia,
+    rpcUrls: {
+        ...sepolia.rpcUrls,
+        default: {
+            http: [process.env.ALCHEMY_RPC_URL_ETHEREUM_SEPOLIA || ""],
+        },
+    },
+}
+
 const polygonMainnet: Chain = {
     ...polygon,
     rpcUrls: {
@@ -116,6 +131,8 @@ type NetworkMeta = {
     nativeSymbol: string
     blockscoutUrlEnv: string[]
     dexScreenerChainIds: string[]
+    uniswapSupported: boolean
+    universalRouterVersion: "2.0" | "2.1.1"
 }
 
 function getSharedBlockscoutApiKey(): string | undefined {
@@ -143,6 +160,8 @@ const NETWORK_META: Record<NetworkId, NetworkMeta> = {
             "BLOCKSCOUT_API_URL_ROBINHOOD_TESTNET"
         ],
         dexScreenerChainIds: ["robinhood", "4663", "46630"],
+        uniswapSupported: false,
+        universalRouterVersion: "2.0",
     },
     "robinhood-mainnet": {
         id: "robinhood-mainnet",
@@ -155,6 +174,8 @@ const NETWORK_META: Record<NetworkId, NetworkMeta> = {
             "BLOCKSCOUT_API_URL_ROBINHOOD_MAINNET",
         ],
         dexScreenerChainIds: ["robinhood", "4663"],
+        uniswapSupported: true,
+        universalRouterVersion: "2.1.1",
     },
     ethereum: {
         id: "ethereum",
@@ -165,6 +186,20 @@ const NETWORK_META: Record<NetworkId, NetworkMeta> = {
         nativeSymbol: "ETH",
         blockscoutUrlEnv: ["BLOCKSCOUT_API_URL_ETHEREUM"],
         dexScreenerChainIds: ["ethereum"],
+        uniswapSupported: true,
+        universalRouterVersion: "2.0",
+    },
+    "ethereum-sepolia": {
+        id: "ethereum-sepolia",
+        label: "Ethereum Sepolia",
+        shortLabel: "Sepolia",
+        chain: ethereumSepolia,
+        explorerBaseUrl: "https://sepolia.etherscan.io",
+        nativeSymbol: "ETH",
+        blockscoutUrlEnv: ["BLOCKSCOUT_API_URL_ETHEREUM_SEPOLIA"],
+        dexScreenerChainIds: ["sepolia", "ethereumsepolia"],
+        uniswapSupported: true,
+        universalRouterVersion: "2.0",
     },
     polygon: {
         id: "polygon",
@@ -175,6 +210,8 @@ const NETWORK_META: Record<NetworkId, NetworkMeta> = {
         nativeSymbol: "POL",
         blockscoutUrlEnv: ["BLOCKSCOUT_API_URL_POLYGON"],
         dexScreenerChainIds: ["polygon"],
+        uniswapSupported: true,
+        universalRouterVersion: "2.0",
     },
 }
 
@@ -184,7 +221,7 @@ export type NetworkOption = {
     shortLabel: string
     chainId: number
     description: string
-    accent: "amber" | "indigo" | "blue" | "violet"
+    accent: "amber" | "indigo" | "blue" | "sky" | "violet"
 }
 
 export const NETWORK_OPTIONS: NetworkOption[] = [
@@ -213,6 +250,14 @@ export const NETWORK_OPTIONS: NetworkOption[] = [
         accent: "blue",
     },
     {
+        id: "ethereum-sepolia",
+        label: "Ethereum Sepolia",
+        shortLabel: "Sepolia",
+        chainId: 11155111,
+        description: "Chain ID: 11155111. Ethereum testnet for safe development.",
+        accent: "sky",
+    },
+    {
         id: "polygon",
         label: "Polygon Mainnet",
         shortLabel: "Polygon",
@@ -228,6 +273,10 @@ function meta(network?: string | null): NetworkMeta {
 
 export function getChainConfig(network?: string | null): Chain {
     return meta(network).chain
+}
+
+export function getChainId(network?: string | null): number {
+    return meta(network).chain.id
 }
 
 export function getExplorerBaseUrl(network?: string | null): string {
@@ -246,6 +295,7 @@ const NETWORK_ICON_SRC: Record<NetworkId, string> = {
     "robinhood-testnet": "/chains/robinhood.png",
     "robinhood-mainnet": "/chains/robinhood.png",
     ethereum: "/chains/ethereum.png",
+    "ethereum-sepolia": "/chains/ethereum.png",
     polygon: "/chains/polygon.png",
 }
 
@@ -259,6 +309,16 @@ export function getNativeCurrencySymbol(network?: string | null): string {
 
 export function getDexScreenerChainIds(network?: string | null): string[] {
     return meta(network).dexScreenerChainIds
+}
+
+export function isUniswapSwapSupported(network?: string | null): boolean {
+    return meta(network).uniswapSupported
+}
+
+export function getUniversalRouterVersion(
+    network?: string | null
+): "2.0" | "2.1.1" {
+    return meta(network).universalRouterVersion
 }
 
 export function getTokenBalancesApi(network?: string | null): {

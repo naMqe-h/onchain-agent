@@ -10,24 +10,37 @@ import {
     normalizeNetworkId,
 } from '@/lib/web3/config'
 
-export interface SendNativeTx {
+export interface SwapTx {
     success: true
     hash: string
+    approvalHash?: string | null
     from: string
-    to: string
-    amount: string
-    symbol?: string
+    tokenIn: {
+        address: string
+        symbol: string
+        isNative?: boolean
+    }
+    tokenOut: {
+        address: string
+        symbol: string
+        isNative?: boolean
+    }
+    amountIn: string
+    amountOut?: string | null
+    slippageTolerance?: number
+    routing?: string
     gasUsed?: string | null
     gasPriceGwei?: string | null
     gasFeeEth?: string | null
     gasFeeNative?: string | null
+    nativeSymbol?: string
     status: string
     pendingReason?: string | null
-    network?: string
+    network: string
 }
 
-interface SendNativeCardProps {
-    tx: SendNativeTx
+interface SwapCardProps {
+    tx: SwapTx
 }
 
 function shortAddress(addr: string): string {
@@ -91,15 +104,17 @@ function CopyableRow({
     )
 }
 
-export default function SendNativeCard({ tx }: SendNativeCardProps) {
+export default function SwapCard({ tx }: SwapCardProps) {
     const [copiedKey, setCopiedKey] = useState<string | null>(null)
 
     const network = normalizeNetworkId(tx.network)
     const base = getExplorerBaseUrl(network)
     const networkLabel = getNetworkShortLabel(network)
-    const symbol = tx.symbol || getNativeCurrencySymbol(network)
+    const gasSymbol = tx.nativeSymbol || getNativeCurrencySymbol(network)
     const gasFee = tx.gasFeeNative ?? tx.gasFeeEth
     const isPending = tx.status === 'pending' || tx.status === 'submitted'
+    const inSym = tx.tokenIn?.symbol || 'IN'
+    const outSym = tx.tokenOut?.symbol || 'OUT'
 
     const handleCopy = async (key: string, text: string) => {
         try {
@@ -111,9 +126,16 @@ export default function SendNativeCard({ tx }: SendNativeCardProps) {
         }
     }
 
+    const tokenHref = (address: string, isNative?: boolean) => {
+        if (isNative || !address || address.startsWith('0x0000000000000000000000000000000000000000')) {
+            return undefined
+        }
+        return `${base}/token/${address}`
+    }
+
     return (
         <div className="w-full max-w-2xl bg-[#171719]/90 border border-zinc-800/80 rounded-2xl p-5 md:p-6 backdrop-blur-md shadow-xl transition-all duration-300 hover:border-zinc-700/60 my-3">
-            <div className="grid grid-cols-3 gap-4 pb-5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pb-5">
                 <div className="flex flex-col gap-1 min-w-0">
                     <span className="text-[11px] text-zinc-500 uppercase font-semibold tracking-wider">
                         Status
@@ -136,11 +158,23 @@ export default function SendNativeCard({ tx }: SendNativeCardProps) {
                 </div>
                 <div className="flex flex-col gap-1 min-w-0">
                     <span className="text-[11px] text-zinc-500 uppercase font-semibold tracking-wider">
-                        Amount
+                        You pay
                     </span>
-                    <span className="text-base font-bold text-zinc-100 break-all" title={tx.amount}>
-                        {formatCompactAmount(tx.amount)}{' '}
-                        <span className="text-sm font-semibold text-zinc-400">{symbol}</span>
+                    <span className="text-base font-bold text-zinc-100 break-all" title={tx.amountIn}>
+                        {formatCompactAmount(tx.amountIn)}{' '}
+                        <span className="text-sm font-semibold text-zinc-400">{inSym}</span>
+                    </span>
+                </div>
+                <div className="flex flex-col gap-1 min-w-0">
+                    <span className="text-[11px] text-zinc-500 uppercase font-semibold tracking-wider">
+                        You receive
+                    </span>
+                    <span
+                        className="text-base font-bold text-zinc-100 break-all"
+                        title={tx.amountOut || undefined}
+                    >
+                        {tx.amountOut ? formatCompactAmount(tx.amountOut) : '—'}{' '}
+                        <span className="text-sm font-semibold text-zinc-400">{outSym}</span>
                     </span>
                 </div>
                 <div className="flex flex-col gap-1 min-w-0">
@@ -151,7 +185,7 @@ export default function SendNativeCard({ tx }: SendNativeCardProps) {
                         {gasFee != null && gasFee !== '' ? (
                             <>
                                 {gasFee}{' '}
-                                <span className="text-sm font-semibold text-zinc-400">{symbol}</span>
+                                <span className="text-sm font-semibold text-zinc-400">{gasSymbol}</span>
                             </>
                         ) : (
                             <span className="text-sm font-semibold text-zinc-500">—</span>
@@ -176,13 +210,33 @@ export default function SendNativeCard({ tx }: SendNativeCardProps) {
                     onCopy={handleCopy}
                 />
                 <CopyableRow
-                    label="To"
-                    value={tx.to}
-                    href={`${base}/address/${tx.to}`}
-                    copiedKey="to"
+                    label="Token In"
+                    value={tx.tokenIn.address}
+                    href={tokenHref(tx.tokenIn.address, tx.tokenIn.isNative)}
+                    display={`${inSym} · ${shortAddress(tx.tokenIn.address)}`}
+                    copiedKey="tokenIn"
                     activeKey={copiedKey}
                     onCopy={handleCopy}
                 />
+                <CopyableRow
+                    label="Token Out"
+                    value={tx.tokenOut.address}
+                    href={tokenHref(tx.tokenOut.address, tx.tokenOut.isNative)}
+                    display={`${outSym} · ${shortAddress(tx.tokenOut.address)}`}
+                    copiedKey="tokenOut"
+                    activeKey={copiedKey}
+                    onCopy={handleCopy}
+                />
+                {tx.approvalHash ? (
+                    <CopyableRow
+                        label="Approval Hash"
+                        value={tx.approvalHash}
+                        href={`${base}/tx/${tx.approvalHash}`}
+                        copiedKey="approval"
+                        activeKey={copiedKey}
+                        onCopy={handleCopy}
+                    />
+                ) : null}
                 <CopyableRow
                     label="Transaction Hash"
                     value={tx.hash}
@@ -193,10 +247,22 @@ export default function SendNativeCard({ tx }: SendNativeCardProps) {
                 />
             </div>
 
-            <div className="flex items-center justify-between gap-3 pt-4 mt-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 bg-zinc-900/80 border border-zinc-800/80 px-2.5 py-1 rounded-full shrink-0">
-                    {networkLabel}
-                </span>
+            <div className="flex items-center justify-between gap-3 pt-4 mt-1 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 bg-zinc-900/80 border border-zinc-800/80 px-2.5 py-1 rounded-full shrink-0">
+                        {networkLabel}
+                    </span>
+                    {tx.routing ? (
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 bg-zinc-900/80 border border-zinc-800/80 px-2.5 py-1 rounded-full shrink-0">
+                            {tx.routing}
+                        </span>
+                    ) : null}
+                    {typeof tx.slippageTolerance === 'number' ? (
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 bg-zinc-900/80 border border-zinc-800/80 px-2.5 py-1 rounded-full shrink-0">
+                            {tx.slippageTolerance}% slip
+                        </span>
+                    ) : null}
+                </div>
                 <a
                     href={`${base}/tx/${tx.hash}`}
                     target="_blank"

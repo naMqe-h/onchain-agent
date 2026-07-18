@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools"
 import { z } from "zod"
-import { createWalletClient, createPublicClient, http, parseEther, formatEther, formatGwei } from "viem"
+import { createWalletClient, createPublicClient, http, parseEther, type Hash } from "viem"
 import { privateKeyToAccount } from "viem/accounts"
 import {
     getChainConfig,
@@ -9,6 +9,7 @@ import {
 } from "../../lib/web3/config"
 import { resolveActingWallet } from "../../lib/web3/resolveActiveWallet"
 import { resolveNamedAddress } from "../../lib/web3/resolveNamedAddress"
+import { gasFieldsFromReceipt, waitForTxReceipt } from "../../lib/web3/waitForTx"
 import { createHash, createDecipheriv } from "crypto"
 
 const getEncryptionKey = () => {
@@ -93,16 +94,33 @@ export default defineTool({
                 transport: http(),
             })
 
-            const hash = await walletClient.sendTransaction({
+            const hash = (await walletClient.sendTransaction({
                 to: recipientAddress as `0x${string}`,
                 value: parseEther(amount),
-            })
+            })) as Hash
 
-            const receipt = await publicClient.waitForTransactionReceipt({ hash })
+            const waited = await waitForTxReceipt(publicClient, hash)
 
-            const gasUsed = receipt.gasUsed.toString()
-            const gasPriceGwei = receipt.effectiveGasPrice ? formatGwei(receipt.effectiveGasPrice) : "0"
-            const gasFeeNative = formatEther(receipt.gasUsed * (receipt.effectiveGasPrice || BigInt(0)))
+            if (waited.status === "pending") {
+                return {
+                    success: true,
+                    hash,
+                    from: wallet.address,
+                    to: recipientAddress,
+                    amount,
+                    symbol,
+                    gasUsed: null,
+                    gasPriceGwei: null,
+                    gasFeeEth: null,
+                    gasFeeNative: null,
+                    status: "pending",
+                    pendingReason: waited.reason,
+                    network: activeNetwork,
+                }
+            }
+
+            const receipt = waited.receipt
+            const { gasUsed, gasPriceGwei, gasFeeNative } = gasFieldsFromReceipt(receipt)
 
             return {
                 success: true,

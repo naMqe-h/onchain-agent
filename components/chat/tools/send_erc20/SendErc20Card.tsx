@@ -18,12 +18,13 @@ export interface SendErc20Tx {
     tokenAddress: string
     tokenSymbol?: string | null
     amount: string
-    gasUsed: string
-    gasPriceGwei: string
-    gasFeeEth: string
-    gasFeeNative?: string
+    gasUsed?: string | null
+    gasPriceGwei?: string | null
+    gasFeeEth?: string | null
+    gasFeeNative?: string | null
     nativeSymbol?: string
     status: string
+    pendingReason?: string | null
     network: string
 }
 
@@ -101,6 +102,7 @@ export default function SendErc20Card({ tx }: SendErc20CardProps) {
     const networkLabel = getNetworkShortLabel(network)
     const gasSymbol = tx.nativeSymbol || getNativeCurrencySymbol(network)
     const gasFee = tx.gasFeeNative ?? tx.gasFeeEth
+    const isPending = tx.status === 'pending' || tx.status === 'submitted'
 
     const handleCopy = async (key: string, text: string) => {
         try {
@@ -120,10 +122,19 @@ export default function SendErc20Card({ tx }: SendErc20CardProps) {
                         Status
                     </span>
                     <span
-                        className={`text-base font-bold capitalize ${tx.status === 'success' ? 'text-emerald-400' : 'text-red-400'
-                            }`}
+                        className={`text-base font-bold capitalize ${
+                            tx.status === 'success'
+                                ? 'text-emerald-400'
+                                : isPending
+                                  ? 'text-amber-400'
+                                  : 'text-red-400'
+                        }`}
                     >
-                        {tx.status === 'success' ? 'Success' : tx.status || 'Failed'}
+                        {tx.status === 'success'
+                            ? 'Success'
+                            : isPending
+                              ? 'Pending'
+                              : tx.status || 'Failed'}
                     </span>
                 </div>
                 <div className="flex flex-col gap-1 min-w-0">
@@ -140,11 +151,23 @@ export default function SendErc20Card({ tx }: SendErc20CardProps) {
                         Gas Fee
                     </span>
                     <span className="text-base font-bold text-zinc-100 break-all">
-                        {gasFee}{' '}
-                        <span className="text-sm font-semibold text-zinc-400">{gasSymbol}</span>
+                        {gasFee != null && gasFee !== '' ? (
+                            <>
+                                {gasFee}{' '}
+                                <span className="text-sm font-semibold text-zinc-400">{gasSymbol}</span>
+                            </>
+                        ) : (
+                            <span className="text-sm font-semibold text-zinc-500">—</span>
+                        )}
                     </span>
                 </div>
             </div>
+
+            {isPending && tx.pendingReason ? (
+                <p className="text-xs text-amber-400/90 bg-amber-500/5 border border-amber-500/20 rounded-xl px-3 py-2 mb-1">
+                    {tx.pendingReason}
+                </p>
+            ) : null}
 
             <div className="flex flex-col gap-2.5 pt-4 border-t border-zinc-800/60">
                 <CopyableRow

@@ -10,6 +10,8 @@ import SendErc20Card from './tools/send_erc20/SendErc20Card'
 import SendErc20Skeleton from './tools/send_erc20/SendErc20Skeleton'
 import SendNativeCard from './tools/send_native/SendNativeCard'
 import SendNativeSkeleton from './tools/send_native/SendNativeSkeleton'
+import SwapCard from './tools/swap_tokens/SwapCard'
+import SwapSkeleton from './tools/swap_tokens/SwapSkeleton'
 import { slideInUp, staggerContainer } from '../../lib/motion'
 
 interface Message {
@@ -51,6 +53,7 @@ function MessageItem({ message, isActive, onToggleReasoning, isLast, isBusy }: M
         const tokenBalancesParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_token_balances')
         const sendErc20Parts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'send_erc20')
         const sendNativeParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'send_native')
+        const swapParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'swap_tokens')
 
         return (
             <div className="flex flex-col gap-2 w-full">
@@ -100,6 +103,15 @@ function MessageItem({ message, isActive, onToggleReasoning, isLast, isBusy }: M
                     }
                     if (part.state === 'output-available' && part.output?.success === true) {
                         return <SendNativeCard key={`send-native-card-${i}`} tx={part.output} />
+                    }
+                    return null
+                })}
+                {swapParts.map((part, i) => {
+                    if (part.state === 'executing' || part.state === 'requested') {
+                        return <SwapSkeleton key={`swap-skeleton-${i}`} />
+                    }
+                    if (part.state === 'output-available' && part.output?.success === true) {
+                        return <SwapCard key={`swap-card-${i}`} tx={part.output} />
                     }
                     return null
                 })}

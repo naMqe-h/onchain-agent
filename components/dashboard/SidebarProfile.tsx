@@ -17,6 +17,7 @@ const NETWORK_BADGE_CLASS: Record<NetworkId, string> = {
     'robinhood-testnet': 'text-amber-500',
     'robinhood-mainnet': 'text-indigo-400',
     ethereum: 'text-blue-400',
+    'ethereum-sepolia': 'text-sky-400',
     polygon: 'text-violet-400',
 }
 

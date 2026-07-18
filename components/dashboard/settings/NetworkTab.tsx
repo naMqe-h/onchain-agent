@@ -18,6 +18,7 @@ const ACCENT_SELECTED: Record<string, string> = {
     amber: 'bg-amber-500/5 border-amber-500/30 hover:border-amber-500/40',
     indigo: 'bg-indigo-500/5 border-indigo-500/30 hover:border-indigo-500/40',
     blue: 'bg-blue-500/5 border-blue-500/30 hover:border-blue-500/40',
+    sky: 'bg-sky-500/5 border-sky-500/30 hover:border-sky-500/40',
     violet: 'bg-violet-500/5 border-violet-500/30 hover:border-violet-500/40',
 }
 
@@ -25,6 +26,7 @@ const ACCENT_ICON: Record<string, string> = {
     amber: 'bg-amber-500/10 text-amber-400',
     indigo: 'bg-indigo-500/10 text-indigo-400',
     blue: 'bg-blue-500/10 text-blue-400',
+    sky: 'bg-sky-500/10 text-sky-400',
     violet: 'bg-violet-500/10 text-violet-400',
 }
 
@@ -32,6 +34,7 @@ const ACCENT_CHECK: Record<string, string> = {
     amber: 'bg-amber-500/20 border-amber-500/30 text-amber-400',
     indigo: 'bg-indigo-500/20 border-indigo-500/30 text-indigo-400',
     blue: 'bg-blue-500/20 border-blue-500/30 text-blue-400',
+    sky: 'bg-sky-500/20 border-sky-500/30 text-sky-400',
     violet: 'bg-violet-500/20 border-violet-500/30 text-violet-400',
 }
 
