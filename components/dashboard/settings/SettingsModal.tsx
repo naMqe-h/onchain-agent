@@ -42,7 +42,7 @@ export default function SettingsModal({ user, profile }: SettingsModalProps) {
             onClick={closeSettings}
         >
             <div
-                className="bg-[#18181b] w-full h-full rounded-none max-w-none border-none md:max-w-3xl md:h-[500px] md:rounded-[24px] md:border md:border-white/10 flex flex-col md:flex-row overflow-hidden shadow-2xl"
+                className="bg-[#18181b] w-full h-full rounded-none max-w-none border-none md:max-w-4xl md:h-[600px] md:rounded-[24px] md:border md:border-white/10 flex flex-col md:flex-row overflow-hidden shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="w-full md:w-[240px] pt-4 px-4 pb-5 md:p-5 flex flex-row md:flex-col justify-between md:justify-start gap-3 md:gap-4 bg-[#141416]/50 border-b border-white/5 md:border-b-0 md:border-r md:border-white/5 items-center md:items-stretch shrink-0">

@@ -215,14 +215,35 @@ const NETWORK_META: Record<NetworkId, NetworkMeta> = {
     },
 }
 
+export type NetworkEnvironment = "mainnet" | "testnet"
+
 export type NetworkOption = {
     id: NetworkId
     label: string
     shortLabel: string
     chainId: number
-    description: string
+    environment: NetworkEnvironment
     accent: "amber" | "indigo" | "blue" | "sky" | "violet"
 }
+
+export const NETWORK_SECTIONS: {
+    id: NetworkEnvironment
+    title: string
+    description: string
+}[] = [
+        {
+            id: "mainnet",
+            title: "Mainnet",
+            description:
+                "Production networks. Transactions use real assets and cannot be reversed.",
+        },
+        {
+            id: "testnet",
+            title: "Testnet",
+            description:
+                "Development and testing networks. Use test funds only - no real value at risk.",
+        },
+    ]
 
 export const NETWORK_OPTIONS: NetworkOption[] = [
     {
@@ -230,7 +251,7 @@ export const NETWORK_OPTIONS: NetworkOption[] = [
         label: "Robinhood Chain Testnet",
         shortLabel: "Robinhood Testnet",
         chainId: 46630,
-        description: "Chain ID: 46630. For development and safe testing.",
+        environment: "testnet",
         accent: "amber",
     },
     {
@@ -238,7 +259,7 @@ export const NETWORK_OPTIONS: NetworkOption[] = [
         label: "Robinhood Chain Mainnet",
         shortLabel: "Robinhood Mainnet",
         chainId: 4663,
-        description: "Chain ID: 4663. Real transactions on Robinhood Chain.",
+        environment: "mainnet",
         accent: "indigo",
     },
     {
@@ -246,7 +267,7 @@ export const NETWORK_OPTIONS: NetworkOption[] = [
         label: "Ethereum Mainnet",
         shortLabel: "Ethereum",
         chainId: 1,
-        description: "Chain ID: 1. Real transactions on Ethereum.",
+        environment: "mainnet",
         accent: "blue",
     },
     {
@@ -254,7 +275,7 @@ export const NETWORK_OPTIONS: NetworkOption[] = [
         label: "Ethereum Sepolia",
         shortLabel: "Sepolia",
         chainId: 11155111,
-        description: "Chain ID: 11155111. Ethereum testnet for safe development.",
+        environment: "testnet",
         accent: "sky",
     },
     {
@@ -262,7 +283,7 @@ export const NETWORK_OPTIONS: NetworkOption[] = [
         label: "Polygon Mainnet",
         shortLabel: "Polygon",
         chainId: 137,
-        description: "Chain ID: 137. Real transactions on Polygon.",
+        environment: "mainnet",
         accent: "violet",
     },
 ]
