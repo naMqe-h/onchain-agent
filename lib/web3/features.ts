@@ -63,5 +63,16 @@ export const FEATURES_REGISTRY: FeatureSupport[] = [
             'ethereum-sepolia': { status: 'partial', details: 'Low Liquidity' },
             'polygon': { status: 'supported', details: 'Router v2.0' },
         }
+    },
+    {
+        name: 'Transaction History',
+        description: 'View wallet transaction history on the explorer.',
+        support: {
+            'robinhood-testnet': { status: 'supported', details: 'Supported' },
+            'robinhood-mainnet': { status: 'supported', details: 'Supported' },
+            'ethereum': { status: 'supported', details: 'Supported' },
+            'ethereum-sepolia': { status: 'supported', details: 'Supported' },
+            'polygon': { status: 'supported', details: 'Supported' },
+        }
     }
 ]

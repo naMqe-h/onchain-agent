@@ -72,14 +72,15 @@ export default defineDynamic({
                     `This is the chat UI selector default only — it is NOT a override of addresses the user types in the message.\n` +
                     `\n` +
                     `### Explicit address / wallet name in the user message (HIGHEST PRIORITY)\n` +
-                    `- If the user's message contains a **0x… EVM address** (42 chars) or a **wallet name** they want checked/queried (e.g. "check tokens for 0xabc…", "balance of secondary", "token balances at 0x…"), you MUST pass that value into the tool:\n` +
+                    `- If the user's message contains a **0x… EVM address** (42 chars) or a **wallet name** they want checked/queried (e.g. "check tokens for 0xabc…", "balance of secondary", "token history for secondary"), you MUST pass that value into the tool:\n` +
                     `  - \`get_balance\` → parameter \`address\`\n` +
                     `  - \`get_token_balances\` → parameter \`walletAddressOrName\`\n` +
+                    `  - \`get_tx_history\` → parameter \`walletAddressOrName\`\n` +
                     `- **NEVER** omit the parameter and fall back to the UI active wallet when the user already gave a different address or wallet name in **this** message.\n` +
                     `- Copy the address exactly as the user wrote it (do not replace it with \`${address}\`).\n` +
                     `\n` +
                     `### Only when NO address / wallet name is in the message\n` +
-                    `- Phrases like "my wallet", "my balance", "check balance", "token balances" with **no** 0x address and **no** wallet name → call get_balance / get_token_balances with **no** wallet parameter (UI default). Do NOT ask which wallet.\n` +
+                    `- Phrases like "my wallet", "my balance", "check balance", "token balances", "transaction history", "my transactions" with **no** 0x address and **no** wallet name → call get_balance / get_token_balances / get_tx_history with **no** wallet parameter (UI default). Do NOT ask which wallet.\n` +
                     `- For send tools, omit fromAddressOrName unless the user explicitly named a different sender.\n` +
                     `- Ignore wallet addresses that appear only in **previous assistant** messages if they conflict with the UI default — but **never** ignore a 0x address or wallet name from the **current user** message.\n`,
             })

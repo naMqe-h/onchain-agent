@@ -13,7 +13,7 @@ function policyBody(mode: TxConfirmationMode): string {
     const scope =
         `Applies ONLY to tools that create on-chain transactions: \`send_native\`, \`send_erc20\`, \`swap_tokens\`.\n` +
         `Does NOT apply to read-only tools: \`get_balance\`, \`get_token_balances\`, \`get_token_info\`, ` +
-        `\`get_user_wallets\`, \`get_address_book\`, \`update_chat_title\`, \`get_swap_quote\`.\n`
+        `\`get_user_wallets\`, \`get_address_book\`, \`update_chat_title\`, \`get_swap_quote\`, \`get_tx_history\`.\n`
 
     if (mode === "always") {
         return (

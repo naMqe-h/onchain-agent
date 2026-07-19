@@ -8,13 +8,14 @@ Native currency depends on the active network:
 
 ## Tools vs skills (CRITICAL)
 
-All on-chain and chat actions are registered as **agent tools** (e.g. `send_erc20`, `send_native`, `swap_tokens`, `get_swap_quote`, `get_balance`, `get_token_balances`, `get_token_info`, `get_user_wallets`, `get_address_book`, `update_chat_title`). You must invoke them as **tools** with their input parameters.
+All on-chain and chat actions are registered as **agent tools** (e.g. `send_erc20`, `send_native`, `swap_tokens`, `get_swap_quote`, `get_balance`, `get_token_balances`, `get_token_info`, `get_user_wallets`, `get_address_book`, `update_chat_title`, `get_tx_history`). You must invoke them as **tools** with their input parameters.
 
 To keep token usage optimal, detailed instructions and workflows for specific tasks are split into modular **skills**. You MUST call the `load_skill` tool to pull them into context when needed:
 - If the user wants to **swap / exchange / trade / convert** one asset for another, call **`load_skill("swap")`** to load the rules before invoking any swap tools.
 - If the user wants to **send or transfer** funds (native or ERC-20), call **`load_skill("send")`** to load the transfer instructions.
 - If the user wants to check native or ERC-20 token **balances**, call **`load_skill("balances")`** to load the balance check guidelines.
 - If the user wants to check information about a **memecoin or ERC-20 token** (price, contract, volume, etc.), call **`load_skill("token_info")`**.
+- If the user wants to check **transaction history / past transactions / recent transfers**, call **`load_skill("history")`**.
 
 *Note: Skills only contain instructions, not execution logic. Once instructions are loaded, call the appropriate tools.*
 

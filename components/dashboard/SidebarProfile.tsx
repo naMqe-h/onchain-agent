@@ -199,12 +199,12 @@ export default function SidebarProfile({
             <button
                 onClick={() => {
                     setIsOpen(false)
-                    openSettings()
+                    setIsFeaturesOpen(true)
                 }}
                 className="w-[calc(100%-16px)] mx-2 text-left px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-zinc-100 flex items-center gap-3 rounded-xl cursor-pointer transition-colors"
             >
-                <FiSettings size={16} className="text-zinc-400" />
-                Settings
+                <FiLayers size={16} className="text-zinc-400" />
+                Features
             </button>
 
             <div className="h-px bg-white/5 my-1.5" />
@@ -212,12 +212,12 @@ export default function SidebarProfile({
             <button
                 onClick={() => {
                     setIsOpen(false)
-                    setIsFeaturesOpen(true)
+                    openSettings()
                 }}
                 className="w-[calc(100%-16px)] mx-2 text-left px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-zinc-100 flex items-center gap-3 rounded-xl cursor-pointer transition-colors"
             >
-                <FiLayers size={16} className="text-zinc-400" />
-                Features
+                <FiSettings size={16} className="text-zinc-400" />
+                Settings
             </button>
 
             <div className="h-px bg-white/5 my-1.5" />
