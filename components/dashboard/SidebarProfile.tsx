@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { User } from '@supabase/supabase-js'
-import { FiMoreHorizontal, FiSettings, FiLogOut, FiAlertTriangle } from 'react-icons/fi'
+import { FiMoreHorizontal, FiSettings, FiLogOut, FiAlertTriangle, FiLayers } from 'react-icons/fi'
 import { createClient } from '../../lib/supabase/client'
 import { useSettingsStore } from '../../hooks/useSettingsStore'
 import { useAuthModalStore } from '../../hooks/useAuthModalStore'
@@ -15,6 +15,7 @@ import {
     normalizeNetworkId,
     type NetworkId,
 } from '../../lib/web3/config'
+import FeaturesModal from './FeaturesModal'
 
 type DailyUsageAlert = {
     level: 'soft' | 'hard'
@@ -76,6 +77,7 @@ export default function SidebarProfile({
     collapsed?: boolean
 }) {
     const [isOpen, setIsOpen] = useState(false)
+    const [isFeaturesOpen, setIsFeaturesOpen] = useState(false)
     const [usageAlert, setUsageAlert] = useState<DailyUsageAlert | null>(null)
     const openSettings = useSettingsStore((state) => state.openSettings)
     const openAuthModal = useAuthModalStore((state) => state.open)
@@ -208,6 +210,19 @@ export default function SidebarProfile({
             <div className="h-px bg-white/5 my-1.5" />
 
             <button
+                onClick={() => {
+                    setIsOpen(false)
+                    setIsFeaturesOpen(true)
+                }}
+                className="w-[calc(100%-16px)] mx-2 text-left px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-zinc-100 flex items-center gap-3 rounded-xl cursor-pointer transition-colors"
+            >
+                <FiLayers size={16} className="text-zinc-400" />
+                Features
+            </button>
+
+            <div className="h-px bg-white/5 my-1.5" />
+
+            <button
                 onClick={handleLogout}
                 className="w-[calc(100%-16px)] mx-2 text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 flex items-center gap-3 rounded-xl cursor-pointer transition-colors"
             >
@@ -241,6 +256,7 @@ export default function SidebarProfile({
                         </span>
                     </span>
                 </button>
+                <FeaturesModal isOpen={isFeaturesOpen} onClose={() => setIsFeaturesOpen(false)} />
             </div>
         )
     }
@@ -307,6 +323,7 @@ export default function SidebarProfile({
                     </button>
                 </div>
             </div>
+            <FeaturesModal isOpen={isFeaturesOpen} onClose={() => setIsFeaturesOpen(false)} />
         </div>
     )
 }

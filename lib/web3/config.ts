@@ -149,34 +149,6 @@ function firstEnv(...names: string[]): string {
 }
 
 const NETWORK_META: Record<NetworkId, NetworkMeta> = {
-    "robinhood-testnet": {
-        id: "robinhood-testnet",
-        label: "Robinhood Chain Testnet",
-        shortLabel: "Robinhood Testnet",
-        chain: robinhoodTestnet,
-        explorerBaseUrl: "https://explorer.testnet.chain.robinhood.com",
-        nativeSymbol: "ETH",
-        blockscoutUrlEnv: [
-            "BLOCKSCOUT_API_URL_ROBINHOOD_TESTNET"
-        ],
-        dexScreenerChainIds: ["robinhood", "4663", "46630"],
-        uniswapSupported: false,
-        universalRouterVersion: "2.0",
-    },
-    "robinhood-mainnet": {
-        id: "robinhood-mainnet",
-        label: "Robinhood Chain Mainnet",
-        shortLabel: "Robinhood Mainnet",
-        chain: robinhoodMainnet,
-        explorerBaseUrl: "https://robinhoodchain.blockscout.com",
-        nativeSymbol: "ETH",
-        blockscoutUrlEnv: [
-            "BLOCKSCOUT_API_URL_ROBINHOOD_MAINNET",
-        ],
-        dexScreenerChainIds: ["robinhood", "4663"],
-        uniswapSupported: true,
-        universalRouterVersion: "2.1.1",
-    },
     ethereum: {
         id: "ethereum",
         label: "Ethereum Mainnet",
@@ -212,6 +184,34 @@ const NETWORK_META: Record<NetworkId, NetworkMeta> = {
         dexScreenerChainIds: ["polygon"],
         uniswapSupported: true,
         universalRouterVersion: "2.0",
+    },
+    "robinhood-testnet": {
+        id: "robinhood-testnet",
+        label: "Robinhood Chain Testnet",
+        shortLabel: "Robinhood Testnet",
+        chain: robinhoodTestnet,
+        explorerBaseUrl: "https://explorer.testnet.chain.robinhood.com",
+        nativeSymbol: "ETH",
+        blockscoutUrlEnv: [
+            "BLOCKSCOUT_API_URL_ROBINHOOD_TESTNET"
+        ],
+        dexScreenerChainIds: ["robinhood", "4663", "46630"],
+        uniswapSupported: false,
+        universalRouterVersion: "2.0",
+    },
+    "robinhood-mainnet": {
+        id: "robinhood-mainnet",
+        label: "Robinhood Chain Mainnet",
+        shortLabel: "Robinhood Mainnet",
+        chain: robinhoodMainnet,
+        explorerBaseUrl: "https://robinhoodchain.blockscout.com",
+        nativeSymbol: "ETH",
+        blockscoutUrlEnv: [
+            "BLOCKSCOUT_API_URL_ROBINHOOD_MAINNET",
+        ],
+        dexScreenerChainIds: ["robinhood", "4663"],
+        uniswapSupported: true,
+        universalRouterVersion: "2.1.1",
     },
 }
 
