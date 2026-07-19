@@ -46,6 +46,7 @@ function supabaseAuth(): AuthFn<Request> {
         const txConfirmationMode = normalizeTxConfirmationMode(
             user.user_metadata?.txConfirmationMode
         )
+        const addressAllowlistEnabled = !!user.user_metadata?.addressAllowlistEnabled
 
         const attributes: Record<string, string> = {
             modelName: modelHeader,
@@ -54,6 +55,7 @@ function supabaseAuth(): AuthFn<Request> {
             activeWalletAddress: walletHeader,
             txConfirmationMode,
             timeZone: timeZoneHeader,
+            addressAllowlistEnabled: String(addressAllowlistEnabled),
         }
 
         return {

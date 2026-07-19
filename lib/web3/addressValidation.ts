@@ -51,3 +51,42 @@ export async function assertUniqueLabel(
         throw new Error("An address book entry with this name already exists")
     }
 }
+
+export async function isAddressOnAllowlist(
+    userId: string,
+    address: string
+): Promise<boolean> {
+    const trimmed = address.trim()
+    if (!trimmed) {
+        return false
+    }
+
+    let normalized = trimmed
+    try {
+        normalized = normalizeEvmAddress(trimmed)
+    } catch { }
+
+    const wallet = await db.wallet.findFirst({
+        where: {
+            userId,
+            address: { equals: normalized, mode: "insensitive" },
+        },
+        select: { id: true },
+    })
+    if (wallet) {
+        return true
+    }
+
+    const entry = await db.addressBookEntry.findFirst({
+        where: {
+            userId,
+            address: { equals: normalized, mode: "insensitive" },
+        },
+        select: { id: true },
+    })
+    if (entry) {
+        return true
+    }
+
+    return false
+}

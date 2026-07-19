@@ -32,9 +32,41 @@ export default function SecurityTab({ user }: SecurityTabProps) {
     const [mode, setMode] = useState<TxConfirmationMode>(
         normalizeTxConfirmationMode(user?.user_metadata?.txConfirmationMode)
     )
+    const [addressAllowlistEnabled, setAddressAllowlistEnabled] = useState<boolean>(
+        !!user?.user_metadata?.addressAllowlistEnabled
+    )
     const [isUpdating, setIsUpdating] = useState(false)
     const [successMessage, setSuccessMessage] = useState('')
     const [errorMessage, setErrorMessage] = useState('')
+
+    const handleToggleAllowlist = async () => {
+        if (isUpdating) return
+
+        const nextVal = !addressAllowlistEnabled
+        setIsUpdating(true)
+        setSuccessMessage('')
+        setErrorMessage('')
+
+        try {
+            const supabase = createClient()
+            const { error } = await supabase.auth.updateUser({
+                data: { addressAllowlistEnabled: nextVal },
+            })
+
+            if (error) {
+                throw error
+            }
+
+            setAddressAllowlistEnabled(nextVal)
+            setSuccessMessage(`Address allowlist: ${nextVal ? 'Enabled' : 'Disabled'}`)
+            router.refresh()
+        } catch (err: unknown) {
+            console.error('Failed to update address allowlist status:', err)
+            setErrorMessage('Failed to update security settings. Please try again.')
+        } finally {
+            setIsUpdating(false)
+        }
+    }
 
     const handleModeChange = async (newMode: TxConfirmationMode) => {
         if (isUpdating || newMode === mode) return
@@ -123,6 +155,47 @@ export default function SecurityTab({ user }: SecurityTabProps) {
                             </button>
                         )
                     })}
+                </div>
+
+                <div className="border-t border-white/5 my-4 pt-4 flex flex-col gap-4">
+                    <div className="flex flex-col gap-1.5">
+                        <h3 className="text-sm font-semibold text-zinc-200">Address allowlist</h3>
+                        <p className="text-xs text-zinc-500">
+                            Restrict on-chain token transfers to verified addresses only. When enabled, the agent will only send tokens to contacts in your Address Book or to your own Wallets.
+                        </p>
+                    </div>
+
+                    <button
+                        key="address-allowlist-btn"
+                        type="button"
+                        onClick={handleToggleAllowlist}
+                        disabled={isUpdating}
+                        className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer text-left ${
+                            addressAllowlistEnabled
+                                ? 'bg-emerald-500/5 border-emerald-500/30 hover:border-emerald-500/40'
+                                : 'bg-[#1c1c1f]/30 border-white/5 hover:border-white/10'
+                        }`}
+                    >
+                        <div className="flex flex-col gap-1 pr-3 min-w-0">
+                            <span className="text-sm font-semibold text-zinc-200">
+                                Restrict transfers to Allowlist
+                            </span>
+                            <span className="text-xs text-zinc-500">
+                                {addressAllowlistEnabled
+                                    ? 'Agent is restricted to address book and your wallets.'
+                                    : 'Agent can send tokens to any address.'}
+                            </span>
+                        </div>
+                        <div
+                            className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
+                                addressAllowlistEnabled
+                                    ? 'border-emerald-500/30 bg-emerald-500/20 text-emerald-400'
+                                    : 'border-white/10 bg-white/5 text-transparent'
+                            }`}
+                        >
+                            {addressAllowlistEnabled && <FiCheck size={12} />}
+                        </div>
+                    </button>
                 </div>
 
                 {isUpdating && (

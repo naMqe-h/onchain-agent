@@ -17,6 +17,7 @@ import {
 } from "../../lib/web3/config"
 import { resolveActingWallet } from "../../lib/web3/resolveActiveWallet"
 import { resolveNamedAddress } from "../../lib/web3/resolveNamedAddress"
+import { isAddressOnAllowlist } from "../../lib/web3/addressValidation"
 import { fetchWalletErc20Tokens, type BalanceToken } from "../../lib/web3/tokenBalances"
 import { gasFieldsFromReceipt, waitForTxReceipt } from "../../lib/web3/waitForTx"
 import { createHash, createDecipheriv } from "crypto"
@@ -154,6 +155,17 @@ export default defineTool({
                 return { success: false, error: recipientResult.error }
             }
             const recipientAddress = recipientResult.address
+
+            const addressAllowlistEnabled = ctx.session?.auth?.current?.attributes?.addressAllowlistEnabled === "true"
+            if (addressAllowlistEnabled) {
+                const allowed = await isAddressOnAllowlist(userId, recipientAddress)
+                if (!allowed) {
+                    return {
+                        success: false,
+                        error: "Address Allowlist security check failed: The recipient address is not in your address book or wallets list. To send to this address, add it to your Address Book in Settings, or disable this safety check in Settings -> Security."
+                    }
+                }
+            }
 
             let resolvedTokenAddress: string
             let resolvedFromBalances = false
