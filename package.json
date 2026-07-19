@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
+    "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
@@ -18,7 +18,7 @@
     "@supabase/ssr": "^0.12.1",
     "@supabase/supabase-js": "^2.110.4",
     "ai": "^7.0.26",
-    "eve": "^0.25.1",
+    "eve": "^0.25.2",
     "framer-motion": "^12.42.2",
     "js-tiktoken": "^1.0.21",
     "moment": "^2.30.1",
