@@ -74,5 +74,16 @@ export const FEATURES_REGISTRY: FeatureSupport[] = [
             'ethereum-sepolia': { status: 'supported', details: 'Supported' },
             'polygon': { status: 'supported', details: 'Supported' },
         }
+    },
+    {
+        name: 'Trending Tokens',
+        description: 'Fetch the top trending tokens.',
+        support: {
+            'robinhood-testnet': { status: 'unsupported', details: 'Testnet not supported' },
+            'robinhood-mainnet': { status: 'supported', details: 'Supported' },
+            'ethereum': { status: 'supported', details: 'Supported' },
+            'ethereum-sepolia': { status: 'unsupported', details: 'Testnet not supported' },
+            'polygon': { status: 'supported', details: 'Supported' },
+        }
     }
 ]

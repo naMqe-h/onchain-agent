@@ -16,6 +16,8 @@ import SwapCard from '../tools/swap_tokens/SwapCard'
 import SwapSkeleton from '../tools/swap_tokens/SwapSkeleton'
 import TxHistoryCard from '../tools/get_tx_history/TxHistoryCard'
 import TxHistorySkeleton from '../tools/get_tx_history/TxHistorySkeleton'
+import TrendingTokensCard from '../tools/get_trending_tokens/TrendingTokensCard'
+import TrendingTokensSkeleton from '../tools/get_trending_tokens/TrendingTokensSkeleton'
 import { messageHasReasoning, messageHasTools } from '../AgentAnalysisPanel'
 import { slideInUp } from '../../../lib/motion'
 import CopyMessageButton from './CopyMessageButton'
@@ -140,6 +142,7 @@ export default function MessageItem({
         const sendNativeParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'send_native')
         const swapParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'swap_tokens')
         const txHistoryParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_tx_history')
+        const trendingTokensParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_trending_tokens')
 
         return (
             <div className="flex flex-col gap-2 w-full">
@@ -148,6 +151,17 @@ export default function MessageItem({
                         <ReactMarkdown>{part.text}</ReactMarkdown>
                     </div>
                 ))}
+                {trendingTokensParts.map((part, i) => {
+                    if (part.state === 'executing' || part.state === 'requested') {
+                        return <TrendingTokensSkeleton key={`trending-skeleton-${i}`} />
+                    }
+                    if (part.state === 'output-available') {
+                        if (part.output?.success && part.output?.found) {
+                            return <TrendingTokensCard key={`trending-card-${i}`} data={part.output} />
+                        }
+                    }
+                    return null
+                })}
                 {tokenInfoParts.map((part, i) => {
                     if (part.state === 'executing' || part.state === 'requested') {
                         return <TokenInfoSkeleton key={`token-skeleton-${i}`} />

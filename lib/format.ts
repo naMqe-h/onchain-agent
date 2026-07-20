@@ -77,7 +77,11 @@ export function formatBalance(balance: string | number | null | undefined): stri
 export function formatUsd(value: number | null | undefined): string {
     if (isEmpty(value) || !Number.isFinite(value as number)) return EMPTY_VALUE
     const n = value as number
-    if (n > 0 && n < 0.01) {
+    if (n === 0) return '$0.00'
+    if (n > 0 && n < 1) {
+        if (n < 0.000001) return `$${n.toFixed(10)}`
+        if (n < 0.0001) return `$${n.toFixed(8)}`
+        if (n < 0.01) return `$${n.toFixed(6)}`
         return `$${n.toFixed(4)}`
     }
     if (Math.abs(n) >= 1000) {
@@ -94,6 +98,13 @@ export function formatUsdCompact(value: number | null | undefined): string {
 export function formatDisplayText(value: string | null | undefined): string {
     if (isEmpty(value)) return EMPTY_VALUE
     return String(value)
+}
+
+export function formatPercent(percent: number | null | undefined): string {
+    if (isEmpty(percent) || !Number.isFinite(percent as number)) return EMPTY_VALUE
+    const p = percent as number
+    const sign = p > 0 ? '+' : ''
+    return `${sign}${p.toFixed(2)}%`
 }
 
 export function formatShortAddress(addr: string | null | undefined): string {
