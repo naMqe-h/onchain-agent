@@ -1,6 +1,7 @@
 import { useRef, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { slideInUp, staggerContainer } from '../../lib/motion'
+import { getAgentStatusText } from '../../lib/chat/getAgentStatusText'
 import MessageItem from './messages/MessageItem'
 
 interface Message {
@@ -17,6 +18,7 @@ interface ChatMessagesListProps {
     onToggleAnalysis: (id: string, mode: 'reasoning' | 'tools') => void
     isBusy?: boolean
     showError?: boolean
+    agentEvents?: readonly any[]
 }
 
 const hasTextContent = (message: Message) => {
@@ -24,7 +26,16 @@ const hasTextContent = (message: Message) => {
     return message.parts.some(part => part.type === 'text' && part.text && part.text.trim().length > 0)
 }
 
-export default function ChatMessagesList({ chatId, messages, activeMessageId, activePanelMode, onToggleAnalysis, isBusy, showError }: ChatMessagesListProps) {
+export default function ChatMessagesList({
+    chatId,
+    messages,
+    activeMessageId,
+    activePanelMode,
+    onToggleAnalysis,
+    isBusy,
+    showError,
+    agentEvents
+}: ChatMessagesListProps) {
     const containerRef = useRef<HTMLDivElement>(null)
     const isAtBottomRef = useRef(true)
 
@@ -97,10 +108,19 @@ export default function ChatMessagesList({ chatId, messages, activeMessageId, ac
                     (messages[messages.length - 1]?.role === 'assistant' && !hasTextContent(messages[messages.length - 1]))
                 ) && (
                         <motion.div variants={slideInUp} className="flex flex-col items-start w-full gap-2">
-                            <div className="flex items-center gap-1.5 px-4 py-3 bg-[#1e1e20]/40 rounded-[20px] border border-white/5 shadow-sm">
-                                <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                            <div className="flex flex-col items-start gap-1.5 px-4 py-3 bg-[#1e1e20]/40 rounded-[20px] border border-white/5 shadow-sm min-w-[150px]">
+                                <motion.span
+                                    animate={{ opacity: [0.5, 1, 0.5] }}
+                                    transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+                                    className="text-[13px] text-zinc-400 font-medium select-none px-0.5"
+                                >
+                                    {getAgentStatusText(agentEvents)}
+                                </motion.span>
+                                <div className="flex items-center gap-1.5 pl-0.5">
+                                    <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                    <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                    <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                </div>
                             </div>
                         </motion.div>
                     )}

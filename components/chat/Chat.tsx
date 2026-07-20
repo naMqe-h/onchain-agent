@@ -54,6 +54,7 @@ export default function Chat(props: UseChatSessionProps) {
                     onToggleAnalysis={handleToggleAnalysis}
                     isBusy={isBusy}
                     showError={agentError}
+                    agentEvents={agentEvents}
                 />
                 <div className="relative w-full">
                     {showChatMeta && (

@@ -144,6 +144,8 @@ export default function MessageItem({
         const txHistoryParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_tx_history')
         const trendingTokensParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_trending_tokens')
 
+        const showCustomComponents = !(isLast && isBusy)
+
         return (
             <div className="flex flex-col gap-2 w-full">
                 {textParts.map((part, i) => (
@@ -151,79 +153,88 @@ export default function MessageItem({
                         <ReactMarkdown>{part.text}</ReactMarkdown>
                     </div>
                 ))}
-                {trendingTokensParts.map((part, i) => {
-                    if (part.state === 'executing' || part.state === 'requested') {
-                        return <TrendingTokensSkeleton key={`trending-skeleton-${i}`} />
-                    }
-                    if (part.state === 'output-available') {
-                        if (part.output?.success && part.output?.found) {
-                            return <TrendingTokensCard key={`trending-card-${i}`} data={part.output} />
-                        }
-                    }
-                    return null
-                })}
-                {tokenInfoParts.map((part, i) => {
-                    if (part.state === 'executing' || part.state === 'requested') {
-                        return <TokenInfoSkeleton key={`token-skeleton-${i}`} />
-                    }
-                    if (part.state === 'output-available') {
-                        const tokenData = part.output?.token
-                        if (tokenData) {
-                            return <TokenInfoCard key={`token-card-${i}`} token={tokenData} />
-                        }
-                    }
-                    return null
-                })}
-                {tokenBalancesParts.map((part, i) => {
-                    if (part.state === 'executing' || part.state === 'requested') {
-                        return <TokenBalancesSkeleton key={`token-balances-skeleton-${i}`} />
-                    }
-                    if (
-                        part.state === 'output-available' &&
-                        part.output?.success === true &&
-                        Array.isArray(part.output.tokens) &&
-                        part.output.tokens.length > 0
-                    ) {
-                        return <TokenBalancesTable key={`token-balances-table-${i}`} data={part.output} />
-                    }
-                    return null
-                })}
-                {sendErc20Parts.map((part, i) => {
-                    if (part.state === 'executing' || part.state === 'requested') {
-                        return <SendErc20Skeleton key={`send-erc20-skeleton-${i}`} />
-                    }
-                    if (part.state === 'output-available' && part.output?.success === true) {
-                        return <SendErc20Card key={`send-erc20-card-${i}`} tx={part.output} />
-                    }
-                    return null
-                })}
-                {sendNativeParts.map((part, i) => {
-                    if (part.state === 'executing' || part.state === 'requested') {
-                        return <SendNativeSkeleton key={`send-native-skeleton-${i}`} />
-                    }
-                    if (part.state === 'output-available' && part.output?.success === true) {
-                        return <SendNativeCard key={`send-native-card-${i}`} tx={part.output} />
-                    }
-                    return null
-                })}
-                {swapParts.map((part, i) => {
-                    if (part.state === 'executing' || part.state === 'requested') {
-                        return <SwapSkeleton key={`swap-skeleton-${i}`} />
-                    }
-                    if (part.state === 'output-available' && part.output?.success === true) {
-                        return <SwapCard key={`swap-card-${i}`} tx={part.output} />
-                    }
-                    return null
-                })}
-                {txHistoryParts.map((part, i) => {
-                    if (part.state === 'executing' || part.state === 'requested') {
-                        return <TxHistorySkeleton key={`tx-history-skeleton-${i}`} />
-                    }
-                    if (part.state === 'output-available' && part.output?.success === true) {
-                        return <TxHistoryCard key={`tx-history-card-${i}`} data={part.output} />
-                    }
-                    return null
-                })}
+                {showCustomComponents && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, ease: 'easeOut' }}
+                        className="flex flex-col gap-2 w-full"
+                    >
+                        {trendingTokensParts.map((part, i) => {
+                            if (part.state === 'executing' || part.state === 'requested') {
+                                return <TrendingTokensSkeleton key={`trending-skeleton-${i}`} />
+                            }
+                            if (part.state === 'output-available') {
+                                if (part.output?.success && part.output?.found) {
+                                    return <TrendingTokensCard key={`trending-card-${i}`} data={part.output} />
+                                }
+                            }
+                            return null
+                        })}
+                        {tokenInfoParts.map((part, i) => {
+                            if (part.state === 'executing' || part.state === 'requested') {
+                                return <TokenInfoSkeleton key={`token-skeleton-${i}`} />
+                            }
+                            if (part.state === 'output-available') {
+                                const tokenData = part.output?.token
+                                if (tokenData) {
+                                    return <TokenInfoCard key={`token-card-${i}`} token={tokenData} />
+                                }
+                            }
+                            return null
+                        })}
+                        {tokenBalancesParts.map((part, i) => {
+                            if (part.state === 'executing' || part.state === 'requested') {
+                                return <TokenBalancesSkeleton key={`token-balances-skeleton-${i}`} />
+                            }
+                            if (
+                                part.state === 'output-available' &&
+                                part.output?.success === true &&
+                                Array.isArray(part.output.tokens) &&
+                                part.output.tokens.length > 0
+                            ) {
+                                return <TokenBalancesTable key={`token-balances-table-${i}`} data={part.output} />
+                            }
+                            return null
+                        })}
+                        {sendErc20Parts.map((part, i) => {
+                            if (part.state === 'executing' || part.state === 'requested') {
+                                return <SendErc20Skeleton key={`send-erc20-skeleton-${i}`} />
+                            }
+                            if (part.state === 'output-available' && part.output?.success === true) {
+                                return <SendErc20Card key={`send-erc20-card-${i}`} tx={part.output} />
+                            }
+                            return null
+                        })}
+                        {sendNativeParts.map((part, i) => {
+                            if (part.state === 'executing' || part.state === 'requested') {
+                                return <SendNativeSkeleton key={`send-native-skeleton-${i}`} />
+                            }
+                            if (part.state === 'output-available' && part.output?.success === true) {
+                                return <SendNativeCard key={`send-native-card-${i}`} tx={part.output} />
+                            }
+                            return null
+                        })}
+                        {swapParts.map((part, i) => {
+                            if (part.state === 'executing' || part.state === 'requested') {
+                                return <SwapSkeleton key={`swap-skeleton-${i}`} />
+                            }
+                            if (part.state === 'output-available' && part.output?.success === true) {
+                                return <SwapCard key={`swap-card-${i}`} tx={part.output} />
+                            }
+                            return null
+                        })}
+                        {txHistoryParts.map((part, i) => {
+                            if (part.state === 'executing' || part.state === 'requested') {
+                                return <TxHistorySkeleton key={`tx-history-skeleton-${i}`} />
+                            }
+                            if (part.state === 'output-available' && part.output?.success === true) {
+                                return <TxHistoryCard key={`tx-history-card-${i}`} data={part.output} />
+                            }
+                            return null
+                        })}
+                    </motion.div>
+                )}
             </div>
         )
     }
@@ -234,7 +245,7 @@ export default function MessageItem({
                 variants={slideInUp}
                 className="flex flex-col items-end justify-end w-full gap-1"
             >
-                <div className="bg-[#1e1e20] text-zinc-200 px-5 py-3 rounded-[24px] max-w-[85%] text-[15px] leading-relaxed">
+                <div className="bg-[#1e1e20] text-zinc-200 px-5 py-3 rounded-3xl max-w-[85%] text-[15px] leading-relaxed">
                     {renderContent()}
                 </div>
                 <div className="flex items-center gap-1 px-1 text-zinc-500">
