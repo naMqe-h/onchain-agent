@@ -1,7 +1,23 @@
 {
   "name": "onchain-agent",
   "version": "0.1.0",
-  "private": true,
+  "description": "Autonomous AI Web3 agent platform for multi chain EVM transactions, token swaps, and real-time blockchain analytics",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/naMqe-h/onchain-agent.git"
+  },
+  "keywords": [
+    "ai",
+    "web3",
+    "evm",
+    "agent",
+    "eve",
+    "nextjs",
+    "uniswap",
+    "blockscout",
+    "ethereum"
+  ],
   "scripts": {
     "dev": "next dev --webpack",
     "build": "prisma generate && next build",
