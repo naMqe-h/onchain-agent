@@ -1,4 +1,4 @@
-export type TxConfirmationMode = 'always' | 'agent_decides' | 'never'
+import { TxConfirmationMode } from '@/types'
 
 export const DEFAULT_TX_CONFIRMATION_MODE: TxConfirmationMode = 'always'
 

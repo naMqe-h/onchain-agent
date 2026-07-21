@@ -1,13 +1,6 @@
 export const PENDING_CHAT_SEND_KEY = 'pending-chat-send'
 
-export type PendingChatSend = {
-    chatId: string
-    message: string
-    model: string
-    network: string
-    wallet: string
-    createdAt: number
-}
+import { type PendingChatSend } from '@/types'
 
 function parsePending(raw: string | null): PendingChatSend | null {
     if (!raw) return null

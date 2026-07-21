@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { getUserWallets, type PublicWallet } from '../app/actions/wallet'
+import { getUserWallets } from '../app/actions/wallet'
+import { type PublicWallet } from '@/types'
 
 const STORAGE_KEY = 'activeWalletAddress'
 

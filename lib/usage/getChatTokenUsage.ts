@@ -1,8 +1,6 @@
 import db from "@/lib/db"
 
-export type ChatTokenUsage = {
-    totalTokens: number
-}
+import { type ChatTokenUsage } from "@/types"
 
 export async function getChatTokenUsage(
     userId: string,

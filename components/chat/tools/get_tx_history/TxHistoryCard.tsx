@@ -12,27 +12,7 @@ import {
     getNetworkShortLabel,
     normalizeNetworkId,
 } from '../../../../lib/web3/config'
-
-export type TxHistoryRow = {
-    hash: string
-    timestamp: string
-    status: 'success' | 'reverted' | 'pending' | 'unknown'
-    from: string
-    to: string | null
-    value: string
-    fee: string | null
-    method: string | null
-}
-
-export type TxHistoryData = {
-    success: true
-    address: string
-    network: string
-    symbol: string
-    totalCount: number
-    returnedCount: number
-    transactions: TxHistoryRow[]
-}
+import { TxHistoryData } from '@/types'
 
 interface TxHistoryCardProps {
     data: TxHistoryData
@@ -195,13 +175,12 @@ export default function TxHistoryCard({ data }: TxHistoryCardProps) {
 
                                 <div className="flex items-center gap-2">
                                     <span
-                                        className={`text-[10px] font-medium capitalize ${
-                                            tx.status === 'success'
-                                                ? 'text-emerald-400'
-                                                : tx.status === 'pending'
-                                                  ? 'text-amber-400'
-                                                  : 'text-rose-400'
-                                        }`}
+                                        className={`text-[10px] font-medium capitalize ${tx.status === 'success'
+                                            ? 'text-emerald-400'
+                                            : tx.status === 'pending'
+                                                ? 'text-amber-400'
+                                                : 'text-rose-400'
+                                            }`}
                                     >
                                         {tx.status}
                                     </span>
@@ -221,7 +200,7 @@ export default function TxHistoryCard({ data }: TxHistoryCardProps) {
                 })}
             </div>
 
-            {data.totalCount > data.returnedCount && (
+            {(data.totalCount ?? 0) > (data.returnedCount ?? 0) && (
                 <p className="pt-3 mt-1 text-[11px] text-zinc-500 border-t border-zinc-800/60">
                     Showing recent {data.returnedCount} of {data.totalCount} transactions
                 </p>

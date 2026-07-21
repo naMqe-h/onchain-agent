@@ -1,17 +1,10 @@
 'use server'
 
+import { PublicCoinBookEntry } from '@/types'
 import db from '../../lib/db'
 import { createClient } from '../../lib/supabase/server'
 import { getDexScreenerChainIds } from '../../lib/web3/config'
 
-export type PublicCoinBookEntry = {
-    id: string
-    name: string
-    symbol: string
-    address: string
-    chain: string
-    imageUrl?: string | null
-}
 
 async function requireUser() {
     const supabase = await createClient()

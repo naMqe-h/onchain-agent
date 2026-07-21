@@ -8,8 +8,8 @@ import { createClient } from '../../../lib/supabase/client'
 import {
     normalizeTxConfirmationMode,
     TX_CONFIRMATION_OPTIONS,
-    type TxConfirmationMode,
 } from '../../../lib/security'
+import { type TxConfirmationMode } from '@/types'
 
 interface SecurityTabProps {
     user: User | null

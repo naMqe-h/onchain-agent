@@ -1,9 +1,9 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { type ChatModelOption, type UserModelPreferences } from '@/types'
 import { getEnabledModelCatalog } from '@/lib/modelCatalog'
-import { resolveUserModelPreferences, type UserModelPreferences } from '@/lib/modelPreferences'
-import type { ChatModelOption } from '@/lib/models'
+import { resolveUserModelPreferences } from '@/lib/modelPreferences'
+import { createClient } from '@/lib/supabase/server'
 
 export async function fetchModelCatalog(): Promise<ChatModelOption[]> {
     return getEnabledModelCatalog()

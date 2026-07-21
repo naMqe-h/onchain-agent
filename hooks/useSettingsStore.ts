@@ -1,16 +1,5 @@
+import { SettingsTab } from '@/types'
 import { create } from 'zustand'
-
-export type SettingsTab =
-    | 'profile'
-    | 'wallets'
-    | 'addressBook'
-    | 'coinBook'
-    | 'security'
-    | 'sessions'
-    | 'network'
-    | 'models'
-    | 'usage'
-    | 'archived'
 
 interface SettingsStore {
     isOpen: boolean

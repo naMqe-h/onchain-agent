@@ -1,24 +1,9 @@
+import type { ChatOnchainTx } from '@/types'
 import {
     getExplorerBaseUrl,
     getNativeCurrencySymbol,
     normalizeNetworkId,
-} from "@/lib/web3/config"
-
-export type ChatOnchainTx = {
-    id: string
-    kind: "swap" | "send_native" | "send_erc20"
-    hash: string
-    network: string
-    explorerUrl: string
-    inAmount: string | null
-    inSymbol: string | null
-    inIsNative: boolean
-    outAmount: string | null
-    outSymbol: string | null
-    outIsNative: boolean
-    createdAt: Date | string | null
-    status?: string
-}
+} from '../web3/config'
 
 type MessageLike = {
     id?: string

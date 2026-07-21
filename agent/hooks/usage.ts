@@ -1,12 +1,13 @@
 import { defineHook } from "eve/hooks"
 import db from "../../lib/db"
-import { DEFAULT_MODEL_ID, SUPPORTED_MODELS, type SupportedModelId } from "../../lib/models"
+import { type SupportedModelId, type LlmUsageSource } from "@/types"
+import { DEFAULT_MODEL_ID, SUPPORTED_MODELS } from "../../lib/models"
 import { getUsageConfig } from "../../lib/usage/config"
 import {
   estimateInputTokensFromMessages,
   estimateOutputTokens,
 } from "../../lib/usage/estimateTokens"
-import { recordLlmUsage, type LlmUsageSource } from "../../lib/usage/recordLlm"
+import { recordLlmUsage } from "../../lib/usage/recordLlm"
 
 type StepTextBuffer = {
   messageText: string

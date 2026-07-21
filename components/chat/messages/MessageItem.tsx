@@ -21,12 +21,7 @@ import TrendingTokensSkeleton from '../tools/get_trending_tokens/TrendingTokensS
 import { messageHasReasoning, messageHasTools } from '../AgentAnalysisPanel'
 import { slideInUp } from '../../../lib/motion'
 import CopyMessageButton from './CopyMessageButton'
-
-interface Message {
-    id: string
-    role: 'user' | 'assistant' | 'system'
-    parts?: readonly any[]
-}
+import { type Message } from '@/types'
 
 interface MessageItemProps {
     message: Message

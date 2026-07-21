@@ -15,15 +15,19 @@ import {
     writePendingChatSend,
     peekPendingChatSend,
     consumePendingChatSend,
-    type PendingChatSend,
 } from '../../../lib/pendingChatSend'
 import {
     getStepMetrics,
     getToolMetrics,
     messageHasReasoning,
     messageHasTools,
-    type AnalysisPanelMode,
 } from '../AgentAnalysisPanel'
+import {
+    type PendingChatSend,
+    type AnalysisPanelMode,
+    type StoredMessage,
+    type SessionState,
+} from '@/types'
 
 export const AGENT_ERROR_TEXT = 'Something went wrong'
 
@@ -58,20 +62,6 @@ function titleFromMessages(messages: readonly { parts?: unknown }[]): string | n
         }
     }
     return null
-}
-
-export interface StoredMessage {
-    id: string
-    role: 'user' | 'assistant' | 'system'
-    content: string
-    parts: unknown
-    createdAt: Date
-}
-
-export interface SessionState {
-    sessionId?: string
-    continuationToken?: string
-    streamIndex: number
 }
 
 export interface UseChatSessionProps {
@@ -430,7 +420,10 @@ export function useChatSession({
     }, [router, refreshChatTokens])
 
     const agent = useEveAgent({
-        initialSession,
+        initialSession: {
+            ...initialSession,
+            streamIndex: initialSession.streamIndex ?? 0,
+        },
         onError: useCallback(() => {
             setIsStreaming(false)
             setAgentError(true)
@@ -623,11 +616,11 @@ export function useChatSession({
             if (!pending) return
 
             void runAgentSend({
-                messageText: pending.message,
-                targetChatId: pending.chatId,
+                messageText: pending.message ?? '',
+                targetChatId: pending.chatId ?? '',
                 model: pending.model || selectedModel,
-                network: pending.network,
-                wallet: pending.wallet,
+                network: pending.network ?? '',
+                wallet: pending.wallet ?? '',
                 userAlreadyShown: true,
             })
         }, 0)

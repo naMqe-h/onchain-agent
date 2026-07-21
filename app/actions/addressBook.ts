@@ -1,18 +1,13 @@
 'use server'
 
-import db from '@/lib/db'
-import { createClient } from '@/lib/supabase/server'
+import { PublicAddressBookEntry } from '@/types'
+import db from '../../lib/db'
+import { createClient } from '../../lib/supabase/server'
 import {
     assertUniqueLabel,
     isValidEvmAddress,
     normalizeEvmAddress,
-} from '@/lib/web3/addressValidation'
-
-export type PublicAddressBookEntry = {
-    id: string
-    name: string
-    address: string
-}
+} from '../../lib/web3/addressValidation'
 
 async function requireUser() {
     const supabase = await createClient()

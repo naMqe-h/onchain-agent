@@ -7,26 +7,7 @@ import {
     resolveTimeZone,
 } from "@/lib/usage/day"
 
-export type QuotaLevel = "ok" | "soft" | "hard"
-
-export type QuotaCheckResult = {
-    level: QuotaLevel
-    enforce: boolean
-    blocked: boolean
-    reasons: string[]
-    resetsInLabel: string | null
-    dayResetsInLabel: string
-    timeZone: string
-    usage: {
-        tokensToday: number
-        requestsToday: number
-        requestsLastMinute: number
-        tokensPerDayLimit: number
-        requestsPerDayLimit: number
-        requestsPerMinuteLimit: number
-        softTokenThreshold: number
-    }
-}
+import { type QuotaLevel, type QuotaCheckResult } from "@/types"
 
 export async function checkLlmQuota(
     userId: string,

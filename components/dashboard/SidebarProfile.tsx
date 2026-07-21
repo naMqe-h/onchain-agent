@@ -6,9 +6,8 @@ import { createClient } from '../../lib/supabase/client'
 import { useSettingsStore } from '../../hooks/useSettingsStore'
 import { useAuthModalStore } from '../../hooks/useAuthModalStore'
 import { useWalletStore } from '../../hooks/useWalletStore'
-import { PublicProfile } from '../../app/actions/profile/profile'
+import { type PublicProfile, type QuotaCheckResult } from '@/types'
 import { checkMyUsageQuota } from '../../app/actions/usage/usage'
-import type { QuotaCheckResult } from '../../lib/usage/checkQuota'
 import FeaturesModal from './FeaturesModal'
 
 type DailyUsageAlert = {

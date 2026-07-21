@@ -4,18 +4,7 @@ import Link from 'next/link'
 import { FiStar, FiMessageSquare, FiMoreVertical } from 'react-icons/fi'
 import { formatRelativeTime } from '../../../lib/format'
 import { getNetworkIconSrc, getNetworkShortLabel } from '../../../lib/web3/config'
-
-interface Chat {
-    id: string
-    title: string
-    createdAt: Date
-    updatedAt: Date
-    isPinned: boolean
-    pinnedAt: Date | null
-    folderId: string | null
-    network: string
-    _count: { messages: number }
-}
+import { type Chat } from '@/types'
 
 interface ChatRowProps {
     chat: Chat

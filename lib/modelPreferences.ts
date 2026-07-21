@@ -1,20 +1,8 @@
+import { UserModelPreferences, type ChatModelOption, type SupportedModelId } from '@/types'
 import {
     DEFAULT_MODEL_ID,
     isSupportedModelId,
-    type ChatModelOption,
-    type SupportedModelId,
-} from '@/lib/models'
-
-export type UserModelPreferences = {
-    catalog: ChatModelOption[]
-    enabledModelIds: string[]
-    defaultModelId: string
-    didHeal: boolean
-    healedMetadata?: {
-        defaultModel: string
-        enabledModels: string[]
-    }
-}
+} from './models'
 
 export function resolveUserModelPreferences(
     catalog: ChatModelOption[],

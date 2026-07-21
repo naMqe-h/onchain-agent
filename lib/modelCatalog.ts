@@ -10,8 +10,8 @@ export {
     resolveUserModelPreferences,
     clampToSupportedModelId,
     mapChatModelRow,
-    type UserModelPreferences,
-} from '@/lib/modelPreferences'
+} from './modelPreferences'
+export type { UserModelPreferences } from '@/types'
 
 export async function getEnabledModelCatalog(): Promise<ChatModelOption[]> {
     const rows = await db.chatModel.findMany({

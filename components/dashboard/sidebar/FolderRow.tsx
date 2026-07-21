@@ -2,24 +2,7 @@
 
 import { FiChevronRight, FiChevronDown, FiFolder, FiMoreVertical } from 'react-icons/fi'
 import ChatRow from './ChatRow'
-
-interface Folder {
-    id: string
-    name: string
-    sortOrder: number
-}
-
-interface Chat {
-    id: string
-    title: string
-    createdAt: Date
-    updatedAt: Date
-    isPinned: boolean
-    pinnedAt: Date | null
-    folderId: string | null
-    network: string
-    _count: { messages: number }
-}
+import { type Folder, type Chat } from '@/types'
 
 interface FolderRowProps {
     folder: Folder

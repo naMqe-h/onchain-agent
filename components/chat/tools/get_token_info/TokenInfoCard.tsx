@@ -2,29 +2,7 @@ import { useState } from 'react'
 import { FiCopy, FiCheck, FiExternalLink, FiGlobe } from 'react-icons/fi'
 import { FaTelegram } from 'react-icons/fa'
 import { FaXTwitter } from 'react-icons/fa6'
-
-interface TokenInfo {
-    name: string
-    symbol: string
-    address: string
-    imageUrl?: string
-    priceUsd?: string
-    priceNative?: string
-    volume24h?: number
-    fdv?: number
-    marketCap?: number
-    network?: string
-    explorerBaseUrl?: string
-    bestPair?: {
-        dexId?: string
-        pairAddress?: string
-        quoteTokenSymbol?: string
-        liquidityUsd?: number
-        url?: string
-    }
-    websites?: Array<{ label?: string; url?: string }>
-    socials?: Array<{ type?: string; url?: string }>
-}
+import { type TokenInfo } from '@/types'
 
 interface TokenInfoCardProps {
     token: TokenInfo

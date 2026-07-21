@@ -7,19 +7,19 @@ import { FiLogOut, FiMonitor, FiRefreshCw, FiSmartphone } from 'react-icons/fi'
 import {
     listMySessions,
     revokeSession,
-    type AuthSessionItem,
 } from '../../../app/actions/auth/sessions'
 import { createClient } from '../../../lib/supabase/client'
 import { useAuthModalStore } from '../../../hooks/useAuthModalStore'
 import { useSettingsStore } from '../../../hooks/useSettingsStore'
 import { useWalletStore } from '../../../hooks/useWalletStore'
+import { AuthSessionItem } from '@/types'
 
-function formatRelative(iso: string | null): string {
+function formatRelative(iso: Date | string | null | undefined): string {
     if (!iso) return 'Unknown'
     return moment(iso).fromNow()
 }
 
-function isMobileUserAgent(userAgent: string | null): boolean {
+function isMobileUserAgent(userAgent: string | null | undefined): boolean {
     if (!userAgent) return false
     return /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent)
 }
@@ -191,15 +191,15 @@ export default function SessionsTab() {
                                 <div
                                     key={session.id}
                                     className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border transition-colors ${session.isCurrent
-                                            ? 'bg-emerald-500/5 border-emerald-500/20'
-                                            : 'bg-[#1c1c1f]/30 border-white/5'
+                                        ? 'bg-emerald-500/5 border-emerald-500/20'
+                                        : 'bg-[#1c1c1f]/30 border-white/5'
                                         }`}
                                 >
                                     <div className="flex items-start gap-3 min-w-0">
                                         <div
                                             className={`mt-0.5 w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${session.isCurrent
-                                                    ? 'bg-emerald-500/15 text-emerald-400'
-                                                    : 'bg-white/5 text-zinc-400'
+                                                ? 'bg-emerald-500/15 text-emerald-400'
+                                                : 'bg-white/5 text-zinc-400'
                                                 }`}
                                         >
                                             <Icon size={16} />

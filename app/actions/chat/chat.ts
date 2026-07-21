@@ -7,6 +7,7 @@ import { ensureChatModelAllowed, getEnabledModelCatalog } from "@/lib/modelCatal
 import { clampToSupportedModelId } from "@/lib/modelPreferences"
 import { DEFAULT_MODEL_ID, isSupportedModelId } from "@/lib/models"
 import { normalizeNetworkId } from "@/lib/web3/config"
+import type { ChatSearchResult } from "@/types"
 
 export async function createChat(model?: string, network?: string, userId?: string) {
     let resolvedUserId = userId
@@ -349,13 +350,6 @@ export async function updateChatNetwork(chatId: string, network: string) {
         data: { network: safeNetwork }
     })
     revalidatePath('/')
-}
-
-export type ChatSearchResult = {
-    chatId: string
-    title: string
-    matchType: 'title' | 'message'
-    snippet: string | null
 }
 
 function buildSnippet(content: string, query: string, radiusBefore = 40, radiusAfter = 60): string {

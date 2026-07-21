@@ -8,7 +8,7 @@ import {
     formatRelativeTime,
 } from '@/lib/format'
 import { getNetworkIconSrc } from '@/lib/web3/config'
-import type { ChatOnchainTx } from '@/lib/chat/extractOnchainTransactions'
+import { ChatOnchainTx } from '@/types'
 
 interface ChatTransactionsPanelProps {
     transactions: ChatOnchainTx[]

@@ -2,30 +2,7 @@ import db from "@/lib/db"
 import { checkLlmQuota } from "@/lib/usage/checkQuota"
 import { dayKeyInTimeZone, daysAgoInTimeZone } from "@/lib/usage/day"
 
-export type UsageSummary = {
-    today: {
-        inputTokens: number
-        outputTokens: number
-        totalTokens: number
-        requests: number
-    }
-    last7Days: {
-        inputTokens: number
-        outputTokens: number
-        totalTokens: number
-        requests: number
-    }
-    byModel: Array<{
-        model: string
-        provider: string
-        inputTokens: number
-        outputTokens: number
-        cacheReadTokens: number
-        totalTokens: number
-        requests: number
-    }>
-    quota: Awaited<ReturnType<typeof checkLlmQuota>>
-}
+import { type UsageSummary } from "@/types"
 
 export async function getUsageSummary(
     userId: string,

@@ -1,16 +1,7 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
-
-export type AuthSessionItem = {
-    id: string
-    createdAt: string
-    updatedAt: string | null
-    userAgent: string | null
-    ip: string | null
-    isCurrent: boolean
-    deviceLabel: string
-}
+import { AuthSessionItem } from '@/types'
+import { createClient } from '../../../lib/supabase/server'
 
 type RpcSessionRow = {
     id: string

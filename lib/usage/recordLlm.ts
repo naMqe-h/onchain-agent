@@ -1,23 +1,7 @@
 import db from "@/lib/db"
 import { dayKeyInTimeZone } from "@/lib/usage/day"
 
-export type LlmUsageSource = "provider" | "estimated" | "missing"
-
-export type RecordLlmUsageInput = {
-    userId: string
-    chatId?: string | null
-    eveSessionId?: string | null
-    model: string
-    provider: string
-    stepIndex?: number | null
-    inputTokens?: number
-    outputTokens?: number
-    cacheReadTokens?: number
-    cacheWriteTokens?: number
-    source: LlmUsageSource
-    durationMs?: number | null
-    timeZone?: string | null
-}
+import { type RecordLlmUsageInput } from "@/types"
 
 function nonNegInt(n: unknown): number {
     if (typeof n !== "number" || !Number.isFinite(n) || n < 0) return 0

@@ -9,22 +9,7 @@ import {
     getNetworkShortLabel,
     normalizeNetworkId,
 } from '@/lib/web3/config'
-
-export interface SendNativeTx {
-    success: true
-    hash: string
-    from: string
-    to: string
-    amount: string
-    symbol?: string
-    gasUsed?: string | null
-    gasPriceGwei?: string | null
-    gasFeeEth?: string | null
-    gasFeeNative?: string | null
-    status: string
-    pendingReason?: string | null
-    network?: string
-}
+import { SendNativeTx } from '@/types'
 
 interface SendNativeCardProps {
     tx: SendNativeTx
@@ -45,7 +30,7 @@ function CopyableRow({
     onCopy,
 }: {
     label: string
-    value: string
+    value: string | undefined
     href?: string
     display?: string
     copiedKey: string
@@ -53,7 +38,7 @@ function CopyableRow({
     onCopy: (key: string, text: string) => void
 }) {
     const isCopied = activeKey === copiedKey
-    const text = display ?? shortAddress(value)
+    const text = display ?? shortAddress(value ?? '')
 
     return (
         <div className="flex items-center justify-between gap-3 bg-zinc-900/60 px-3.5 py-2.5 rounded-xl border border-zinc-800/80 min-w-0">
@@ -77,7 +62,7 @@ function CopyableRow({
             </div>
             <button
                 type="button"
-                onClick={() => onCopy(copiedKey, value)}
+                onClick={() => onCopy(copiedKey, value ?? '')}
                 className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer border border-transparent hover:border-zinc-700/50 shrink-0"
                 title={`Copy ${label.toLowerCase()}`}
             >
@@ -119,19 +104,18 @@ export default function SendNativeCard({ tx }: SendNativeCardProps) {
                         Status
                     </span>
                     <span
-                        className={`text-base font-bold capitalize ${
-                            tx.status === 'success'
+                        className={`text-base font-bold capitalize ${tx.status === 'success'
                                 ? 'text-emerald-400'
                                 : isPending
-                                  ? 'text-amber-400'
-                                  : 'text-red-400'
-                        }`}
+                                    ? 'text-amber-400'
+                                    : 'text-red-400'
+                            }`}
                     >
                         {tx.status === 'success'
                             ? 'Success'
                             : isPending
-                              ? 'Pending'
-                              : tx.status || 'Failed'}
+                                ? 'Pending'
+                                : tx.status || 'Failed'}
                     </span>
                 </div>
                 <div className="flex flex-col gap-1 min-w-0">

@@ -235,9 +235,9 @@ export default function ModelsTab({ user }: ModelsTabProps) {
                     <div className="flex flex-col">
                         {catalog.map((m) => {
                             const isEnabled = enabledModels.includes(m.id)
-                            const latencyTier = getLatencyTier(m.latencyMs)
-                            const contextTier = getContextTier(m.contextTokens)
-                            const contextLabel = formatContextWindow(m.contextTokens)
+                            const latencyTier = getLatencyTier(m.latencyMs ?? 0)
+                            const contextTier = getContextTier(m.contextTokens ?? 0)
+                            const contextLabel = formatContextWindow(m.contextTokens ?? 0)
                             return (
                                 <div
                                     key={m.id}

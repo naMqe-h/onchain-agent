@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { useModelsStore } from '../../hooks/useModelsStore'
-import type { ChatModelOption } from '../../lib/models'
+import type { ChatModelOption } from '@/types'
 
 interface ModelsBootstrapProps {
     initialModels?: ChatModelOption[]

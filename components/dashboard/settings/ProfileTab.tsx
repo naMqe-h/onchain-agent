@@ -6,11 +6,11 @@ import { useRouter } from 'next/navigation'
 import { FiCamera, FiLock, FiUser } from 'react-icons/fi'
 import {
     changePassword,
-    PublicProfile,
     removeAvatar,
     updateDisplayName,
     uploadAvatar,
 } from '../../../app/actions/profile/profile'
+import { type PublicProfile } from '@/types'
 import { validatePasswordStrength } from '../../../lib/password'
 
 interface ProfileTabProps {

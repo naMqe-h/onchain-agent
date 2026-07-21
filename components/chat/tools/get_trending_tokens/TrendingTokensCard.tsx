@@ -1,30 +1,7 @@
 import { useState } from 'react'
 import { FiCopy, FiCheck } from 'react-icons/fi'
 import { formatUsdCompact, formatPercent } from '../../../../lib/format'
-
-interface TrendingToken {
-    rank: number
-    poolAddress: string
-    poolName: string
-    tokenAddress: string
-    name: string
-    symbol: string
-    imageUrl: string | null
-    priceUsd: number | null
-    fdvUsd: number | null
-    marketCapUsd: number | null
-    volume24hUsd: number
-    reserveUsd: number | null
-    priceChangePercentage24h: number | null
-    priceChangePercentage1h: number | null
-    dexName: string
-    transactions24h: {
-        buys: number
-        sells: number
-        buyers: number
-        sellers: number
-    }
-}
+import { TrendingToken } from '@/types'
 
 interface TrendingTokensCardProps {
     data: {
@@ -68,7 +45,7 @@ export default function TrendingTokensCard({ data }: TrendingTokensCardProps) {
             </div>
 
             <div className="overflow-x-auto w-full">
-                <table className="w-full text-left border-collapse min-w-[600px]">
+                <table className="w-full text-left border-collapse min-w-150">
                     <thead>
                         <tr className="border-b border-zinc-800/40 text-[11px] text-zinc-500 uppercase tracking-wider font-semibold">
                             <th className="pb-3 pl-2">Token</th>
@@ -80,7 +57,7 @@ export default function TrendingTokensCard({ data }: TrendingTokensCardProps) {
                     </thead>
                     <tbody className="divide-y divide-zinc-800/30 text-sm">
                         {tokens.map((token, i) => {
-                            const isPositive24h = token.priceChangePercentage24h !== null && token.priceChangePercentage24h >= 0
+                            const isPositive24h = token.priceChangePercentage24h != null && token.priceChangePercentage24h >= 0
 
                             return (
                                 <tr key={token.poolAddress} className="hover:bg-zinc-800/20 transition-colors group">
@@ -105,7 +82,7 @@ export default function TrendingTokensCard({ data }: TrendingTokensCardProps) {
                                                     {token.tokenAddress && (
                                                         <div className="inline-flex items-center gap-1">
                                                             <button
-                                                                onClick={() => handleCopyAddress(token.tokenAddress, i)}
+                                                                onClick={() => handleCopyAddress(token.tokenAddress!, i)}
                                                                 className="p-1 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80 rounded transition-colors cursor-pointer"
                                                                 title="Copy contract address"
                                                             >
@@ -114,7 +91,7 @@ export default function TrendingTokensCard({ data }: TrendingTokensCardProps) {
                                                         </div>
                                                     )}
                                                 </div>
-                                                <span className="text-xs text-zinc-500 max-w-[150px] truncate">{token.name || '-'}</span>
+                                                <span className="text-xs text-zinc-500 max-w-37.5 truncate">{token.name || '-'}</span>
                                             </div>
                                         </div>
                                     </td>
@@ -122,7 +99,7 @@ export default function TrendingTokensCard({ data }: TrendingTokensCardProps) {
                                         {formatPercent(token.priceChangePercentage24h)}
                                     </td>
                                     <td className="py-3.5 text-right text-zinc-300 font-mono text-xs">
-                                        {formatUsdCompact(token.volume24hUsd)}
+                                        {formatUsdCompact(typeof token.volume24hUsd === 'string' ? parseFloat(token.volume24hUsd) : token.volume24hUsd)}
                                     </td>
                                     <td className="py-3.5 text-right text-xs">
                                         <div className="flex flex-col items-end">

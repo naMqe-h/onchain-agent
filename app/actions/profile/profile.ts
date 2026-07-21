@@ -1,21 +1,15 @@
 'use server'
 
-import db from '@/lib/db'
-import { createClient } from '@/lib/supabase/server'
-import { validatePasswordStrength } from '@/lib/password'
+import db from '../../../lib/db'
+import { createClient } from '../../../lib/supabase/server'
+import { validatePasswordStrength } from '../../../lib/password'
+import { PublicProfile } from '@/types'
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024
 const ALLOWED_MIME: Record<string, string> = {
     'image/jpeg': 'jpg',
     'image/png': 'png',
     'image/webp': 'webp',
-}
-
-export type PublicProfile = {
-    id: string
-    userId: string
-    displayName: string
-    avatarUrl: string | null
 }
 
 function defaultDisplayName(email: string | undefined): string {

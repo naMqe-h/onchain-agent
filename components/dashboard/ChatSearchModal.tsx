@@ -4,7 +4,8 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { FiMessageSquare, FiSearch, FiX } from 'react-icons/fi'
 import { motion, AnimatePresence } from 'framer-motion'
-import { searchChats, type ChatSearchResult } from '../../app/actions/chat/chat'
+import { searchChats } from '../../app/actions/chat/chat'
+import { type ChatSearchResult } from '@/types'
 import { fadeInOut, scaleIn } from '../../lib/motion'
 
 interface ChatSearchModalProps {
@@ -28,7 +29,7 @@ function highlightMatch(text: string, query: string): ReactNode {
         part.toLowerCase() === q.toLowerCase() ? (
             <mark
                 key={i}
-                className="bg-amber-400/20 text-amber-100/90 rounded-[2px] px-0.5 not-italic font-inherit"
+                className="bg-amber-400/20 text-amber-100/90 rounded-xs px-0.5 not-italic font-inherit"
             >
                 {part}
             </mark>

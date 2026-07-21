@@ -1,13 +1,8 @@
 'use client'
 
 import { FiEdit2, FiTrash2 } from 'react-icons/fi'
-import FloatingMenu, { type AnchorRect } from './FloatingMenu'
-
-interface Folder {
-    id: string
-    name: string
-    sortOrder: number
-}
+import FloatingMenu from './FloatingMenu'
+import { type Folder, type AnchorRect } from '@/types'
 
 interface FolderActionMenuProps {
     activeFolderForMenu: Folder

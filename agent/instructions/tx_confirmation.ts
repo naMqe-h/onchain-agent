@@ -1,5 +1,6 @@
 import { defineDynamic, defineInstructions } from "eve/instructions"
-import { normalizeTxConfirmationMode, type TxConfirmationMode } from "../../lib/security"
+import { normalizeTxConfirmationMode } from "../../lib/security"
+import { TxConfirmationMode } from "@/types"
 
 function attrString(value: unknown): string | null {
     if (typeof value === "string" && value.trim()) return value.trim()

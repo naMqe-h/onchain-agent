@@ -1,11 +1,19 @@
-export type LatencyTier = 'Low' | 'Medium' | 'High'
-export type ContextTier = 'Small' | 'Medium' | 'Large'
+import {
+    type LatencyTier,
+    type ContextTier,
+    type ModelProvider,
+    type SupportedModelConfig,
+    type ChatModelOption,
+    type SupportedModelId,
+} from '@/types'
 
-export type ModelProvider = 'openai' | 'openrouter'
-
-export type SupportedModelConfig = {
-    provider: ModelProvider
-    modelId: string
+export type {
+    LatencyTier,
+    ContextTier,
+    ModelProvider,
+    SupportedModelConfig,
+    ChatModelOption,
+    SupportedModelId,
 }
 
 export const SUPPORTED_MODELS = {
@@ -27,24 +35,12 @@ export const SUPPORTED_MODELS = {
     },
 } as const satisfies Record<string, SupportedModelConfig>
 
-export type SupportedModelId = keyof typeof SUPPORTED_MODELS
-
 export const DEFAULT_MODEL_ID: SupportedModelId = 'gpt-4.1-nano'
 
 export const SUPPORTED_MODEL_IDS = Object.keys(SUPPORTED_MODELS) as SupportedModelId[]
 
 export function isSupportedModelId(id: string): id is SupportedModelId {
     return id in SUPPORTED_MODELS
-}
-
-export type ChatModelOption = {
-    id: string
-    name: string
-    shortName: string
-    provider: string
-    isReasoning: boolean
-    latencyMs: number
-    contextTokens: number
 }
 
 export function getLatencyTier(ms: number): LatencyTier {

@@ -2,8 +2,7 @@ import { TbBrain, TbTool } from 'react-icons/tb'
 import { FiX } from 'react-icons/fi'
 import { motion } from 'framer-motion'
 import { slideInRight } from '../../lib/motion'
-
-export type AnalysisPanelMode = 'reasoning' | 'tools'
+import { type AnalysisPanelMode } from '@/types'
 
 interface AgentAnalysisPanelProps {
     activeMessage: any

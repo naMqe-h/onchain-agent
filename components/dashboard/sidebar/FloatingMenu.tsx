@@ -2,13 +2,7 @@
 
 import { useState, useRef, useLayoutEffect, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-
-export interface AnchorRect {
-    top: number
-    bottom: number
-    left: number
-    right: number
-}
+import { type AnchorRect } from '@/types'
 
 interface FloatingMenuProps {
     anchor: AnchorRect

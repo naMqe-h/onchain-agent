@@ -7,9 +7,9 @@ import {
     listCoinBook,
     createCoinBookEntry,
     deleteCoinBookEntry,
-    type PublicCoinBookEntry,
 } from '../../../app/actions/coinBook'
 import { normalizeNetworkId } from '../../../lib/web3/config'
+import { PublicCoinBookEntry } from '@/types'
 
 interface CoinBookTabProps {
     user: User | null

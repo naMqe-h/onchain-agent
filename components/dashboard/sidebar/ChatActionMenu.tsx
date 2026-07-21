@@ -1,25 +1,8 @@
 'use client'
 
 import { FiEdit2, FiStar, FiFolder, FiCheck, FiArchive, FiTrash2 } from 'react-icons/fi'
-import FloatingMenu, { type AnchorRect } from './FloatingMenu'
-
-interface Chat {
-    id: string
-    title: string
-    createdAt: Date
-    updatedAt: Date
-    isPinned: boolean
-    pinnedAt: Date | null
-    folderId: string | null
-    network: string
-    _count: { messages: number }
-}
-
-interface Folder {
-    id: string
-    name: string
-    sortOrder: number
-}
+import FloatingMenu from './FloatingMenu'
+import { type Chat, type Folder, type AnchorRect } from '@/types'
 
 interface ChatActionMenuProps {
     activeChatForMenu: Chat

@@ -2,7 +2,8 @@ import { defineAgent, defineDynamic } from "eve"
 import { createOpenRouter } from "@openrouter/ai-sdk-provider"
 import { createOpenAI } from "@ai-sdk/openai"
 import db from "../lib/db"
-import { DEFAULT_MODEL_ID, SUPPORTED_MODELS, type SupportedModelId } from "../lib/models"
+import { type SupportedModelId } from "@/types"
+import { DEFAULT_MODEL_ID, SUPPORTED_MODELS } from "../lib/models"
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,

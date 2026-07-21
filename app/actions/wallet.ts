@@ -4,6 +4,7 @@ import db from '../../lib/db'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { createHash, randomBytes, createCipheriv, createDecipheriv } from 'crypto'
 import { createClient } from '../../lib/supabase/server'
+import { PublicWallet } from '@/types'
 
 const getEncryptionKey = () => {
     const secret = process.env.WALLET_ENCRYPTION_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'default-fallback-key-secret-1234'
@@ -31,13 +32,6 @@ function decryptKey(encryptedText: string): string {
     let decrypted = decipher.update(encrypted, 'hex', 'utf8')
     decrypted += decipher.final('utf8')
     return decrypted
-}
-
-export type PublicWallet = {
-    id: string
-    name: string
-    address: string
-    type: string
 }
 
 export async function getUserWallets(userId: string): Promise<PublicWallet[]> {

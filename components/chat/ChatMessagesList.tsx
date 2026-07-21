@@ -3,12 +3,7 @@ import { motion } from 'framer-motion'
 import { slideInUp, staggerContainer } from '../../lib/motion'
 import { getAgentStatusText } from '../../lib/chat/getAgentStatusText'
 import MessageItem from './messages/MessageItem'
-
-interface Message {
-    id: string
-    role: 'user' | 'assistant' | 'system'
-    parts?: readonly any[]
-}
+import { type Message, type AnalysisPanelMode } from '@/types'
 
 interface ChatMessagesListProps {
     chatId: string | null
@@ -108,7 +103,7 @@ export default function ChatMessagesList({
                     (messages[messages.length - 1]?.role === 'assistant' && !hasTextContent(messages[messages.length - 1]))
                 ) && (
                         <motion.div variants={slideInUp} className="flex flex-col items-start w-full gap-2">
-                            <div className="flex flex-col items-start gap-1.5 px-4 py-3 bg-[#1e1e20]/40 rounded-[20px] border border-white/5 shadow-sm min-w-[150px]">
+                            <div className="flex flex-col items-start gap-1.5 px-4 py-3 bg-[#1e1e20]/40 rounded-[20px] border border-white/5 shadow-sm min-w-37.5">
                                 <motion.span
                                     animate={{ opacity: [0.5, 1, 0.5] }}
                                     transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}

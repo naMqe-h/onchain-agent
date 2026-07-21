@@ -5,26 +5,7 @@ import { User } from '@supabase/supabase-js'
 import { FiPlus, FiChevronRight, FiChevronDown } from 'react-icons/fi'
 import ChatRow from './ChatRow'
 import FolderRow from './FolderRow'
-
-type SidebarSectionId = 'pinned' | 'folders' | 'recent'
-
-interface Chat {
-    id: string
-    title: string
-    createdAt: Date
-    updatedAt: Date
-    isPinned: boolean
-    pinnedAt: Date | null
-    folderId: string | null
-    network: string
-    _count: { messages: number }
-}
-
-interface Folder {
-    id: string
-    name: string
-    sortOrder: number
-}
+import { type SidebarSectionId, type Chat, type Folder } from '@/types'
 
 interface SidebarNavigationListProps {
     user: User | null
@@ -102,7 +83,7 @@ export default function SidebarNavigationList({
 }: SidebarNavigationListProps) {
     const visibleChats = useMemo(() => {
         return chats.filter(
-            (chat) => chat._count.messages > 0 || pathname === `/chat/${chat.id}`
+            (chat) => (chat._count?.messages ?? 0) > 0 || pathname === `/chat/${chat.id}`
         )
     }, [chats, pathname])
 

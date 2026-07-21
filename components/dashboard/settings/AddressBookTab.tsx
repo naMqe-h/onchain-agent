@@ -7,8 +7,8 @@ import {
     createAddressBookEntry,
     updateAddressBookEntry,
     deleteAddressBookEntry,
-    type PublicAddressBookEntry,
 } from '../../../app/actions/addressBook'
+import { type PublicAddressBookEntry } from '@/types'
 
 export default function AddressBookTab() {
     const [entries, setEntries] = useState<PublicAddressBookEntry[]>([])

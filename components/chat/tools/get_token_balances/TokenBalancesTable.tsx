@@ -14,29 +14,7 @@ import {
     getNetworkShortLabel,
     normalizeNetworkId,
 } from '@/lib/web3/config'
-
-export type TokenBalanceRow = {
-    name: string
-    symbol: string
-    address: string
-    balance: string
-    decimals: number
-    valueUsd: number | null
-    circulatingMarketCap?: number | null
-    volume24h?: number | null
-    iconUrl?: string | null
-}
-
-export type TokenBalancesData = {
-    success: true
-    address: string
-    network: string
-    totalCount: number
-    returnedCount: number
-    truncated?: boolean
-    note?: string
-    tokens: TokenBalanceRow[]
-}
+import { type TokenBalancesData } from '@/types'
 
 interface TokenBalancesTableProps {
     data: TokenBalancesData
@@ -78,7 +56,7 @@ export default function TokenBalancesTable({ data }: TokenBalancesTableProps) {
             </div>
 
             <div className="overflow-x-auto -mx-1 mt-2">
-                <table className="w-full min-w-[640px] text-left border-collapse">
+                <table className="w-full min-w-160 text-left border-collapse">
                     <thead>
                         <tr className="text-[10px] text-zinc-500 uppercase font-semibold tracking-wider">
                             <th className="py-2 px-2 font-semibold">Token</th>
@@ -118,7 +96,7 @@ export default function TokenBalancesTable({ data }: TokenBalancesTableProps) {
                                                     {formatDisplayText(token.symbol)}
                                                 </span>
                                                 <span
-                                                    className="text-[11px] text-zinc-500 truncate max-w-[120px]"
+                                                    className="text-[11px] text-zinc-500 truncate max-w-30"
                                                     title={token.name || undefined}
                                                 >
                                                     {formatDisplayText(token.name)}

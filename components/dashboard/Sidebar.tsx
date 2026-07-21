@@ -21,12 +21,10 @@ import {
     deleteFolder,
     moveChatToFolder,
 } from '../../app/actions/chat/chat'
-import { PublicProfile } from '../../app/actions/profile/profile'
+import { type PublicProfile, type AnchorRect, type Chat, type Folder, type SidebarSectionId } from '@/types'
 import { motion, AnimatePresence } from 'framer-motion'
 import { slideInLeft } from '../../lib/motion'
 import { useAuthModalStore } from '../../hooks/useAuthModalStore'
-
-import { type AnchorRect } from './sidebar/FloatingMenu'
 import DeleteChatModal from './sidebar/DeleteChatModal'
 import DeleteFolderModal from './sidebar/DeleteFolderModal'
 import ChatActionMenu from './sidebar/ChatActionMenu'
@@ -40,30 +38,10 @@ const SECTION_COLLAPSED_KEY = 'sidebar-section-collapsed'
 const CHAT_MENU_WIDTH = 192
 const FOLDER_MENU_WIDTH = 144
 
-type SidebarSectionId = 'pinned' | 'folders' | 'recent'
-
 const DEFAULT_SECTION_COLLAPSED: Record<SidebarSectionId, boolean> = {
     pinned: false,
     folders: false,
     recent: false,
-}
-
-interface Chat {
-    id: string
-    title: string
-    createdAt: Date
-    updatedAt: Date
-    isPinned: boolean
-    pinnedAt: Date | null
-    folderId: string | null
-    network: string
-    _count: { messages: number }
-}
-
-interface Folder {
-    id: string
-    name: string
-    sortOrder: number
 }
 
 interface SidebarProps {
@@ -455,9 +433,8 @@ export default function Sidebar({ user, chats, folders, profile }: SidebarProps)
                 variants={slideInLeft}
                 initial="initial"
                 animate="animate"
-                className={`hidden md:flex h-screen border-r border-white/5 bg-[#131314] flex-col shrink-0 transition-[width] duration-200 ease-out ${
-                    isCollapsed ? 'w-14' : 'w-56 lg:w-64'
-                }`}
+                className={`hidden md:flex h-screen border-r border-white/5 bg-[#131314] flex-col shrink-0 transition-[width] duration-200 ease-out ${isCollapsed ? 'w-14' : 'w-56 lg:w-64'
+                    }`}
             >
                 {renderSidebarContent(isCollapsed)}
             </motion.div>

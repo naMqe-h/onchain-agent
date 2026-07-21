@@ -5,7 +5,7 @@ import { FiAlertTriangle, FiRefreshCw } from 'react-icons/fi'
 import {
     getMyUsageSummary,
 } from '../../../app/actions/usage/usage'
-import type { UsageSummary } from '../../../lib/usage/getUsageSummary'
+import { type UsageSummary } from '@/types'
 import { useModelsStore } from '../../../hooks/useModelsStore'
 import { formatTokens } from '../../../lib/format'
 
@@ -218,7 +218,7 @@ export default function UsageTab() {
                                                     key={`${row.provider}:${row.model}`}
                                                     className="border-b border-white/5 last:border-0"
                                                 >
-                                                    <td className="px-3 py-2 text-zinc-200 truncate max-w-[160px]">
+                                                    <td className="px-3 py-2 text-zinc-200 truncate max-w-40">
                                                         {modelNameById(row.model)}
                                                     </td>
                                                     <td className="px-3 py-2 text-zinc-400 text-right tabular-nums">

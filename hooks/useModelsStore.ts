@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { fetchModelCatalog } from '../app/actions/models/models'
-import type { ChatModelOption } from '../lib/models'
+import type { ChatModelOption } from '@/types'
 
 interface ModelsStore {
     models: ChatModelOption[]
