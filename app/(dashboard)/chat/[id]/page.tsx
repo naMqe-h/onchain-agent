@@ -34,7 +34,9 @@ export default async function ChatPage({ params }: ChatPageProps) {
         }
         : { streamIndex: 0 }
 
-    const activeNetwork = normalizeNetworkId(user?.user_metadata?.activeNetwork)
+    const activeNetwork = normalizeNetworkId(
+        chat.network || user?.user_metadata?.defaultNetwork || user?.user_metadata?.activeNetwork
+    )
 
     return (
         <Chat

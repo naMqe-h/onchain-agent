@@ -9,12 +9,6 @@ import { useWalletStore } from '../../hooks/useWalletStore'
 import { PublicProfile } from '../../app/actions/profile/profile'
 import { checkMyUsageQuota } from '../../app/actions/usage/usage'
 import type { QuotaCheckResult } from '../../lib/usage/checkQuota'
-import {
-    getNetworkIconSrc,
-    getNetworkShortLabel,
-    normalizeNetworkId,
-    type NetworkId,
-} from '../../lib/web3/config'
 import FeaturesModal from './FeaturesModal'
 
 type DailyUsageAlert = {
@@ -57,14 +51,6 @@ function dailyUsageAlert(
         return { level: 'soft', percentUsed }
     }
     return null
-}
-
-const NETWORK_BADGE_CLASS: Record<NetworkId, string> = {
-    'robinhood-testnet': 'text-amber-500',
-    'robinhood-mainnet': 'text-indigo-400',
-    ethereum: 'text-blue-400',
-    'ethereum-sepolia': 'text-sky-400',
-    polygon: 'text-violet-400',
 }
 
 export default function SidebarProfile({
@@ -243,18 +229,7 @@ export default function SidebarProfile({
                     aria-label="Open profile menu"
                     title={displayName}
                 >
-                    <span className="relative inline-block">
-                        <Avatar />
-                        <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#131314] border border-white/10 flex items-center justify-center overflow-hidden">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                                src={getNetworkIconSrc(activeNetwork)}
-                                alt=""
-                                className="w-2.5 h-2.5 object-contain"
-                                aria-hidden
-                            />
-                        </span>
-                    </span>
+                    <Avatar />
                 </button>
                 <FeaturesModal isOpen={isFeaturesOpen} onClose={() => setIsFeaturesOpen(false)} />
             </div>
@@ -275,20 +250,8 @@ export default function SidebarProfile({
                         <span className="text-sm font-medium text-zinc-300 truncate group-hover:text-zinc-100 transition-colors">
                             {displayName}
                         </span>
-                        <span
-                            className={`inline-flex items-center gap-1 text-[10px] font-medium leading-none mt-0.5 ${NETWORK_BADGE_CLASS[
-                                normalizeNetworkId(activeNetwork)
-                            ]
-                                }`}
-                        >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                                src={getNetworkIconSrc(activeNetwork)}
-                                alt=""
-                                className="w-3 h-3 object-contain shrink-0 rounded-sm"
-                                aria-hidden
-                            />
-                            {getNetworkShortLabel(activeNetwork)}
+                        <span className="text-[11px] text-zinc-500 truncate">
+                            {user.email}
                         </span>
                     </div>
                 </div>

@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useEveAgent } from 'eve/react'
-import { addMessage, updateChatSession, createChat, updateChatModel } from '../../../app/actions/chat/chat'
+import { addMessage, updateChatSession, createChat, updateChatModel, updateChatNetwork } from '../../../app/actions/chat/chat'
 import { checkMyUsageQuota, getChatTokenUsageAction } from '../../../app/actions/usage/usage'
 import { useWalletStore } from '../../../hooks/useWalletStore'
 import { useAuthModalStore } from '../../../hooks/useAuthModalStore'
@@ -107,6 +107,7 @@ export function useChatSession({
     const [chatTitle, setChatTitle] = useState(initialTitle)
     const [totalTokens, setTotalTokens] = useState<number | null>(null)
     const [selectedModel, setSelectedModel] = useState(initialModel || DEFAULT_MODEL_ID)
+    const [selectedNetwork, setSelectedNetwork] = useState<string>(normalizeNetworkId(activeNetwork))
     const [agentError, setAgentError] = useState(false)
 
     const loadWallets = useWalletStore(s => s.loadWallets)
@@ -127,6 +128,10 @@ export function useChatSession({
     useEffect(() => {
         setChatTitle(initialTitle)
     }, [initialChatId, initialTitle])
+
+    useEffect(() => {
+        setSelectedNetwork(normalizeNetworkId(activeNetwork))
+    }, [initialChatId, activeNetwork])
 
     const refreshChatTokens = useCallback(async (chatId: string | null) => {
         if (!chatId || !userId) {
@@ -157,6 +162,18 @@ export function useChatSession({
             await updateChatModel(currentChatId, model)
         }
     }
+
+    const handleNetworkChange = useCallback(async (network: string) => {
+        const safeNetwork = normalizeNetworkId(network)
+        setSelectedNetwork(safeNetwork)
+        if (currentChatId) {
+            try {
+                await updateChatNetwork(currentChatId, safeNetwork)
+            } catch (err) {
+                console.error('Failed to update chat network:', err)
+            }
+        }
+    }, [currentChatId])
 
     const handleToggleAnalysis = useCallback((id: string, mode: AnalysisPanelMode) => {
         setTxPanelOpen(false)
@@ -674,13 +691,13 @@ export function useChatSession({
 
         const messageText = input.trim()
         const activeWallet = useWalletStore.getState().selectedAddress || ''
-        const networkForTurn = await resolveNetworkForTurn()
+        const networkForTurn = selectedNetwork
 
         if (!currentChatId) {
             setIsCreatingDb(true)
             setAgentError(false)
             try {
-                const chat = await createChat(selectedModel)
+                const chat = await createChat(selectedModel, selectedNetwork)
                 const targetChatId = chat.id
                 const userParts = [{ type: 'text', text: messageText }]
 
@@ -829,6 +846,7 @@ export function useChatSession({
         enrichedMessages,
         totalTokens,
         selectedModel,
+        selectedNetwork,
         isBusy,
         agentError: agentError || agent.status === 'error',
         txPanelOpen,
@@ -840,6 +858,7 @@ export function useChatSession({
         agentEvents: agent.events,
         handleSubmit,
         handleModelChange,
+        handleNetworkChange,
         handleToggleAnalysis,
         handleClosePanel,
         handleOpenTransactions,

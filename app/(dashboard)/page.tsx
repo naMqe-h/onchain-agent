@@ -8,7 +8,9 @@ export default async function DashboardPage() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    const activeNetwork = normalizeNetworkId(user?.user_metadata?.activeNetwork)
+    const activeNetwork = normalizeNetworkId(
+        user?.user_metadata?.defaultNetwork || user?.user_metadata?.activeNetwork
+    )
 
     let defaultModel: string = DEFAULT_MODEL_ID
     let enabledModels: string[] | undefined

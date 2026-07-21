@@ -98,7 +98,9 @@ function NetworkOptionRow({
 
 export default function NetworkTab({ user }: NetworkTabProps) {
     const router = useRouter()
-    const initialNetwork = normalizeNetworkId(user?.user_metadata?.activeNetwork)
+    const initialNetwork = normalizeNetworkId(
+        user?.user_metadata?.defaultNetwork || user?.user_metadata?.activeNetwork
+    )
     const [network, setNetwork] = useState<NetworkId>(initialNetwork)
     const [isUpdating, setIsUpdating] = useState(false)
     const [successMessage, setSuccessMessage] = useState('')
@@ -111,7 +113,10 @@ export default function NetworkTab({ user }: NetworkTabProps) {
         try {
             const supabase = createClient()
             const { error } = await supabase.auth.updateUser({
-                data: { activeNetwork: newNetwork },
+                data: {
+                    defaultNetwork: newNetwork,
+                    activeNetwork: newNetwork,
+                },
             })
 
             if (error) {
@@ -120,7 +125,7 @@ export default function NetworkTab({ user }: NetworkTabProps) {
 
             const option = NETWORK_OPTIONS.find((o) => o.id === newNetwork)
             setNetwork(newNetwork)
-            setSuccessMessage(`Switched to ${option?.label ?? newNetwork}`)
+            setSuccessMessage(`Default network for new chats set to ${option?.label ?? newNetwork}`)
 
             router.refresh()
         } catch (err: any) {
@@ -133,9 +138,9 @@ export default function NetworkTab({ user }: NetworkTabProps) {
     return (
         <div className="flex flex-col h-full overflow-hidden">
             <div className="pb-3 border-b border-white/5 shrink-0">
-                <h2 className="text-lg font-medium text-zinc-100">Network Settings</h2>
+                <h2 className="text-lg font-medium text-zinc-100">Default Network Settings</h2>
                 <p className="text-xs text-zinc-500 mt-0.5">
-                    Choose which network the agent interacts with.
+                    Choose the default network for new conversations.
                 </p>
             </div>
 

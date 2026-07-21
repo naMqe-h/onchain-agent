@@ -54,6 +54,7 @@ model Chat {
   updatedAt            DateTime    @default(now())
   messages             Message[]
   model                String      @default("gpt-4.1-nano")
+  network              String      @default("ethereum")
 
   @@index([userId, isArchived])
   @@index([userId, isPinned])

@@ -6,22 +6,30 @@ import { createClient } from "@/lib/supabase/server"
 import { ensureChatModelAllowed, getEnabledModelCatalog } from "@/lib/modelCatalog"
 import { clampToSupportedModelId } from "@/lib/modelPreferences"
 import { DEFAULT_MODEL_ID, isSupportedModelId } from "@/lib/models"
+import { normalizeNetworkId } from "@/lib/web3/config"
 
-export async function createChat(model?: string, userId?: string) {
+export async function createChat(model?: string, network?: string, userId?: string) {
     let resolvedUserId = userId
-    if (!resolvedUserId) {
+    let defaultNetworkFromUser = network
+
+    if (!resolvedUserId || !defaultNetworkFromUser) {
         const supabase = await createClient()
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) throw new Error('Unauthorized')
         resolvedUserId = user.id
+        if (!defaultNetworkFromUser) {
+            defaultNetworkFromUser = user.user_metadata?.defaultNetwork || user.user_metadata?.activeNetwork
+        }
     }
 
     const safeModel = clampToSupportedModelId(model)
+    const safeNetwork = normalizeNetworkId(defaultNetworkFromUser)
 
     const chat = await db.chat.create({
         data: {
             userId: resolvedUserId,
-            model: safeModel
+            model: safeModel,
+            network: safeNetwork,
         }
     })
     return chat
@@ -100,7 +108,7 @@ export async function getChatWithMessagesAndResolvedModel(
         defaultModelId || DEFAULT_MODEL_ID
     )
 
-    return { ...chat, model: resolvedModel }
+    return { ...chat, model: resolvedModel, network: normalizeNetworkId(chat.network) }
 }
 
 const FOLDER_NAME_MAX = 40
@@ -328,6 +336,16 @@ export async function updateChatModel(chatId: string, model: string) {
     await db.chat.update({
         where: { id: chatId },
         data: { model }
+    })
+    revalidatePath('/')
+}
+
+export async function updateChatNetwork(chatId: string, network: string) {
+    await getAuthenticatedUserAndChat(chatId)
+    const safeNetwork = normalizeNetworkId(network)
+    await db.chat.update({
+        where: { id: chatId },
+        data: { network: safeNetwork }
     })
     revalidatePath('/')
 }

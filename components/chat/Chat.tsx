@@ -16,6 +16,7 @@ export default function Chat(props: UseChatSessionProps) {
         enrichedMessages,
         totalTokens,
         selectedModel,
+        selectedNetwork,
         isBusy,
         agentError,
         txPanelOpen,
@@ -27,6 +28,7 @@ export default function Chat(props: UseChatSessionProps) {
         agentEvents,
         handleSubmit,
         handleModelChange,
+        handleNetworkChange,
         handleToggleAnalysis,
         handleClosePanel,
         handleOpenTransactions,
@@ -71,6 +73,8 @@ export default function Chat(props: UseChatSessionProps) {
                         isBusy={isBusy}
                         selectedModel={selectedModel}
                         onModelChange={handleModelChange}
+                        selectedNetwork={selectedNetwork}
+                        onNetworkChange={handleNetworkChange}
                         enabledModels={props.enabledModels}
                         isAuthenticated={!!props.userId}
                     />

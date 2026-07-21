@@ -16,7 +16,7 @@ export const NETWORK_IDS: NetworkId[] = [
     "polygon",
 ]
 
-export const DEFAULT_NETWORK_ID: NetworkId = "robinhood-testnet"
+export const DEFAULT_NETWORK_ID: NetworkId = "ethereum"
 
 const NETWORK_ALIASES: Record<string, NetworkId> = {
     testnet: "robinhood-testnet",
