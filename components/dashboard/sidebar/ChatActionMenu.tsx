@@ -11,6 +11,7 @@ interface Chat {
     isPinned: boolean
     pinnedAt: Date | null
     folderId: string | null
+    network: string
     _count: { messages: number }
 }
 
@@ -107,7 +108,7 @@ export default function ChatActionMenu({
                             {activeChatForMenu.folderId === null ? (
                                 <FiCheck size={11} className="text-emerald-400" />
                             ) : (
-                                <span className="w-[11px]" />
+                                <span className="w-2.75" />
                             )}
                             No folder
                         </button>
@@ -123,7 +124,7 @@ export default function ChatActionMenu({
                                 {activeChatForMenu.folderId === folder.id ? (
                                     <FiCheck size={11} className="text-emerald-400" />
                                 ) : (
-                                    <span className="w-[11px]" />
+                                    <span className="w-2.75" />
                                 )}
                                 <span className="truncate">{folder.name}</span>
                             </button>

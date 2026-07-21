@@ -16,6 +16,7 @@ interface Chat {
     isPinned: boolean
     pinnedAt: Date | null
     folderId: string | null
+    network: string
     _count: { messages: number }
 }
 

@@ -47,6 +47,7 @@ export async function getUserChats(userId: string) {
             isPinned: true,
             pinnedAt: true,
             folderId: true,
+            network: true,
             _count: { select: { messages: true } }
         }
     })

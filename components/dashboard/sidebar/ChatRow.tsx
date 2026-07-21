@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { FiStar, FiMessageSquare, FiMoreVertical } from 'react-icons/fi'
 import { formatRelativeTime } from '../../../lib/format'
+import { getNetworkIconSrc, getNetworkShortLabel } from '../../../lib/web3/config'
 
 interface Chat {
     id: string
@@ -12,6 +13,7 @@ interface Chat {
     isPinned: boolean
     pinnedAt: Date | null
     folderId: string | null
+    network: string
     _count: { messages: number }
 }
 
@@ -95,9 +97,16 @@ export default function ChatRow({
                         ) : (
                             <p className="truncate leading-tight">{chat.title}</p>
                         )}
-                        <p className="text-[11px] text-zinc-600 mt-0.5">
-                            {formatRelativeTime(chat.updatedAt)}
-                        </p>
+                        <div className="flex items-center gap-1.5 text-[11px] text-zinc-600 mt-0.5 min-w-0">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src={getNetworkIconSrc(chat.network)}
+                                alt={getNetworkShortLabel(chat.network)}
+                                title={getNetworkShortLabel(chat.network)}
+                                className="w-3 h-3 object-contain shrink-0 rounded-sm"
+                            />
+                            <span className="shrink-0">{formatRelativeTime(chat.updatedAt)}</span>
+                        </div>
                     </div>
                 </Link>
 
