@@ -74,6 +74,18 @@ CREATE POLICY "AddressBookEntry_service_all" ON "AddressBookEntry"
   USING (true)
   WITH CHECK (true);
 
+ALTER TABLE "CoinBookEntry" ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "CoinBookEntry_select_owner" ON "CoinBookEntry";
+CREATE POLICY "CoinBookEntry_select_owner" ON "CoinBookEntry"
+  FOR SELECT TO anon, authenticated
+  USING ("userId" = auth.uid()::text);
+
+DROP POLICY IF EXISTS "CoinBookEntry_service_all" ON "CoinBookEntry";
+CREATE POLICY "CoinBookEntry_service_all" ON "CoinBookEntry"
+  FOR ALL TO service_role
+  USING (true)
+  WITH CHECK (true);
+
 ALTER TABLE "ChatModel" ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "ChatModel_select_public" ON "ChatModel";
 CREATE POLICY "ChatModel_select_public" ON "ChatModel"

@@ -4,6 +4,7 @@ export type SettingsTab =
     | 'profile'
     | 'wallets'
     | 'addressBook'
+    | 'coinBook'
     | 'security'
     | 'sessions'
     | 'network'

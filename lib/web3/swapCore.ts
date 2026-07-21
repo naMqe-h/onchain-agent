@@ -92,6 +92,7 @@ export async function prepareSwapContext(params: {
     tokenOutQuery: string
     amount: string
     slippageTolerance?: number
+    userId?: string
 }): Promise<
     | { ok: true; ctx: PreparedSwapContext }
     | { ok: false; error: string; candidates?: unknown }
@@ -112,6 +113,7 @@ export async function prepareSwapContext(params: {
         network: params.network,
         walletAddress: params.walletAddress,
         role: "in",
+        userId: params.userId,
     })
     if (!tokenInResult.ok) {
         return {
@@ -126,6 +128,7 @@ export async function prepareSwapContext(params: {
         network: params.network,
         walletAddress: params.walletAddress,
         role: "out",
+        userId: params.userId,
     })
     if (!tokenOutResult.ok) {
         return {

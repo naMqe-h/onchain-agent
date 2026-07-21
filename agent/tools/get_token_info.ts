@@ -1,5 +1,6 @@
 import { defineTool } from "eve/tools"
 import { z } from "zod"
+import db from "../../lib/db"
 import {
     getDexScreenerChainIds,
     getExplorerBaseUrl,
@@ -9,8 +10,9 @@ import {
 
 export default defineTool({
     description:
-        "Search for ERC-20 token / memecoin metadata, price, 24h volume, and market cap on the user's active network " +
-        "(Robinhood, Ethereum, or Polygon) using DEX Screener. Returns the single highest-volume matching token on that chain.",
+        "Search and retrieve ERC-20 token / memecoin metadata, price, 24h volume, and market cap on the active network using DEX Screener. " +
+        "Use this tool whenever the user asks to check, inspect, lookup, or get information for any token or ticker (e.g. 'check PEPE', 'info USDC', 'what is PEPE'). " +
+        "Checks the user's private Coin Book database first.",
     inputSchema: z.object({
         query: z.string().describe("The token name, ticker (symbol), or contract address to search for."),
     }),
@@ -23,6 +25,7 @@ export default defineTool({
             }
         }
 
+        const userId = ctx.session?.auth?.current?.principalId
         const activeNetworkAttr = ctx.session?.auth?.current?.attributes?.activeNetwork
         const activeNetwork = normalizeNetworkId(
             typeof activeNetworkAttr === "string" ? activeNetworkAttr : activeNetworkAttr?.[0]
@@ -34,7 +37,26 @@ export default defineTool({
         const explorerBaseUrl = getExplorerBaseUrl(activeNetwork)
 
         try {
-            const url = `https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(trimmedQuery)}`
+            let targetAddress: string | null = null
+            if (userId && userId !== "local-dev") {
+                const savedCoin = await db.coinBookEntry.findFirst({
+                    where: {
+                        userId,
+                        OR: [
+                            { symbol: { equals: trimmedQuery, mode: "insensitive" } },
+                            { name: { equals: trimmedQuery, mode: "insensitive" } },
+                            { address: { equals: trimmedQuery, mode: "insensitive" } },
+                        ],
+                    },
+                })
+                if (savedCoin) {
+                    targetAddress = savedCoin.address
+                }
+            }
+
+            const url = targetAddress
+                ? `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(targetAddress)}`
+                : `https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(trimmedQuery)}`
             const response = await fetch(url)
 
             if (!response.ok) {

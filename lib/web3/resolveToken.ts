@@ -1,4 +1,5 @@
 import { createPublicClient, erc20Abi, http, isAddress } from "viem"
+import db from "../db"
 import {
     getChainConfig,
     getDexScreenerChainIds,
@@ -16,7 +17,7 @@ export type ResolvedToken = {
     name: string
     decimals: number
     isNative: boolean
-    source: "native" | "address" | "balances" | "registry" | "dexscreener"
+    source: "native" | "address" | "balances" | "registry" | "dexscreener" | "coinbook"
 }
 
 export type ResolveTokenResult =
@@ -213,6 +214,7 @@ export async function resolveToken(params: {
     network: NetworkId
     walletAddress?: string
     role?: "in" | "out"
+    userId?: string
 }): Promise<ResolveTokenResult> {
     const query = params.query.trim()
     if (!query) {
@@ -270,6 +272,40 @@ export async function resolveToken(params: {
                 isNative: false,
                 source: "address",
             },
+        }
+    }
+
+    if (params.userId) {
+        try {
+            const savedCoin = await db.coinBookEntry.findFirst({
+                where: {
+                    userId: params.userId,
+                    OR: [
+                        { symbol: { equals: query, mode: "insensitive" } },
+                        { name: { equals: query, mode: "insensitive" } },
+                    ],
+                },
+            })
+
+            if (savedCoin) {
+                const meta = await readErc20Meta(
+                    savedCoin.address as `0x${string}`,
+                    network
+                )
+                return {
+                    ok: true,
+                    token: {
+                        address: savedCoin.address,
+                        symbol: meta?.symbol || savedCoin.symbol,
+                        name: meta?.name || savedCoin.name,
+                        decimals: meta?.decimals ?? 18,
+                        isNative: false,
+                        source: "coinbook",
+                    },
+                }
+            }
+        } catch {
+            // Ignore DB error and fallback to standard resolution
         }
     }
 

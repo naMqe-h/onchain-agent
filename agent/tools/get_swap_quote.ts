@@ -81,6 +81,7 @@ export default defineTool({
                 tokenOutQuery: tokenOut,
                 amount,
                 slippageTolerance,
+                userId,
             })
             if (!prepared.ok) {
                 return {

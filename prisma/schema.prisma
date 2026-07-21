@@ -91,6 +91,22 @@ model AddressBookEntry {
   @@index([userId])
 }
 
+model CoinBookEntry {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  symbol    String
+  address   String
+  chain     String
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, chain, address])
+  @@index([userId])
+  @@index([userId, symbol])
+}
+
 model ChatModel {
   id            String   @id
   name          String
