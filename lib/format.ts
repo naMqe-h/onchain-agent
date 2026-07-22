@@ -17,7 +17,7 @@ const standardAmountFormatter = new Intl.NumberFormat('en-US', {
     useGrouping: false,
 })
 
-const usdStandardFormatter = new Intl.NumberFormat('en-US', {
+export const usdStandardFormatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 2,

@@ -27,6 +27,8 @@ export const getAgentStatusText = (agentEvents?: readonly any[]) => {
                 return 'Retrieving address book...'
             case 'get_token_info':
                 return 'Getting token info...'
+            case 'get_crypto_price':
+                return 'Checking crypto price...'
             case 'get_trending_tokens':
                 return 'Fetching trending tokens...'
             case 'get_user_wallets':

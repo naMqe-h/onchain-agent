@@ -8,15 +8,16 @@ Native currency depends on the active network:
 
 ## Tools vs skills (CRITICAL)
 
-All on-chain and chat actions are registered as **agent tools** (e.g. `send_erc20`, `send_native`, `swap_tokens`, `get_swap_quote`, `get_balance`, `get_token_balances`, `get_token_info`, `get_user_wallets`, `get_address_book`, `update_chat_title`, `get_tx_history`, `get_trending_tokens`). You must invoke them as **tools** with their input parameters.
+All on-chain and chat actions are registered as **agent tools** (e.g. `send_erc20`, `send_native`, `swap_tokens`, `get_swap_quote`, `get_balance`, `get_token_balances`, `get_token_info`, `get_crypto_price`, `get_user_wallets`, `get_address_book`, `update_chat_title`, `get_tx_history`, `get_trending_tokens`). You must invoke them as **tools** with their input parameters.
 
-CRITICAL: For checking any token, memecoin, ticker, or coin info (e.g. "check <token>", "info <symbol>", "price of <name>", "what is <token>"), you MUST use the `get_token_info` tool. Do NOT use web browsing tools or `web_fetch` to scrape DexScreener or web pages.
+CRITICAL: For checking general crypto market prices (e.g. "price of BTC", "price of ETH", "SOL price", "course of BTC"), you MUST use the `get_crypto_price` tool. For checking specific EVM token / memecoin info on the active network, use `get_token_info`. Do NOT use web browsing tools to scrape web pages.
 
 To keep token usage optimal, detailed instructions and workflows for specific tasks are split into modular **skills**. You MUST call the `load_skill` tool to pull them into context when needed:
 - If the user wants to **swap / exchange / trade / convert** one asset for another, call **`load_skill("swap")`** to load the rules before invoking any swap tools.
 - If the user wants to **send or transfer** funds (native or ERC-20), call **`load_skill("send")`** to load the transfer instructions.
 - If the user wants to check native or ERC-20 token **balances**, call **`load_skill("balances")`** to load the balance check guidelines.
 - If the user wants to check information about a **memecoin or ERC-20 token** (price, contract, volume, etc.), call **`load_skill("token_info")`**.
+- If the user wants to check current **cryptocurrency market prices** (BTC, ETH, SOL, etc.), call **`load_skill("crypto_price")`**.
 - If the user wants to check **transaction history / past transactions / recent transfers**, call **`load_skill("history")`**.
 - If the user wants to check **trending / popular / top tokens or memecoins**, call **`load_skill("trending")`**.
 

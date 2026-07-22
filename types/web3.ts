@@ -267,3 +267,20 @@ export type TokenInfo = {
     websites?: Array<{ label?: string; url?: string }>
     socials?: Array<{ type?: string; url?: string }>
 }
+
+export type CryptoPriceInfo = {
+    id: string
+    name: string
+    symbol: string
+    image?: string
+    currentPrice: number
+    priceChange24h?: number
+    priceChangePercentage24h?: number
+    high24h?: number
+    low24h?: number
+    totalVolume?: number
+    marketCap?: number
+    marketCapRank?: number
+    lastUpdated?: string
+}
+

@@ -18,6 +18,8 @@ import TxHistoryCard from '../tools/get_tx_history/TxHistoryCard'
 import TxHistorySkeleton from '../tools/get_tx_history/TxHistorySkeleton'
 import TrendingTokensCard from '../tools/get_trending_tokens/TrendingTokensCard'
 import TrendingTokensSkeleton from '../tools/get_trending_tokens/TrendingTokensSkeleton'
+import CryptoPriceCard from '../tools/get_crypto_price/CryptoPriceCard'
+import CryptoPriceSkeleton from '../tools/get_crypto_price/CryptoPriceSkeleton'
 import { messageHasReasoning, messageHasTools } from '../AgentAnalysisPanel'
 import { slideInUp } from '../../../lib/motion'
 import CopyMessageButton from './CopyMessageButton'
@@ -138,6 +140,7 @@ export default function MessageItem({
         const swapParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'swap_tokens')
         const txHistoryParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_tx_history')
         const trendingTokensParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_trending_tokens')
+        const cryptoPriceParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_crypto_price')
 
         const showCustomComponents = !(isLast && isBusy)
 
@@ -155,6 +158,17 @@ export default function MessageItem({
                         transition={{ duration: 0.4, ease: 'easeOut' }}
                         className="flex flex-col gap-2 w-full"
                     >
+                        {cryptoPriceParts.map((part, i) => {
+                            if (part.state === 'executing' || part.state === 'requested') {
+                                return <CryptoPriceSkeleton key={`crypto-price-skeleton-${i}`} />
+                            }
+                            if (part.state === 'output-available') {
+                                if (part.output?.success && part.output?.found && part.output?.priceInfo) {
+                                    return <CryptoPriceCard key={`crypto-price-card-${i}`} data={part.output.priceInfo} />
+                                }
+                            }
+                            return null
+                        })}
                         {trendingTokensParts.map((part, i) => {
                             if (part.state === 'executing' || part.state === 'requested') {
                                 return <TrendingTokensSkeleton key={`trending-skeleton-${i}`} />
