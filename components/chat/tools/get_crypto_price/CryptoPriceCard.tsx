@@ -1,6 +1,7 @@
 import { FiTrendingUp, FiTrendingDown, FiActivity } from 'react-icons/fi'
-import { type CryptoPriceInfo } from '@/types'
 import { formatUsdCompact, formatPercent, usdStandardFormatter } from '../../../../lib/format'
+import CryptoPriceChart from './CryptoPriceChart'
+import { CryptoPriceInfo } from '@/types'
 
 interface CryptoPriceCardProps {
     data: CryptoPriceInfo
@@ -81,6 +82,10 @@ export default function CryptoPriceCard({ data }: CryptoPriceCardProps) {
                     </div>
                 </div>
             </div>
+
+            {data.chartData && data.chartData.length > 0 && (
+                <CryptoPriceChart data={data.chartData} isPositive={isPositive} />
+            )}
 
             <div className="mt-3 flex justify-between items-center text-[10px] text-neutral-500 pt-1">
                 <span>Data provided by CoinGecko API</span>

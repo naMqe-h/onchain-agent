@@ -268,6 +268,11 @@ export type TokenInfo = {
     socials?: Array<{ type?: string; url?: string }>
 }
 
+export type CryptoChartPoint = {
+    time: number
+    value: number
+}
+
 export type CryptoPriceInfo = {
     id: string
     name: string
@@ -282,5 +287,5 @@ export type CryptoPriceInfo = {
     marketCap?: number
     marketCapRank?: number
     lastUpdated?: string
+    chartData?: CryptoChartPoint[]
 }
-

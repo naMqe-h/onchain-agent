@@ -97,7 +97,12 @@ export default defineTool({
             }
 
             const marketUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${encodeURIComponent(coinId)}`
-            const marketRes = await fetch(marketUrl, { headers })
+            const chartUrl = `https://api.coingecko.com/api/v3/coins/${encodeURIComponent(coinId)}/market_chart?vs_currency=usd&days=7`
+
+            const [marketRes, chartRes] = await Promise.all([
+                fetch(marketUrl, { headers }),
+                fetch(chartUrl, { headers }).catch(() => null),
+            ])
 
             if (!marketRes.ok) {
                 return {
@@ -117,6 +122,37 @@ export default defineTool({
 
             const coin = marketData[0]
 
+            let chartData: Array<{ time: number; value: number }> | undefined
+            if (chartRes && chartRes.ok) {
+                try {
+                    const chartJson = await chartRes.json()
+                    if (Array.isArray(chartJson?.prices)) {
+                        const points: Array<{ time: number; value: number }> = []
+                        const seenTimes = new Set<number>()
+
+                        for (const item of chartJson.prices) {
+                            if (Array.isArray(item) && item.length >= 2) {
+                                const timestampMs = item[0]
+                                const priceVal = item[1]
+                                const timeSec = Math.floor(timestampMs / 1000)
+
+                                if (typeof priceVal === "number" && !seenTimes.has(timeSec)) {
+                                    seenTimes.add(timeSec)
+                                    points.push({ time: timeSec, value: priceVal })
+                                }
+                            }
+                        }
+
+                        points.sort((a, b) => a.time - b.time)
+                        if (points.length > 0) {
+                            chartData = points
+                        }
+                    }
+                } catch {
+                    // Ignore chart error gracefully
+                }
+            }
+
             return {
                 success: true,
                 found: true,
@@ -134,6 +170,7 @@ export default defineTool({
                     marketCap: coin.market_cap,
                     marketCapRank: coin.market_cap_rank,
                     lastUpdated: coin.last_updated,
+                    chartData,
                 },
             }
         } catch (err: any) {
