@@ -1,6 +1,7 @@
 'use client'
 
 import { FiExternalLink } from 'react-icons/fi'
+import AddToCoinBookButton from '../AddToCoinBookButton'
 import {
     EMPTY_VALUE,
     formatBalance,
@@ -18,15 +19,17 @@ import { type TokenBalancesData } from '@/types'
 
 interface TokenBalancesTableProps {
     data: TokenBalancesData
+    activeNetwork?: string
 }
 
-export default function TokenBalancesTable({ data }: TokenBalancesTableProps) {
+export default function TokenBalancesTable({ data, activeNetwork }: TokenBalancesTableProps) {
     if (!data.tokens?.length) return null
 
-    const network = normalizeNetworkId(data.network)
+    const network = normalizeNetworkId(data.network || activeNetwork)
     const base = getExplorerBaseUrl(network)
     const networkLabel = getNetworkShortLabel(network)
     const limit = data.returnedCount || data.tokens.length
+    const targetChain = data.network || activeNetwork || 'ethereum'
 
     return (
         <div className="w-full max-w-3xl bg-[#171719]/90 border border-zinc-800/80 rounded-2xl p-4 md:p-5 backdrop-blur-md shadow-xl transition-all duration-300 hover:border-zinc-700/60 my-3">
@@ -120,20 +123,30 @@ export default function TokenBalancesTable({ data }: TokenBalancesTableProps) {
                                         {formatUsdCompact(token.volume24h)}
                                     </td>
                                     <td className="py-2.5 px-2 text-right">
-                                        {token.address ? (
-                                            <a
-                                                href={`${base}/token/${token.address}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-1 font-mono text-xs text-zinc-400 hover:text-purple-400 transition-colors"
-                                                title={token.address}
-                                            >
-                                                <span>{formatShortAddress(token.address)}</span>
-                                                <FiExternalLink size={11} className="opacity-60 shrink-0" />
-                                            </a>
-                                        ) : (
-                                            <span className="text-xs font-mono text-zinc-500">{EMPTY_VALUE}</span>
-                                        )}
+                                        <div className="flex items-center justify-end gap-1.5">
+                                            {token.address ? (
+                                                <a
+                                                    href={`${base}/token/${token.address}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1 font-mono text-xs text-zinc-400 hover:text-purple-400 transition-colors"
+                                                    title={token.address}
+                                                >
+                                                    <span>{formatShortAddress(token.address)}</span>
+                                                    <FiExternalLink size={11} className="opacity-60 shrink-0" />
+                                                </a>
+                                            ) : (
+                                                <span className="text-xs font-mono text-zinc-500">{EMPTY_VALUE}</span>
+                                            )}
+                                            {token.address && (
+                                                <AddToCoinBookButton
+                                                    address={token.address}
+                                                    chain={targetChain}
+                                                    symbol={token.symbol}
+                                                    size={13}
+                                                />
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             )

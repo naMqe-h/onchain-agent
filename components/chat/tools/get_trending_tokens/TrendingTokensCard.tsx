@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { FiCopy, FiCheck } from 'react-icons/fi'
 import { formatUsdCompact, formatPercent } from '../../../../lib/format'
 import { TrendingToken } from '@/types'
+import AddToCoinBookButton from '../AddToCoinBookButton'
 
 interface TrendingTokensCardProps {
     data: {
@@ -10,11 +11,13 @@ interface TrendingTokensCardProps {
         chain: string
         tokens: TrendingToken[]
     }
+    activeNetwork?: string
 }
 
-export default function TrendingTokensCard({ data }: TrendingTokensCardProps) {
+export default function TrendingTokensCard({ data, activeNetwork }: TrendingTokensCardProps) {
     const { chain, tokens } = data
     const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
+    const targetChain = chain || activeNetwork || 'ethereum'
 
     const handleCopyAddress = async (address: string, index: number) => {
         try {
@@ -58,6 +61,7 @@ export default function TrendingTokensCard({ data }: TrendingTokensCardProps) {
                     <tbody className="divide-y divide-zinc-800/30 text-sm">
                         {tokens.map((token, i) => {
                             const isPositive24h = token.priceChangePercentage24h != null && token.priceChangePercentage24h >= 0
+                            const tokenAddr = token.tokenAddress || token.address
 
                             return (
                                 <tr key={token.poolAddress} className="hover:bg-zinc-800/20 transition-colors group">
@@ -79,17 +83,23 @@ export default function TrendingTokensCard({ data }: TrendingTokensCardProps) {
                                                     <span className="font-semibold text-zinc-100 group-hover:text-purple-400 transition-colors">
                                                         {token.symbol || '-'}
                                                     </span>
-                                                    {token.tokenAddress && (
-                                                        <div className="inline-flex items-center gap-1">
+                                                    <div className="inline-flex items-center gap-1">
+                                                        {tokenAddr && (
                                                             <button
-                                                                onClick={() => handleCopyAddress(token.tokenAddress!, i)}
+                                                                onClick={() => handleCopyAddress(tokenAddr, i)}
                                                                 className="p-1 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80 rounded transition-colors cursor-pointer"
                                                                 title="Copy contract address"
                                                             >
                                                                 {copiedIndex === i ? <FiCheck className="text-emerald-400" size={11} /> : <FiCopy size={11} />}
                                                             </button>
-                                                        </div>
-                                                    )}
+                                                        )}
+                                                        <AddToCoinBookButton
+                                                            address={tokenAddr || token.symbol || token.name}
+                                                            chain={targetChain}
+                                                            symbol={token.symbol}
+                                                            size={11}
+                                                        />
+                                                    </div>
                                                 </div>
                                                 <span className="text-xs text-zinc-500 max-w-37.5 truncate">{token.name || '-'}</span>
                                             </div>

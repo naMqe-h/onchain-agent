@@ -8,7 +8,7 @@ import {
     createCoinBookEntry,
     deleteCoinBookEntry,
 } from '../../../app/actions/coinBook'
-import { normalizeNetworkId } from '../../../lib/web3/config'
+import { isSupportedNetwork, normalizeNetworkId } from '../../../lib/web3/config'
 import { PublicCoinBookEntry } from '@/types'
 
 interface CoinBookTabProps {
@@ -22,7 +22,7 @@ type ChainOption = {
 }
 
 const MAINNET_CHAINS: ChainOption[] = [
-    { id: 'robinhood-mainnet', label: 'Robinhood Chain', icon: '/chains/robinhood.png' },
+    { id: 'robinhood-mainnet', label: 'Robinhood', icon: '/chains/robinhood.png' },
     { id: 'ethereum', label: 'Ethereum Mainnet', icon: '/chains/ethereum.png' },
     { id: 'polygon', label: 'Polygon Mainnet', icon: '/chains/polygon.png' },
     { id: 'base', label: 'Base', icon: '/chains/base.png' },
@@ -284,9 +284,16 @@ export default function CoinBookTab({ user }: CoinBookTabProps) {
                 ) : (
                     <div className="flex flex-col gap-2.5">
                         {entries.map((entry) => {
-                            const chainObj = MAINNET_CHAINS.find((c) => c.id === entry.chain) || {
-                                id: entry.chain,
-                                label: entry.chain,
+                            const rawChain = entry.chain || 'ethereum'
+                            const normChain = isSupportedNetwork(rawChain)
+                                ? normalizeNetworkId(rawChain)
+                                : rawChain
+
+                            const chainObj = MAINNET_CHAINS.find(
+                                (c) => c.id === normChain || c.id === rawChain || c.id.toLowerCase() === rawChain.toLowerCase()
+                            ) || {
+                                id: rawChain,
+                                label: rawChain.charAt(0).toUpperCase() + rawChain.slice(1),
                                 icon: '/chains/ethereum.png',
                             }
 

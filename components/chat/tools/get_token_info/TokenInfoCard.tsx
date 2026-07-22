@@ -3,13 +3,16 @@ import { FiCopy, FiCheck, FiExternalLink, FiGlobe } from 'react-icons/fi'
 import { FaTelegram } from 'react-icons/fa'
 import { FaXTwitter } from 'react-icons/fa6'
 import { type TokenInfo } from '@/types'
+import AddToCoinBookButton from '../AddToCoinBookButton'
 
 interface TokenInfoCardProps {
     token: TokenInfo
+    activeNetwork?: string
 }
 
-export default function TokenInfoCard({ token }: TokenInfoCardProps) {
+export default function TokenInfoCard({ token, activeNetwork }: TokenInfoCardProps) {
     const [copied, setCopied] = useState(false)
+    const targetChain = token.network || activeNetwork || 'ethereum'
 
     const handleCopy = async () => {
         try {
@@ -145,13 +148,22 @@ export default function TokenInfoCard({ token }: TokenInfoCardProps) {
                             <FiExternalLink size={12} className="opacity-60" />
                         </a>
                     </div>
-                    <button
-                        onClick={handleCopy}
-                        className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer border border-transparent hover:border-zinc-700/50"
-                        title="Copy contract address"
-                    >
-                        {copied ? <FiCheck className="text-emerald-400" size={16} /> : <FiCopy size={16} />}
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0">
+                        <button
+                            onClick={handleCopy}
+                            className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer border border-transparent hover:border-zinc-700/50"
+                            title="Copy contract address"
+                        >
+                            {copied ? <FiCheck className="text-emerald-400" size={16} /> : <FiCopy size={16} />}
+                        </button>
+                        <AddToCoinBookButton
+                            address={token.address}
+                            chain={targetChain}
+                            symbol={token.symbol}
+                            size={16}
+                            className="p-2 hover:bg-zinc-800 border border-transparent hover:border-zinc-700/50"
+                        />
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0 justify-end md:justify-start">

@@ -21,6 +21,7 @@ export const DEFAULT_NETWORK_ID: NetworkId = "ethereum"
 const NETWORK_ALIASES: Record<string, NetworkId> = {
     testnet: "robinhood-testnet",
     mainnet: "robinhood-mainnet",
+    robinhood: "robinhood-mainnet",
     "robinhood-testnet": "robinhood-testnet",
     "robinhood-mainnet": "robinhood-mainnet",
     ethereum: "ethereum",
@@ -30,8 +31,9 @@ const NETWORK_ALIASES: Record<string, NetworkId> = {
     polygon: "polygon",
 }
 
-export function isSupportedNetwork(id: string): boolean {
-    return id in NETWORK_ALIASES
+export function isSupportedNetwork(id?: string | null): boolean {
+    if (!id || typeof id !== "string") return false
+    return id.trim().toLowerCase() in NETWORK_ALIASES
 }
 
 export function normalizeNetworkId(raw?: string | null): NetworkId {
@@ -201,8 +203,8 @@ const NETWORK_META: Record<NetworkId, NetworkMeta> = {
     },
     "robinhood-mainnet": {
         id: "robinhood-mainnet",
-        label: "Robinhood Chain Mainnet",
-        shortLabel: "Robinhood Mainnet",
+        label: "Robinhood",
+        shortLabel: "Robinhood",
         chain: robinhoodMainnet,
         explorerBaseUrl: "https://robinhoodchain.blockscout.com",
         nativeSymbol: "ETH",
@@ -248,7 +250,7 @@ export const NETWORK_SECTIONS: {
 export const NETWORK_OPTIONS: NetworkOption[] = [
     {
         id: "robinhood-testnet",
-        label: "Robinhood Chain Testnet",
+        label: "Robinhood Testnet",
         shortLabel: "Robinhood Testnet",
         chainId: 46630,
         environment: "testnet",
@@ -256,8 +258,8 @@ export const NETWORK_OPTIONS: NetworkOption[] = [
     },
     {
         id: "robinhood-mainnet",
-        label: "Robinhood Chain Mainnet",
-        shortLabel: "Robinhood Mainnet",
+        label: "Robinhood",
+        shortLabel: "Robinhood",
         chainId: 4663,
         environment: "mainnet",
         accent: "indigo",

@@ -57,6 +57,7 @@ export default function Chat(props: UseChatSessionProps) {
                     isBusy={isBusy}
                     showError={agentError}
                     agentEvents={agentEvents}
+                    activeNetwork={selectedNetwork}
                 />
                 <div className="relative w-full">
                     {showChatMeta && (

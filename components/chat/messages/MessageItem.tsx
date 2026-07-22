@@ -33,6 +33,7 @@ interface MessageItemProps {
     onToggleTools: () => void
     isLast: boolean
     isBusy?: boolean
+    activeNetwork?: string
 }
 
 function getMessagePlainText(message: Message): string {
@@ -71,6 +72,7 @@ export default function MessageItem({
     onToggleTools,
     isLast,
     isBusy,
+    activeNetwork,
 }: MessageItemProps) {
     const [time] = useState(() => {
         const d = (message as any).createdAt || (message as any).timestamp
@@ -175,7 +177,7 @@ export default function MessageItem({
                             }
                             if (part.state === 'output-available') {
                                 if (part.output?.success && part.output?.found) {
-                                    return <TrendingTokensCard key={`trending-card-${i}`} data={part.output} />
+                                    return <TrendingTokensCard key={`trending-card-${i}`} data={part.output} activeNetwork={activeNetwork} />
                                 }
                             }
                             return null
@@ -187,7 +189,7 @@ export default function MessageItem({
                             if (part.state === 'output-available') {
                                 const tokenData = part.output?.token
                                 if (tokenData) {
-                                    return <TokenInfoCard key={`token-card-${i}`} token={tokenData} />
+                                    return <TokenInfoCard key={`token-card-${i}`} token={tokenData} activeNetwork={activeNetwork} />
                                 }
                             }
                             return null
@@ -202,7 +204,7 @@ export default function MessageItem({
                                 Array.isArray(part.output.tokens) &&
                                 part.output.tokens.length > 0
                             ) {
-                                return <TokenBalancesTable key={`token-balances-table-${i}`} data={part.output} />
+                                return <TokenBalancesTable key={`token-balances-table-${i}`} data={part.output} activeNetwork={activeNetwork} />
                             }
                             return null
                         })}

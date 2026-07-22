@@ -3,7 +3,7 @@
 import { PublicCoinBookEntry } from '@/types'
 import db from '../../lib/db'
 import { createClient } from '../../lib/supabase/server'
-import { getDexScreenerChainIds } from '../../lib/web3/config'
+import { getDexScreenerChainIds, isSupportedNetwork, normalizeNetworkId } from '../../lib/web3/config'
 
 
 async function requireUser() {
@@ -59,15 +59,24 @@ export async function listCoinBook(): Promise<PublicCoinBookEntry[]> {
 
 function getMatchingDexScreenerChainIds(chain: string): string[] {
     const chainLower = chain.trim().toLowerCase()
-    try {
-        const dexIds = getDexScreenerChainIds(chainLower)
-        if (dexIds && dexIds.length > 0) {
-            return dexIds.map((id) => id.toLowerCase())
+    const ids = new Set<string>()
+
+    if (isSupportedNetwork(chainLower)) {
+        const norm = normalizeNetworkId(chainLower)
+        try {
+            const dexIds = getDexScreenerChainIds(norm)
+            if (dexIds && dexIds.length > 0) {
+                dexIds.forEach((id) => ids.add(id.toLowerCase()))
+            }
+        } catch {
+            // fallback
         }
-    } catch {
-        // fallback
+        ids.add(norm.toLowerCase())
     }
-    return [chainLower]
+
+    ids.add(chainLower)
+
+    return Array.from(ids)
 }
 
 export async function createCoinBookEntry(
@@ -77,16 +86,19 @@ export async function createCoinBookEntry(
     try {
         const { user } = await requireUser()
         const trimmedAddress = address?.trim()
-        const trimmedChain = chain?.trim()
+        const rawChain = chain?.trim()
 
         if (!trimmedAddress) {
             return { error: 'Address is required' }
         }
 
-        if (!trimmedChain) {
+        if (!rawChain) {
             return { error: 'Chain is required' }
         }
 
+        const trimmedChain = isSupportedNetwork(rawChain)
+            ? normalizeNetworkId(rawChain)
+            : rawChain.toLowerCase()
         const normalizedAddress = trimmedAddress.toLowerCase()
 
         const existing = await db.coinBookEntry.findFirst({
@@ -101,15 +113,24 @@ export async function createCoinBookEntry(
             return { error: 'Token is already saved in your Coin Book for this chain' }
         }
 
-        const url = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(trimmedAddress)}`
-        const response = await fetch(url)
+        let url = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(trimmedAddress)}`
+        let response = await fetch(url)
 
         if (!response.ok) {
             return { error: 'Failed to verify token' }
         }
 
-        const data = await response.json()
-        const pairs = Array.isArray(data?.pairs) ? data.pairs : []
+        let data = await response.json()
+        let pairs = Array.isArray(data?.pairs) ? data.pairs : []
+
+        if (pairs.length === 0) {
+            url = `https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(trimmedAddress)}`
+            response = await fetch(url)
+            if (response.ok) {
+                data = await response.json()
+                pairs = Array.isArray(data?.pairs) ? data.pairs : []
+            }
+        }
 
         const allowedChainIds = new Set(getMatchingDexScreenerChainIds(trimmedChain))
 
@@ -138,18 +159,21 @@ export async function createCoinBookEntry(
         let tokenAddr = trimmedAddress
         let imageUrl: string | undefined = undefined
 
-        if (bestPair.baseToken?.address?.toLowerCase() === normalizedAddress) {
-            tokenName = bestPair.baseToken.name || tokenName
-            tokenSymbol = bestPair.baseToken.symbol || tokenSymbol
-            tokenAddr = bestPair.baseToken.address || tokenAddr
-        } else if (bestPair.quoteToken?.address?.toLowerCase() === normalizedAddress) {
-            tokenName = bestPair.quoteToken.name || tokenName
-            tokenSymbol = bestPair.quoteToken.symbol || tokenSymbol
-            tokenAddr = bestPair.quoteToken.address || tokenAddr
-        } else if (bestPair.baseToken) {
-            tokenName = bestPair.baseToken.name || tokenName
-            tokenSymbol = bestPair.baseToken.symbol || tokenSymbol
-            tokenAddr = bestPair.baseToken.address || tokenAddr
+        if (bestPair.baseToken) {
+            const isBase = bestPair.baseToken.address?.toLowerCase() === normalizedAddress ||
+                bestPair.baseToken.symbol?.toLowerCase() === normalizedAddress
+            const isQuote = bestPair.quoteToken?.address?.toLowerCase() === normalizedAddress ||
+                bestPair.quoteToken?.symbol?.toLowerCase() === normalizedAddress
+
+            if (isQuote && !isBase) {
+                tokenName = bestPair.quoteToken.name || tokenName
+                tokenSymbol = bestPair.quoteToken.symbol || tokenSymbol
+                tokenAddr = bestPair.quoteToken.address || tokenAddr
+            } else {
+                tokenName = bestPair.baseToken.name || tokenName
+                tokenSymbol = bestPair.baseToken.symbol || tokenSymbol
+                tokenAddr = bestPair.baseToken.address || tokenAddr
+            }
         }
 
         for (const pair of matchingPairs) {

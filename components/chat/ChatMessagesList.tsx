@@ -14,6 +14,7 @@ interface ChatMessagesListProps {
     isBusy?: boolean
     showError?: boolean
     agentEvents?: readonly any[]
+    activeNetwork?: string
 }
 
 const hasTextContent = (message: Message) => {
@@ -29,7 +30,8 @@ export default function ChatMessagesList({
     onToggleAnalysis,
     isBusy,
     showError,
-    agentEvents
+    agentEvents,
+    activeNetwork
 }: ChatMessagesListProps) {
     const containerRef = useRef<HTMLDivElement>(null)
     const isAtBottomRef = useRef(true)
@@ -96,6 +98,7 @@ export default function ChatMessagesList({
                         onToggleTools={() => onToggleAnalysis(message.id, 'tools')}
                         isLast={idx === messages.length - 1}
                         isBusy={isBusy}
+                        activeNetwork={activeNetwork}
                     />
                 ))}
                 {isBusy && (
