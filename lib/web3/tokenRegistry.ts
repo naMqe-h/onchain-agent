@@ -87,7 +87,7 @@ const REGISTRY: Partial<Record<NetworkId, RegistryToken[]>> = {
             decimals: 6,
         },
     ],
-    "robinhood-mainnet": [],
+    robinhood: [],
     "robinhood-testnet": [],
 }
 

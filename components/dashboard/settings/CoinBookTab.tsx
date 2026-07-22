@@ -22,7 +22,7 @@ type ChainOption = {
 }
 
 const MAINNET_CHAINS: ChainOption[] = [
-    { id: 'robinhood-mainnet', label: 'Robinhood', icon: '/chains/robinhood.png' },
+    { id: 'robinhood', label: 'Robinhood', icon: '/chains/robinhood.png' },
     { id: 'ethereum', label: 'Ethereum Mainnet', icon: '/chains/ethereum.png' },
     { id: 'polygon', label: 'Polygon Mainnet', icon: '/chains/polygon.png' },
     { id: 'base', label: 'Base', icon: '/chains/base.png' },
@@ -33,10 +33,10 @@ const MAINNET_CHAINS: ChainOption[] = [
 
 function getInitialChain(userNetwork?: string | null): string {
     const norm = normalizeNetworkId(userNetwork)
-    if (norm === 'robinhood-testnet') return 'robinhood-mainnet'
+    if (norm === 'robinhood-testnet') return 'robinhood'
     if (norm === 'ethereum-sepolia') return 'ethereum'
     const found = MAINNET_CHAINS.find((c) => c.id === norm)
-    return found ? found.id : 'robinhood-mainnet'
+    return found ? found.id : 'robinhood'
 }
 
 export default function CoinBookTab({ user }: CoinBookTabProps) {

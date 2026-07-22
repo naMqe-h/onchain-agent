@@ -14,7 +14,7 @@ export const FEATURES_REGISTRY: FeatureSupport[] = [
         description: 'Transfer native gas tokens (ETH or POL) to other addresses.',
         support: {
             'robinhood-testnet': { status: 'supported', details: 'Supported' },
-            'robinhood-mainnet': { status: 'supported', details: 'Supported' },
+            'robinhood': { status: 'supported', details: 'Supported' },
             'ethereum': { status: 'supported', details: 'Supported' },
             'ethereum-sepolia': { status: 'supported', details: 'Supported' },
             'polygon': { status: 'supported', details: 'Supported' },
@@ -25,7 +25,7 @@ export const FEATURES_REGISTRY: FeatureSupport[] = [
         description: 'Transfer ERC-20 tokens (e.g. USDC, WETH, custom tokens).',
         support: {
             'robinhood-testnet': { status: 'supported', details: 'Supported' },
-            'robinhood-mainnet': { status: 'supported', details: 'Supported' },
+            'robinhood': { status: 'supported', details: 'Supported' },
             'ethereum': { status: 'supported', details: 'Supported' },
             'ethereum-sepolia': { status: 'supported', details: 'Supported' },
             'polygon': { status: 'supported', details: 'Supported' },
@@ -36,7 +36,7 @@ export const FEATURES_REGISTRY: FeatureSupport[] = [
         description: 'Query native and ERC-20 token balances for any address.',
         support: {
             'robinhood-testnet': { status: 'supported', details: 'Supported' },
-            'robinhood-mainnet': { status: 'supported', details: 'Supported' },
+            'robinhood': { status: 'supported', details: 'Supported' },
             'ethereum': { status: 'supported', details: 'Supported' },
             'ethereum-sepolia': { status: 'supported', details: 'Supported' },
             'polygon': { status: 'supported', details: 'Supported' },
@@ -47,7 +47,7 @@ export const FEATURES_REGISTRY: FeatureSupport[] = [
         description: 'Fetch name, symbol, decimals, and supply for a specific token address.',
         support: {
             'robinhood-testnet': { status: 'partial', details: 'Missing informations' },
-            'robinhood-mainnet': { status: 'supported', details: 'Supported' },
+            'robinhood': { status: 'supported', details: 'Supported' },
             'ethereum': { status: 'supported', details: 'Supported' },
             'ethereum-sepolia': { status: 'supported', details: 'Supported' },
             'polygon': { status: 'supported', details: 'Supported' },
@@ -58,7 +58,7 @@ export const FEATURES_REGISTRY: FeatureSupport[] = [
         description: 'Perform cross-token swaps directly via Uniswap Routers.',
         support: {
             'robinhood-testnet': { status: 'unsupported', details: 'Not supported' },
-            'robinhood-mainnet': { status: 'supported', details: 'Router v2.1.1' },
+            'robinhood': { status: 'supported', details: 'Router v2.1.1' },
             'ethereum': { status: 'supported', details: 'Router v2.0' },
             'ethereum-sepolia': { status: 'partial', details: 'Low Liquidity' },
             'polygon': { status: 'supported', details: 'Router v2.0' },
@@ -69,7 +69,7 @@ export const FEATURES_REGISTRY: FeatureSupport[] = [
         description: 'View wallet transaction history on the explorer.',
         support: {
             'robinhood-testnet': { status: 'supported', details: 'Supported' },
-            'robinhood-mainnet': { status: 'supported', details: 'Supported' },
+            'robinhood': { status: 'supported', details: 'Supported' },
             'ethereum': { status: 'supported', details: 'Supported' },
             'ethereum-sepolia': { status: 'supported', details: 'Supported' },
             'polygon': { status: 'supported', details: 'Supported' },
@@ -80,7 +80,7 @@ export const FEATURES_REGISTRY: FeatureSupport[] = [
         description: 'Fetch the top trending tokens.',
         support: {
             'robinhood-testnet': { status: 'unsupported', details: 'Testnet not supported' },
-            'robinhood-mainnet': { status: 'supported', details: 'Supported' },
+            'robinhood': { status: 'supported', details: 'Supported' },
             'ethereum': { status: 'supported', details: 'Supported' },
             'ethereum-sepolia': { status: 'unsupported', details: 'Testnet not supported' },
             'polygon': { status: 'supported', details: 'Supported' },

@@ -18,7 +18,7 @@ export default defineTool({
         "Get a Uniswap quote for swapping tokens on the active network without sending a transaction. " +
         "Supports native ETH/POL and ERC-20; tokens may be tickers/names or 0x addresses (e.g. ETH, USDC). " +
         "Use before swap_tokens when the TX confirmation policy requires confirmation, or when the user only asks how much they would receive. " +
-        "Not available on Robinhood Testnet. Supported: Ethereum, Ethereum Sepolia, Polygon, Robinhood Mainnet.",
+        "Not available on Robinhood Testnet. Supported: Ethereum, Ethereum Sepolia, Polygon, Robinhood.",
     inputSchema: z.object({
         tokenIn: z.string().describe(
             "Token to sell: native (ETH/POL), ticker/name (e.g. USDC), or contract address 0x…"

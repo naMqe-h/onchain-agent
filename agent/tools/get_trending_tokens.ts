@@ -10,7 +10,7 @@ const GECKOTERMINAL_CHAIN_MAP: Record<string, string> = {
     "polygon": "polygon_pos",
     "polygon_pos": "polygon_pos",
     "matic": "polygon_pos",
-    "robinhood-mainnet": "robinhood",
+    "robinhood": "robinhood",
     "robinhood-testnet": "robinhood-testnet",
     "solana": "solana",
     "sol": "solana",

@@ -3,14 +3,14 @@ import { mainnet, polygon, sepolia } from "viem/chains"
 
 export type NetworkId =
     | "robinhood-testnet"
-    | "robinhood-mainnet"
+    | "robinhood"
     | "ethereum"
     | "ethereum-sepolia"
     | "polygon"
 
 export const NETWORK_IDS: NetworkId[] = [
     "robinhood-testnet",
-    "robinhood-mainnet",
+    "robinhood",
     "ethereum",
     "ethereum-sepolia",
     "polygon",
@@ -19,11 +19,9 @@ export const NETWORK_IDS: NetworkId[] = [
 export const DEFAULT_NETWORK_ID: NetworkId = "ethereum"
 
 const NETWORK_ALIASES: Record<string, NetworkId> = {
-    testnet: "robinhood-testnet",
-    mainnet: "robinhood-mainnet",
-    robinhood: "robinhood-mainnet",
+    robinhood: "robinhood",
     "robinhood-testnet": "robinhood-testnet",
-    "robinhood-mainnet": "robinhood-mainnet",
+    "robinhood-mainnet": "robinhood",
     ethereum: "ethereum",
     "ethereum-sepolia": "ethereum-sepolia",
     sepolia: "ethereum-sepolia",
@@ -71,7 +69,7 @@ export const robinhoodTestnet = defineChain({
 export const robinhoodMainnet = defineChain({
     id: 4663,
     name: "Robinhood Chain",
-    network: "robinhood-mainnet",
+    network: "robinhood",
     nativeCurrency: {
         decimals: 18,
         name: "Ether",
@@ -201,8 +199,8 @@ const NETWORK_META: Record<NetworkId, NetworkMeta> = {
         uniswapSupported: false,
         universalRouterVersion: "2.0",
     },
-    "robinhood-mainnet": {
-        id: "robinhood-mainnet",
+    robinhood: {
+        id: "robinhood",
         label: "Robinhood",
         shortLabel: "Robinhood",
         chain: robinhoodMainnet,
@@ -257,7 +255,7 @@ export const NETWORK_OPTIONS: NetworkOption[] = [
         accent: "amber",
     },
     {
-        id: "robinhood-mainnet",
+        id: "robinhood",
         label: "Robinhood",
         shortLabel: "Robinhood",
         chainId: 4663,
@@ -316,7 +314,7 @@ export function getNetworkShortLabel(network?: string | null): string {
 
 const NETWORK_ICON_SRC: Record<NetworkId, string> = {
     "robinhood-testnet": "/chains/robinhood.png",
-    "robinhood-mainnet": "/chains/robinhood.png",
+    robinhood: "/chains/robinhood.png",
     ethereum: "/chains/ethereum.png",
     "ethereum-sepolia": "/chains/ethereum.png",
     polygon: "/chains/polygon.png",

@@ -102,7 +102,7 @@ export async function prepareSwapContext(params: {
             ok: false,
             error:
                 `Uniswap swaps are not available on ${getNetworkLabel(params.network)}. ` +
-                `Switch to Ethereum, Ethereum Sepolia, Polygon, or Robinhood Mainnet in Settings → Network.`,
+                `Switch to Ethereum, Ethereum Sepolia, Polygon, or Robinhood in Settings → Network.`,
         }
     }
 

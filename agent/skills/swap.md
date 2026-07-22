@@ -8,7 +8,7 @@ When the user wants to swap / exchange / trade / convert one asset for another (
 - The user says swap, exchange, trade, convert, or equivalent, with **tokenIn + tokenOut** (and amount).
 - Direction is clear: sell amount of A to receive B (EXACT_INPUT).
 - Tickers/names are OK (`ETH`, `USDC`, `USDT`) - tools resolve addresses on the active network.
-- Supported networks: **Ethereum**, **Ethereum Sepolia**, **Polygon**, **Robinhood Mainnet**.
+- Supported networks: **Ethereum**, **Ethereum Sepolia**, **Polygon**, **Robinhood**.
 - **Not supported:** Robinhood Testnet (tool returns a clear error - suggest switching network).
 
 ### Swap workflow
