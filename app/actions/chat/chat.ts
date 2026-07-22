@@ -49,6 +49,7 @@ export async function getUserChats(userId: string) {
             pinnedAt: true,
             folderId: true,
             network: true,
+            hasUnread: true,
             _count: { select: { messages: true } }
         }
     })
@@ -74,6 +75,7 @@ export async function getArchivedChats(userId: string) {
         select: {
             id: true,
             title: true,
+            network: true,
             createdAt: true,
             updatedAt: true,
         }
@@ -163,10 +165,22 @@ export async function addMessage(
         }),
         db.chat.update({
             where: { id: chatId },
-            data: { updatedAt: new Date() },
+            data: {
+                updatedAt: new Date(),
+                ...(role === 'assistant' ? { hasUnread: true } : {})
+            },
         }),
     ])
     return message
+}
+
+export async function markChatAsRead(chatId: string) {
+    await getAuthenticatedUserAndChat(chatId)
+    await db.chat.update({
+        where: { id: chatId },
+        data: { hasUnread: false }
+    })
+    revalidatePath('/')
 }
 
 export async function updateChatSession(

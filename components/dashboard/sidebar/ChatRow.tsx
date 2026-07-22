@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { FiStar, FiMessageSquare, FiMoreVertical } from 'react-icons/fi'
 import { formatRelativeTime } from '../../../lib/format'
 import { getNetworkIconSrc, getNetworkShortLabel } from '../../../lib/web3/config'
+import { useChatActivityStore } from '../../../hooks/useChatActivityStore'
 import { type Chat } from '@/types'
 
 interface ChatRowProps {
@@ -37,19 +38,19 @@ export default function ChatRow({
 }: ChatRowProps) {
     const isActive = pathname === `/chat/${chat.id}`
     const showPinIcon = customShowPinIcon ?? chat.isPinned
+    const isRunning = useChatActivityStore((s) => s.runningChats[chat.id])
+    const hasUnread = !isActive && chat.hasUnread
 
     return (
         <div className={`relative ${inFolder ? 'pl-0' : ''}`}>
             <div
-                className={`flex items-center gap-2 rounded-xl text-sm transition-all group ${
-                    inFolder ? 'gap-2 px-2.5 py-2' : 'gap-2.5 px-3 py-2.5'
-                } ${
-                    isActive
+                className={`flex items-center gap-2 rounded-xl text-sm transition-all group ${inFolder ? 'gap-2 px-2.5 py-2' : 'gap-2.5 px-3 py-2.5'
+                    } ${isActive
                         ? 'bg-white/8 text-zinc-100'
                         : inFolder
                             ? 'text-zinc-400 hover:bg-white/4 hover:text-zinc-200'
                             : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
-                }`}
+                    }`}
             >
                 <Link
                     href={`/chat/${chat.id}`}
@@ -60,9 +61,8 @@ export default function ChatRow({
                         <FiStar size={14} className="shrink-0 mt-0.5 text-amber-400/90" />
                     ) : inFolder ? (
                         <span
-                            className={`shrink-0 mt-1.5 w-1.5 h-1.5 rounded-full ${
-                                isActive ? 'bg-zinc-300' : 'bg-zinc-600 group-hover:bg-zinc-500'
-                            }`}
+                            className={`shrink-0 mt-1.5 w-1.5 h-1.5 rounded-full ${isActive ? 'bg-zinc-300' : 'bg-zinc-600 group-hover:bg-zinc-500'
+                                }`}
                             aria-hidden
                         />
                     ) : (
@@ -84,7 +84,9 @@ export default function ChatRow({
                                 onClick={(e) => e.preventDefault()}
                             />
                         ) : (
-                            <p className="truncate leading-tight">{chat.title}</p>
+                            <p className={`truncate leading-tight ${hasUnread ? 'font-semibold text-zinc-100' : ''}`}>
+                                {chat.title}
+                            </p>
                         )}
                         <div className="flex items-center gap-1.5 text-[11px] text-zinc-600 mt-0.5 min-w-0">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -106,14 +108,24 @@ export default function ChatRow({
                         e.stopPropagation()
                         onOpenChatMenu(chat.id, e.currentTarget)
                     }}
-                    className={`p-1.5 rounded-md hover:bg-white/10 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer ${
-                        activeDropdownId === chat.id
+                    className={`p-1.5 rounded-md hover:bg-white/10 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer ${activeDropdownId === chat.id
                             ? 'opacity-100'
                             : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'
-                    }`}
+                        }`}
                 >
                     <FiMoreVertical size={14} />
                 </button>
+
+                {isRunning ? (
+                    <span className="shrink-0 relative flex h-2.5 w-2.5 items-center justify-center ml-0.5" title="Agent is working">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+                    </span>
+                ) : hasUnread ? (
+                    <span className="shrink-0 relative flex h-2.5 w-2.5 items-center justify-center ml-0.5" title="Unread message">
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500 shadow-sm shadow-indigo-500/50" />
+                    </span>
+                ) : null}
             </div>
         </div>
     )

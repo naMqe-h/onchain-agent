@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { User } from '@supabase/supabase-js'
 import {
@@ -308,6 +308,10 @@ export default function Sidebar({ user, chats, folders, profile }: SidebarProps)
         ? folders.find((f) => f.id === folderMenuId) ?? null
         : null
 
+    const unreadCount = useMemo(() => {
+        return chats.filter((c) => c.hasUnread && pathname !== `/chat/${c.id}`).length
+    }, [chats, pathname])
+
     const renderSidebarContent = (collapsed: boolean) => {
         if (collapsed) {
             return (
@@ -315,6 +319,7 @@ export default function Sidebar({ user, chats, folders, profile }: SidebarProps)
                     <SidebarHeaderControls
                         collapsed={true}
                         user={user}
+                        unreadCount={unreadCount}
                         onToggleCollapse={toggleCollapse}
                         onNewChat={handleNewChat}
                         onOpenSearch={() => setIsSearchOpen(true)}
@@ -349,6 +354,7 @@ export default function Sidebar({ user, chats, folders, profile }: SidebarProps)
                 <SidebarHeaderControls
                     collapsed={false}
                     user={user}
+                    unreadCount={unreadCount}
                     onToggleCollapse={toggleCollapse}
                     onNewChat={handleNewChat}
                     onOpenSearch={() => setIsSearchOpen(true)}

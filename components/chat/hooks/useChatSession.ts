@@ -3,10 +3,11 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useEveAgent } from 'eve/react'
-import { addMessage, updateChatSession, createChat, updateChatModel, updateChatNetwork } from '../../../app/actions/chat/chat'
+import { addMessage, updateChatSession, createChat, updateChatModel, updateChatNetwork, markChatAsRead } from '../../../app/actions/chat/chat'
 import { checkMyUsageQuota, getChatTokenUsageAction } from '../../../app/actions/usage/usage'
 import { useWalletStore } from '../../../hooks/useWalletStore'
 import { useAuthModalStore } from '../../../hooks/useAuthModalStore'
+import { useChatActivityStore } from '../../../hooks/useChatActivityStore'
 import { createClient } from '../../../lib/supabase/client'
 import { normalizeNetworkId } from '../../../lib/web3/config'
 import { DEFAULT_MODEL_ID, isSupportedModelId } from '../../../lib/models'
@@ -419,18 +420,32 @@ export function useChatSession({
         }
     }, [router, refreshChatTokens])
 
+    const setChatRunning = useChatActivityStore((s) => s.setChatRunning)
+
+    useEffect(() => {
+        if (currentChatId) {
+            void markChatAsRead(currentChatId).catch(() => { })
+        }
+    }, [currentChatId])
+
     const agent = useEveAgent({
         initialSession: {
             ...initialSession,
             streamIndex: initialSession.streamIndex ?? 0,
         },
         onError: useCallback(() => {
+            if (chatIdRef.current) {
+                setChatRunning(chatIdRef.current, false)
+            }
             setIsStreaming(false)
             setAgentError(true)
-        }, []),
+        }, [setChatRunning]),
         onFinish: useCallback(async (snapshot: any) => {
+            if (chatIdRef.current) {
+                setChatRunning(chatIdRef.current, false)
+            }
             await persistTurn(snapshot, false)
-        }, [persistTurn])
+        }, [persistTurn, setChatRunning])
     })
 
     const agentRef = useRef(agent)
@@ -476,6 +491,7 @@ export function useChatSession({
         streamStartIndexRef.current = nextStreamStart
         setStreamStartIndex(nextStreamStart)
         setIsStreaming(true)
+        setChatRunning(targetChatId, true)
 
         if (!userAlreadyShown) {
             localUserId = localUserId ?? `local-user-${Date.now()}`
@@ -542,6 +558,7 @@ export function useChatSession({
                 }
             })
         } catch {
+            setChatRunning(targetChatId, false)
             setIsStreaming(false)
             setAgentError(true)
             try {
@@ -741,7 +758,7 @@ export function useChatSession({
         isStreaming ||
         agent.status === 'streaming' ||
         agent.status === 'submitted'
-    
+
     const streamMessages = useMemo(() => {
         return showStreamOverlay
             ? (agent.data?.messages?.slice(streamStartIndex) || []).filter(

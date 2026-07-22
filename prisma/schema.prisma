@@ -55,6 +55,7 @@ model Chat {
   messages             Message[]
   model                String      @default("gpt-4.1-nano")
   network              String      @default("ethereum")
+  hasUnread            Boolean     @default(false)
 
   @@index([userId, isArchived])
   @@index([userId, isPinned])

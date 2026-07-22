@@ -1,11 +1,12 @@
 'use client'
 
 import { User } from '@supabase/supabase-js'
-import { FiPlus, FiSearch, FiChevronsLeft, FiChevronsRight } from 'react-icons/fi'
+import { FiPlus, FiSearch, FiChevronsLeft, FiChevronsRight, FiMessageSquare } from 'react-icons/fi'
 
 interface SidebarHeaderControlsProps {
     collapsed: boolean
     user: User | null
+    unreadCount?: number
     onToggleCollapse: () => void
     onNewChat: () => void
     onOpenSearch: () => void
@@ -14,6 +15,7 @@ interface SidebarHeaderControlsProps {
 export default function SidebarHeaderControls({
     collapsed,
     user,
+    unreadCount = 0,
     onToggleCollapse,
     onNewChat,
     onOpenSearch,
@@ -40,15 +42,33 @@ export default function SidebarHeaderControls({
                     <FiPlus size={16} className="shrink-0 group-hover:rotate-90 transition-transform duration-200" />
                 </button>
                 {user && (
-                    <button
-                        type="button"
-                        onClick={onOpenSearch}
-                        className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 text-zinc-300 hover:text-zinc-100 transition-all cursor-pointer"
-                        aria-label="Search chats"
-                        title="Search chats"
-                    >
-                        <FiSearch size={16} className="shrink-0" />
-                    </button>
+                    <>
+                        <button
+                            type="button"
+                            onClick={onOpenSearch}
+                            className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 text-zinc-300 hover:text-zinc-100 transition-all cursor-pointer"
+                            aria-label="Search chats"
+                            title="Search chats"
+                        >
+                            <FiSearch size={16} className="shrink-0" />
+                        </button>
+                        <div className="relative">
+                            <button
+                                type="button"
+                                onClick={onToggleCollapse}
+                                className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 text-zinc-300 hover:text-zinc-100 transition-all cursor-pointer relative"
+                                aria-label="Chats"
+                                title={unreadCount > 0 ? `${unreadCount} unread chats` : 'Chats'}
+                            >
+                                <FiMessageSquare size={16} className="shrink-0" />
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-indigo-500 text-[10px] font-bold text-white shadow-sm">
+                                        {unreadCount > 99 ? '99+' : unreadCount}
+                                    </span>
+                                )}
+                            </button>
+                        </div>
+                    </>
                 )}
             </div>
         )

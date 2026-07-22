@@ -9,10 +9,12 @@ import {
     getArchivedChats,
     restoreChat,
 } from '../../../app/actions/chat/chat'
+import { getNetworkIconSrc, getNetworkShortLabel } from '../../../lib/web3/config'
 
 interface ArchivedChat {
     id: string
     title: string
+    network?: string
     createdAt: Date
     updatedAt: Date
 }
@@ -118,15 +120,22 @@ export default function ArchivedTab({ user }: ArchivedTabProps) {
                         return (
                             <div
                                 key={chat.id}
-                                className="flex items-center gap-3 px-3 py-3 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/10 transition-colors"
+                                className="flex items-center gap-3 px-3 py-3 rounded-xl bg-white/3 border border-white/5 hover:border-white/10 transition-colors"
                             >
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm text-zinc-100 truncate font-medium">
                                         {chat.title}
                                     </p>
-                                    <p className="text-[11px] text-zinc-500 mt-0.5">
-                                        Created {formatCreatedAt(chat.createdAt)}
-                                    </p>
+                                    <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 mt-0.5 min-w-0">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                            src={getNetworkIconSrc(chat.network)}
+                                            alt={getNetworkShortLabel(chat.network)}
+                                            title={getNetworkShortLabel(chat.network)}
+                                            className="w-3.5 h-3.5 object-contain shrink-0 rounded-sm"
+                                        />
+                                        <span>Created {formatCreatedAt(chat.createdAt)}</span>
+                                    </div>
                                 </div>
 
                                 <div className="flex items-center gap-1 shrink-0">
@@ -158,7 +167,7 @@ export default function ArchivedTab({ user }: ArchivedTabProps) {
             </div>
 
             {deleteConfirmationId && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-sm">
                     <div className="bg-[#1f1f22] border border-white/10 p-6 rounded-2xl w-full max-w-sm shadow-2xl flex flex-col gap-4">
                         <h3 className="text-lg font-medium text-zinc-100">Delete Chat</h3>
                         <p className="text-sm text-zinc-400">
