@@ -172,7 +172,7 @@ export default function SidebarNavigationList({
                 </div>
             )}
 
-            <div className="flex flex-col gap-0.5">
+            <div data-tour="sidebar-folders" className="flex flex-col gap-0.5">
                 {renderSectionHeader(
                     'folders',
                     'Folders',

@@ -93,7 +93,7 @@ export default function ChatInput({
             className="px-4 pt-3 pb-3 bg-transparent"
         >
             <div className="max-w-3xl mx-auto flex flex-col gap-1.5">
-                <form onSubmit={handleSubmit} className="flex gap-3 bg-[#1e1e20] rounded-full px-4 py-3 items-center shadow-lg border border-white/5 relative z-10">
+                <form onSubmit={handleSubmit} data-tour="chat-input" className="flex gap-3 bg-[#1e1e20] rounded-full px-4 py-3 items-center shadow-lg border border-white/5 relative z-10">
                     <input
                         ref={inputRef}
                         type="text"
@@ -122,6 +122,7 @@ export default function ChatInput({
                             <div className="relative min-w-0">
                                 <button
                                     type="button"
+                                    data-tour="wallet-button"
                                     onClick={() => {
                                         setIsWalletOpen(!isWalletOpen)
                                         setIsModelOpen(false)
@@ -194,6 +195,7 @@ export default function ChatInput({
                             <div className="relative min-w-0 shrink-0">
                                 <button
                                     type="button"
+                                    data-tour="network-selector"
                                     onClick={() => {
                                         setIsNetworkOpen(!isNetworkOpen)
                                         setIsWalletOpen(false)
@@ -275,6 +277,7 @@ export default function ChatInput({
                         <div className="relative shrink-0">
                             <button
                                 type="button"
+                                data-tour="model-selector"
                                 onClick={() => {
                                     setIsModelOpen(!isModelOpen)
                                     setIsWalletOpen(false)

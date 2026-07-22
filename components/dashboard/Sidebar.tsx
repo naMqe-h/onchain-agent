@@ -395,7 +395,11 @@ export default function Sidebar({ user, chats, folders, profile }: SidebarProps)
                 />
 
                 {user ? (
-                    <SidebarProfile user={user} profile={profile} />
+                    <SidebarProfile
+                        user={user}
+                        profile={profile}
+                        onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
+                    />
                 ) : (
                     <div className="px-3 pb-4">
                         <button

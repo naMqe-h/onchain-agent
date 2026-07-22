@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { User } from '@supabase/supabase-js'
-import { FiMoreHorizontal, FiSettings, FiLogOut, FiAlertTriangle, FiLayers } from 'react-icons/fi'
+import { FiMoreHorizontal, FiSettings, FiLogOut, FiAlertTriangle, FiLayers, FiCompass } from 'react-icons/fi'
 import { createClient } from '../../lib/supabase/client'
 import { useSettingsStore } from '../../hooks/useSettingsStore'
 import { useAuthModalStore } from '../../hooks/useAuthModalStore'
 import { useWalletStore } from '../../hooks/useWalletStore'
+import { useOnboardingStore } from '../../hooks/useOnboardingStore'
 import { type PublicProfile, type QuotaCheckResult } from '@/types'
 import { checkMyUsageQuota } from '../../app/actions/usage/usage'
 import FeaturesModal from './FeaturesModal'
@@ -56,10 +57,12 @@ export default function SidebarProfile({
     user,
     profile,
     collapsed = false,
+    onCloseMobileMenu,
 }: {
     user: User | null
     profile: PublicProfile | null
     collapsed?: boolean
+    onCloseMobileMenu?: () => void
 }) {
     const [isOpen, setIsOpen] = useState(false)
     const [isFeaturesOpen, setIsFeaturesOpen] = useState(false)
@@ -178,6 +181,20 @@ export default function SidebarProfile({
                     </div>
                 </div>
             </div>
+
+            <div className="h-px bg-white/5 my-1.5" />
+
+            <button
+                onClick={() => {
+                    setIsOpen(false)
+                    onCloseMobileMenu?.()
+                    useOnboardingStore.getState().resetOnboarding()
+                }}
+                className="w-[calc(100%-16px)] mx-2 text-left px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-zinc-100 flex items-center gap-3 rounded-xl cursor-pointer transition-colors"
+            >
+                <FiCompass size={16} className="text-emerald-400" />
+                Onboarding Tour
+            </button>
 
             <div className="h-px bg-white/5 my-1.5" />
 

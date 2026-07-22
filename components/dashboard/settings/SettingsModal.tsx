@@ -28,6 +28,7 @@ export default function SettingsModal({ user, profile }: SettingsModalProps) {
 
     const tabBtn = (tab: SettingsTab, label: string, icon: ReactNode) => (
         <button
+            data-tour={`settings-tab-${tab}`}
             onClick={() => setActiveTab(tab)}
             className={`flex items-center gap-1.5 md:gap-3 px-2.5 py-1.5 md:px-3 md:py-2.5 rounded-xl text-xs md:text-sm font-medium transition-colors cursor-pointer ${activeTab === tab
                 ? 'bg-white/10 text-zinc-100'
@@ -45,6 +46,7 @@ export default function SettingsModal({ user, profile }: SettingsModalProps) {
             onClick={closeSettings}
         >
             <div
+                data-tour="settings-modal"
                 className="bg-[#18181b] w-full h-full rounded-none max-w-none border-none md:max-w-4xl md:h-150 md:rounded-3xl md:border md:border-white/10 flex flex-col md:flex-row overflow-hidden shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
@@ -72,7 +74,7 @@ export default function SettingsModal({ user, profile }: SettingsModalProps) {
                     </div>
                 </div>
 
-                <div className="flex-1 p-6 flex flex-col bg-[#18181b] overflow-hidden">
+                <div data-tour="settings-panel" className="flex-1 p-6 flex flex-col bg-[#18181b] overflow-hidden">
                     {activeTab === 'profile' ? (
                         <ProfileTab user={user} profile={profile} />
                     ) : activeTab === 'wallets' ? (

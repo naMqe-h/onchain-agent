@@ -91,6 +91,7 @@ export default function SidebarHeaderControls({
 
             <button
                 type="button"
+                data-tour="new-chat-button"
                 onClick={onNewChat}
                 className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 text-zinc-300 hover:text-zinc-100 text-sm font-medium transition-all cursor-pointer group"
             >
@@ -100,6 +101,7 @@ export default function SidebarHeaderControls({
             {user && (
                 <button
                     type="button"
+                    data-tour="search-chats"
                     onClick={onOpenSearch}
                     className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl hover:bg-white/5 border border-transparent text-zinc-400 hover:text-zinc-100 text-sm font-medium transition-all cursor-pointer"
                 >
