@@ -49,6 +49,7 @@ export async function getUserChats(userId: string) {
             pinnedAt: true,
             folderId: true,
             network: true,
+            model: true,
             hasUnread: true,
             _count: { select: { messages: true } }
         }
@@ -76,6 +77,7 @@ export async function getArchivedChats(userId: string) {
             id: true,
             title: true,
             network: true,
+            model: true,
             createdAt: true,
             updatedAt: true,
         }

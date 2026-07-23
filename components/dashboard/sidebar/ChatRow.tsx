@@ -5,6 +5,7 @@ import { FiStar, FiMessageSquare, FiMoreVertical } from 'react-icons/fi'
 import { formatRelativeTime } from '../../../lib/format'
 import { getNetworkIconSrc, getNetworkShortLabel } from '../../../lib/web3/config'
 import { useChatActivityStore } from '../../../hooks/useChatActivityStore'
+import { useModelsStore } from '../../../hooks/useModelsStore'
 import { type Chat } from '@/types'
 
 interface ChatRowProps {
@@ -40,6 +41,8 @@ export default function ChatRow({
     const showPinIcon = customShowPinIcon ?? chat.isPinned
     const isRunning = useChatActivityStore((s) => s.runningChats[chat.id])
     const hasUnread = !isActive && chat.hasUnread
+    const catalog = useModelsStore((s) => s.models)
+    const modelInfo = catalog.find((m) => m.id === chat.model)
 
     return (
         <div className={`relative ${inFolder ? 'pl-0' : ''}`}>
@@ -89,6 +92,19 @@ export default function ChatRow({
                             </p>
                         )}
                         <div className="flex items-center gap-1.5 text-[11px] text-zinc-600 mt-0.5 min-w-0">
+                            {modelInfo?.icon ? (
+                                /* eslint-disable-next-line @next/next/no-img-element */
+                                <img
+                                    src={`/models/${modelInfo.icon}`}
+                                    alt={modelInfo.shortName || chat.model}
+                                    title={modelInfo.name || chat.model}
+                                    className="w-3 h-3 object-contain shrink-0"
+                                />
+                            ) : chat.model ? (
+                                <span className="truncate max-w-22.5 text-[10px] text-zinc-500" title={chat.model}>
+                                    {modelInfo?.shortName || chat.model}
+                                </span>
+                            ) : null}
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={getNetworkIconSrc(chat.network)}
@@ -96,6 +112,7 @@ export default function ChatRow({
                                 title={getNetworkShortLabel(chat.network)}
                                 className="w-3 h-3 object-contain shrink-0 rounded-sm"
                             />
+                            <span className="shrink-0">·</span>
                             <span className="shrink-0">{formatRelativeTime(chat.updatedAt)}</span>
                         </div>
                     </div>
@@ -109,8 +126,8 @@ export default function ChatRow({
                         onOpenChatMenu(chat.id, e.currentTarget)
                     }}
                     className={`p-1.5 rounded-md hover:bg-white/10 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer ${activeDropdownId === chat.id
-                            ? 'opacity-100'
-                            : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'
+                        ? 'opacity-100'
+                        : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'
                         }`}
                 >
                     <FiMoreVertical size={14} />

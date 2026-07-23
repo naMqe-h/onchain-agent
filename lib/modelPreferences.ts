@@ -80,6 +80,7 @@ export function mapChatModelRow(row: {
     isReasoning: boolean
     latencyMs: number
     contextTokens: number
+    icon?: string | null
 }): ChatModelOption {
     return {
         id: row.id,
@@ -89,5 +90,6 @@ export function mapChatModelRow(row: {
         isReasoning: row.isReasoning,
         latencyMs: row.latencyMs,
         contextTokens: row.contextTokens,
+        icon: row.icon ?? null,
     }
 }

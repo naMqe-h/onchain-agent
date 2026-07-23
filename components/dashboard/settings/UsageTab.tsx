@@ -213,14 +213,21 @@ export default function UsageTab() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {summary.byModel.map((row) => (
-                                                <tr
-                                                    key={`${row.provider}:${row.model}`}
-                                                    className="border-b border-white/5 last:border-0"
-                                                >
-                                                    <td className="px-3 py-2 text-zinc-200 truncate max-w-40">
-                                                        {modelNameById(row.model)}
-                                                    </td>
+                                            {summary.byModel.map((row) => {
+                                                const modelObj = catalog.find((m) => m.id === row.model)
+                                                return (
+                                                    <tr
+                                                        key={`${row.provider}:${row.model}`}
+                                                        className="border-b border-white/5 last:border-0"
+                                                    >
+                                                        <td className="px-3 py-2 text-zinc-200 truncate max-w-40">
+                                                            <span className="flex items-center gap-1.5 min-w-0">
+                                                                {modelObj?.icon && (
+                                                                    <img src={`/models/${modelObj.icon}`} alt="" className="w-3.5 h-3.5 object-contain shrink-0" />
+                                                                )}
+                                                                <span className="truncate">{modelNameById(row.model)}</span>
+                                                            </span>
+                                                        </td>
                                                     <td className="px-3 py-2 text-zinc-400 text-right tabular-nums">
                                                         {row.requests}
                                                     </td>
@@ -234,7 +241,8 @@ export default function UsageTab() {
                                                         {formatTokens(row.totalTokens)}
                                                     </td>
                                                 </tr>
-                                            ))}
+                                                )
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>

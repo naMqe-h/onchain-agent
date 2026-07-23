@@ -18,6 +18,7 @@ export interface Chat {
     pinnedAt: Date | null
     folderId: string | null
     network: string
+    model?: string
     hasUnread?: boolean
     _count?: { messages: number }
 }

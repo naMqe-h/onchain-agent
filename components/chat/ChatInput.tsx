@@ -312,10 +312,13 @@ export default function ChatInput({
                                     className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] text-zinc-500 hover:text-zinc-300 hover:bg-white/5 transition-colors cursor-pointer disabled:opacity-50"
                                     title={activeModel.isReasoning ? 'Reasoning model (thought process)' : undefined}
                                 >
+                                    {activeModel.icon && (
+                                        <img src={`/models/${activeModel.icon}`} alt="" className="w-3.5 h-3.5 object-contain shrink-0" />
+                                    )}
+                                    <span>{activeModel.shortName}</span>
                                     {activeModel.isReasoning && (
                                         <TbBrain size={13} className="text-purple-400 shrink-0" aria-hidden />
                                     )}
-                                    <span>{activeModel.shortName}</span>
                                     <FiChevronUp className={`transition-transform duration-200 ${isModelOpen ? 'rotate-180' : ''}`} size={12} />
                                 </button>
 
@@ -351,6 +354,9 @@ export default function ChatInput({
                                                             }`}
                                                     >
                                                         <span className="flex items-center gap-1.5 min-w-0">
+                                                            {m.icon && (
+                                                                <img src={`/models/${m.icon}`} alt="" className="w-4 h-4 object-contain shrink-0" />
+                                                            )}
                                                             <span className={`font-medium truncate ${selectedModel === m.id ? 'text-zinc-100' : 'text-zinc-200'}`}>{m.name}</span>
                                                             {m.isReasoning && (
                                                                 <TbBrain

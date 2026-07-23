@@ -25,6 +25,7 @@ export type ChatModelOption = {
     latencyMs?: number
     contextTokens?: number
     isDefault?: boolean
+    icon?: string | null
 }
 
 export type UserModelPreferences = {

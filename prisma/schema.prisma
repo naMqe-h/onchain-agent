@@ -114,6 +114,7 @@ model ChatModel {
   name          String
   shortName     String
   providerLabel String
+  icon          String?
   isReasoning   Boolean  @default(false)
   latencyMs     Int
   contextTokens Int

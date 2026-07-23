@@ -194,8 +194,13 @@ export default function ModelsTab({ user }: ModelsTabProps) {
                             onClick={() => setIsDefaultOpen(!isDefaultOpen)}
                             className="w-full flex items-center justify-between bg-[#1c1c1f] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-white/20 transition-colors cursor-pointer disabled:opacity-50"
                         >
-                            <span>
-                                {activeDefaultModel ? activeDefaultModel.name : 'Select model'}
+                            <span className="flex items-center gap-2 min-w-0">
+                                {activeDefaultModel?.icon && (
+                                    <img src={`/models/${activeDefaultModel.icon}`} alt="" className="w-4 h-4 object-contain shrink-0" />
+                                )}
+                                <span className="truncate">
+                                    {activeDefaultModel ? activeDefaultModel.name : 'Select model'}
+                                </span>
                             </span>
                             <FiChevronDown className={`transition-transform duration-200 text-zinc-400 ${isDefaultOpen ? 'rotate-180' : ''}`} size={16} />
                         </button>
@@ -217,7 +222,12 @@ export default function ModelsTab({ user }: ModelsTabProps) {
                                                 className={`w-full text-left px-3.5 py-2.5 text-xs transition-colors flex items-center justify-between cursor-pointer ${isSelected ? 'bg-white/5 text-zinc-100 font-medium' : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
                                                     }`}
                                             >
-                                                <span className="truncate">{m.name}</span>
+                                                <span className="truncate flex items-center gap-2">
+                                                    {m.icon && (
+                                                        <img src={`/models/${m.icon}`} alt="" className="w-4 h-4 object-contain shrink-0" />
+                                                    )}
+                                                    <span className="truncate">{m.name}</span>
+                                                </span>
                                                 {isSelected && (
                                                     <FiCheck size={14} className="text-purple-400 shrink-0" />
                                                 )}
@@ -246,6 +256,9 @@ export default function ModelsTab({ user }: ModelsTabProps) {
                                         }`}
                                 >
                                     <div className="flex items-center gap-2 text-sm font-medium text-zinc-200 select-none flex-1 mr-4 min-w-0">
+                                        {m.icon && (
+                                            <img src={`/models/${m.icon}`} alt="" className="w-4 h-4 object-contain shrink-0" />
+                                        )}
                                         <span className="truncate">{m.name}</span>
                                         <span className="inline-flex items-center gap-2 shrink-0">
                                             {m.isReasoning && (
