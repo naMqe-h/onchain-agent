@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { FiArrowUp, FiChevronUp, FiCreditCard } from 'react-icons/fi'
+import { FiArrowUp, FiChevronUp, FiCreditCard, FiSquare } from 'react-icons/fi'
 import { TbBrain } from 'react-icons/tb'
 import { motion } from 'framer-motion'
 import { slideInUp } from '../../lib/motion'
@@ -19,6 +19,7 @@ interface ChatInputProps {
     input: string
     handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
     handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void
+    onStop?: () => void
     isBusy?: boolean
     selectedModel: string
     onModelChange: (model: string) => void
@@ -37,6 +38,7 @@ export default function ChatInput({
     input,
     handleInputChange,
     handleSubmit,
+    onStop,
     isBusy,
     selectedModel,
     onModelChange,
@@ -97,23 +99,35 @@ export default function ChatInput({
                     <input
                         ref={inputRef}
                         type="text"
+                        maxLength={4000}
                         value={isAuthenticated ? input : ''}
                         onChange={isAuthenticated ? handleInputChange : undefined}
                         disabled={isBusy}
                         readOnly={!isAuthenticated}
                         onClick={!isAuthenticated ? () => openAuthModal() : undefined}
                         onFocus={!isAuthenticated ? () => openAuthModal() : undefined}
-                        placeholder={isAuthenticated ? 'Ask Agent' : 'Sign in to start chatting…'}
+                        placeholder={isAuthenticated ? (isBusy ? 'Agent is working…' : 'Ask Agent') : 'Sign in to start chatting…'}
                         className="flex-1 bg-transparent text-zinc-200 placeholder-zinc-500 focus:outline-none transition-colors disabled:opacity-50 text-[15px] ml-2 min-w-0 cursor-text"
                     />
 
-                    <button
-                        type="submit"
-                        disabled={isBusy || !input.trim() || !isAuthenticated}
-                        className="bg-zinc-200 hover:bg-white text-black rounded-full p-2 flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-                    >
-                        <FiArrowUp size={20} />
-                    </button>
+                    {isBusy && onStop ? (
+                        <button
+                            type="button"
+                            onClick={onStop}
+                            title="Stop response generation"
+                            className="bg-zinc-200 hover:bg-white text-black rounded-full p-2 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                        >
+                            <FiSquare size={16} className="fill-current" />
+                        </button>
+                    ) : (
+                        <button
+                            type="submit"
+                            disabled={isBusy || !input.trim() || input.length > 4000 || !isAuthenticated}
+                            className="bg-zinc-200 hover:bg-white text-black rounded-full p-2 flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                        >
+                            <FiArrowUp size={20} />
+                        </button>
+                    )}
                 </form>
 
                 {isAuthenticated && (
@@ -274,78 +288,90 @@ export default function ChatInput({
                             </div>
                         </div>
 
-                        <div className="relative shrink-0">
-                            <button
-                                type="button"
-                                data-tour="model-selector"
-                                onClick={() => {
-                                    setIsModelOpen(!isModelOpen)
-                                    setIsWalletOpen(false)
-                                    setIsNetworkOpen(false)
-                                }}
-                                disabled={isBusy}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] text-zinc-500 hover:text-zinc-300 hover:bg-white/5 transition-colors cursor-pointer disabled:opacity-50"
-                                title={activeModel.isReasoning ? 'Reasoning model (thought process)' : undefined}
-                            >
-                                {activeModel.isReasoning && (
-                                    <TbBrain size={13} className="text-purple-400 shrink-0" aria-hidden />
-                                )}
-                                <span>{activeModel.shortName}</span>
-                                <FiChevronUp className={`transition-transform duration-200 ${isModelOpen ? 'rotate-180' : ''}`} size={12} />
-                            </button>
+                        <div className="flex items-center gap-2 shrink-0">
+                            {isAuthenticated && input.length > 2000 && (
+                                <span className={`text-[11px] font-mono transition-colors ${input.length >= 3800
+                                    ? 'text-rose-400 font-semibold'
+                                    : input.length >= 3600
+                                        ? 'text-amber-400 font-medium'
+                                        : 'text-zinc-500'
+                                    }`}>
+                                    {input.length} / 4000
+                                </span>
+                            )}
+                            <div className="relative shrink-0">
+                                <button
+                                    type="button"
+                                    data-tour="model-selector"
+                                    onClick={() => {
+                                        setIsModelOpen(!isModelOpen)
+                                        setIsWalletOpen(false)
+                                        setIsNetworkOpen(false)
+                                    }}
+                                    disabled={isBusy}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] text-zinc-500 hover:text-zinc-300 hover:bg-white/5 transition-colors cursor-pointer disabled:opacity-50"
+                                    title={activeModel.isReasoning ? 'Reasoning model (thought process)' : undefined}
+                                >
+                                    {activeModel.isReasoning && (
+                                        <TbBrain size={13} className="text-purple-400 shrink-0" aria-hidden />
+                                    )}
+                                    <span>{activeModel.shortName}</span>
+                                    <FiChevronUp className={`transition-transform duration-200 ${isModelOpen ? 'rotate-180' : ''}`} size={12} />
+                                </button>
 
-                            {isModelOpen && (
-                                <>
-                                    <div className="fixed inset-0 z-40" onClick={() => setIsModelOpen(false)} />
-                                    <div className="absolute bottom-full mb-1.5 right-0 w-64 bg-[#1f1f22] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden py-1.5 flex flex-col">
-                                        <div className="px-3.5 py-1.5 flex items-center justify-between border-b border-white/5 mb-1 shrink-0">
-                                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Select Model</span>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setIsModelOpen(false)
-                                                    openSettings('models')
-                                                }}
-                                                className="text-[10px] text-purple-400 hover:text-purple-300 transition-colors font-medium cursor-pointer"
-                                            >
-                                                Configure
-                                            </button>
-                                        </div>
-                                        <div className="overflow-y-auto max-h-57.5">
-                                            {models.map((m) => (
+                                {isModelOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-40" onClick={() => setIsModelOpen(false)} />
+                                        <div className="absolute bottom-full mb-1.5 right-0 w-64 bg-[#1f1f22] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden py-1.5 flex flex-col">
+                                            <div className="px-3.5 py-1.5 flex items-center justify-between border-b border-white/5 mb-1 shrink-0">
+                                                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Select Model</span>
                                                 <button
-                                                    key={m.id}
                                                     type="button"
                                                     onClick={() => {
-                                                        onModelChange(m.id)
                                                         setIsModelOpen(false)
+                                                        openSettings('models')
                                                     }}
-                                                    className={`w-full text-left px-4 py-2.5 text-xs transition-colors flex flex-col gap-0.5 cursor-pointer ${selectedModel === m.id
-                                                        ? 'bg-white/5 text-zinc-100'
-                                                        : 'text-zinc-400 hover:bg-white/5'
-                                                        }`}
+                                                    className="text-[10px] text-purple-400 hover:text-purple-300 transition-colors font-medium cursor-pointer"
                                                 >
-                                                    <span className="flex items-center gap-1.5 min-w-0">
-                                                        <span className={`font-medium truncate ${selectedModel === m.id ? 'text-zinc-100' : 'text-zinc-200'}`}>{m.name}</span>
-                                                        {m.isReasoning && (
-                                                            <TbBrain
-                                                                size={14}
-                                                                className="text-purple-400 shrink-0"
-                                                                title="Reasoning model"
-                                                                aria-label="Reasoning model"
-                                                            />
-                                                        )}
-                                                    </span>
-                                                    <span className="text-[10px] text-zinc-500">
-                                                        {m.provider}
-                                                        {m.isReasoning ? ' · Reasoning' : ''}
-                                                    </span>
+                                                    Configure
                                                 </button>
-                                            ))}
+                                            </div>
+                                            <div className="overflow-y-auto max-h-57.5">
+                                                {models.map((m) => (
+                                                    <button
+                                                        key={m.id}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            onModelChange(m.id)
+                                                            setIsModelOpen(false)
+                                                        }}
+                                                        className={`w-full text-left px-4 py-2.5 text-xs transition-colors flex flex-col gap-0.5 cursor-pointer ${selectedModel === m.id
+                                                            ? 'bg-white/5 text-zinc-100'
+                                                            : 'text-zinc-400 hover:bg-white/5'
+                                                            }`}
+                                                    >
+                                                        <span className="flex items-center gap-1.5 min-w-0">
+                                                            <span className={`font-medium truncate ${selectedModel === m.id ? 'text-zinc-100' : 'text-zinc-200'}`}>{m.name}</span>
+                                                            {m.isReasoning && (
+                                                                <TbBrain
+                                                                    size={14}
+                                                                    className="text-purple-400 shrink-0"
+                                                                    title="Reasoning model"
+                                                                    aria-label="Reasoning model"
+                                                                />
+                                                            )}
+                                                        </span>
+                                                        <span className="text-[10px] text-zinc-500">
+                                                            {m.provider}
+                                                            {m.isReasoning ? ' · Reasoning' : ''}
+                                                        </span>
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                </>
-                            )}
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}

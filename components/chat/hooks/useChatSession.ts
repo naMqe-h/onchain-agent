@@ -190,6 +190,7 @@ export function useChatSession({
     const chatIdRef = useRef<string | null>(initialChatId)
     const streamStartIndexRef = useRef(0)
     const displayMessagesRef = useRef(displayMessages)
+    const wasStoppedRef = useRef(false)
 
     useEffect(() => {
         chatIdRef.current = currentChatId
@@ -237,6 +238,98 @@ export function useChatSession({
             ''
         const assistantText = lastAssistant?.parts?.find((p: any) => p.type === 'text')?.text ?? ''
         const userParts = lastUser?.parts ?? pendingLocalUser?.parts ?? [{ type: 'text', text: userText }]
+
+        const isTurnCancelled = wasStoppedRef.current
+        wasStoppedRef.current = false
+
+        if (isTurnCancelled) {
+            setAgentError(false)
+            const stoppedNotice = '_Response generation was stopped by user._'
+            const existingText = assistantText.trim()
+            const finalContent = existingText ? `${existingText}\n\n${stoppedNotice}` : stoppedNotice
+
+            let finalParts: any[] = lastAssistant?.parts ? [...lastAssistant.parts] : []
+            const lastTextIdx = finalParts.findLastIndex((p: any) => p.type === 'text')
+            if (lastTextIdx >= 0) {
+                finalParts[lastTextIdx] = {
+                    ...finalParts[lastTextIdx],
+                    text: `${finalParts[lastTextIdx].text}\n\n${stoppedNotice}`.trim()
+                }
+            } else {
+                finalParts.push({ type: 'text', text: stoppedNotice })
+            }
+
+            const stoppedMessageId = lastAssistant?.id || `stopped-${Date.now()}`
+
+            setDisplayMessages(prev => {
+                const idx = prev.findIndex(m => m.id === stoppedMessageId)
+                const stoppedMsg: StoredMessage = {
+                    id: stoppedMessageId,
+                    role: 'assistant',
+                    content: finalContent,
+                    parts: finalParts,
+                    createdAt: lastAssistant?.createdAt ?? new Date(),
+                }
+                if (idx >= 0) {
+                    const next = [...prev]
+                    next[idx] = stoppedMsg
+                    return next
+                }
+                return [...prev, stoppedMsg]
+            })
+
+            setIsStreaming(false)
+
+            if (!chatId) return
+
+            try {
+                const hadUserThisTurn = Boolean(lastUser) || Boolean(pendingLocalUser)
+                if (userText && hadUserThisTurn) {
+                    const pendingLocal = displayMessagesRef.current.find(
+                        m =>
+                            m.role === 'user' &&
+                            m.content === userText &&
+                            String(m.id).startsWith('local-user-')
+                    )
+                    if (pendingLocal) {
+                        const savedUser = await addMessage(chatId, 'user', userText, userParts)
+                        setDisplayMessages(prev => {
+                            const localIdx = prev.findIndex(m => m.id === pendingLocal.id)
+                            const saved: StoredMessage = {
+                                id: savedUser.id,
+                                role: 'user',
+                                content: userText,
+                                parts: userParts,
+                                createdAt: savedUser.createdAt,
+                            }
+                            if (localIdx >= 0) {
+                                const next = [...prev]
+                                next[localIdx] = saved
+                                return next
+                            }
+                            if (prev.some(m => m.id === savedUser.id)) return prev
+                            return [...prev, saved]
+                        })
+                    }
+                }
+
+                await addMessage(chatId, 'assistant', finalContent, finalParts)
+                const session = snapshot?.session
+                if (session?.sessionId) {
+                    await updateChatSession(
+                        chatId,
+                        session.sessionId,
+                        session.continuationToken ?? '',
+                        session.streamIndex ?? 0
+                    )
+                }
+                void refreshChatTokens(chatId)
+                router.refresh()
+            } catch (err) {
+                console.error('Failed to persist stopped turn:', err)
+            }
+            return
+        }
 
         const explicitError =
             forceError ||
@@ -452,6 +545,39 @@ export function useChatSession({
     useEffect(() => {
         agentRef.current = agent
     }, [agent])
+
+    const handleStop = useCallback(async () => {
+        wasStoppedRef.current = true
+        setAgentError(false)
+        const targetChatId = chatIdRef.current
+        const activeSessionId = agentRef.current.session?.sessionId || initialSession?.sessionId
+
+        if (activeSessionId) {
+            try {
+                const res = await fetch(`/eve/v1/session/${encodeURIComponent(activeSessionId)}/cancel`, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                })
+                if (!res.ok) {
+                    console.warn('Server cancel route returned non-ok status, resetting client session.')
+                    agentRef.current.reset()
+                    void persistTurn(agentRef.current, false)
+                }
+            } catch (err) {
+                console.warn('Failed to cancel Eve session turn on server:', err)
+                agentRef.current.reset()
+                void persistTurn(agentRef.current, false)
+            }
+        } else {
+            agentRef.current.reset()
+            void persistTurn(agentRef.current, false)
+        }
+
+        if (targetChatId) {
+            setChatRunning(targetChatId, false)
+        }
+        setIsStreaming(false)
+    }, [initialSession, persistTurn, setChatRunning])
 
     const resolveNetworkForTurn = useCallback(async () => {
         let networkForTurn = normalizeNetworkId(activeNetwork)
@@ -873,5 +999,6 @@ export function useChatSession({
         handleClosePanel,
         handleOpenTransactions,
         handleCloseTxPanel,
+        handleStop,
     }
 }

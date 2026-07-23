@@ -33,6 +33,7 @@ export default function Chat(props: UseChatSessionProps) {
         handleClosePanel,
         handleOpenTransactions,
         handleCloseTxPanel,
+        handleStop,
     } = useChatSession(props)
 
     const showChatMeta = Boolean(props.chatId)
@@ -71,6 +72,7 @@ export default function Chat(props: UseChatSessionProps) {
                         input={input}
                         handleInputChange={(e) => setInput(e.target.value)}
                         handleSubmit={handleSubmit}
+                        onStop={handleStop}
                         isBusy={isBusy}
                         selectedModel={selectedModel}
                         onModelChange={handleModelChange}
