@@ -289,3 +289,61 @@ export type CryptoPriceInfo = {
     lastUpdated?: string
     chartData?: CryptoChartPoint[]
 }
+
+export type NativeBalanceData = {
+    success?: boolean
+    address: string
+    balance: string
+    symbol: string
+    network: string
+    formatted: string
+}
+
+export type SwapQuoteToken = {
+    address: string
+    symbol: string
+    name?: string
+    decimals?: number
+    isNative?: boolean
+    source?: string
+}
+
+export type SwapQuoteData = {
+    success?: boolean
+    network: string
+    networkLabel?: string
+    nativeSymbol?: string
+    from: string
+    tokenIn: SwapQuoteToken
+    tokenOut: SwapQuoteToken
+    amountIn: string
+    amountInRaw?: string
+    amountOut: string
+    amountOutRaw?: string
+    slippageTolerance?: number
+    routing?: string
+    gasFeeUSD?: string
+    gasUseEstimate?: string
+}
+
+export type AddressBookEntry = {
+    name: string
+    address: string
+}
+
+export type AddressBookData = {
+    success?: boolean
+    entries: AddressBookEntry[]
+}
+
+export type UserWalletItem = {
+    name: string
+    address: string
+    type: string
+}
+
+export type UserWalletsData = {
+    success?: boolean
+    wallets: UserWalletItem[]
+}
+

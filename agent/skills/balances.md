@@ -5,8 +5,14 @@ Use when the user wants to check native currency balance or ERC-20 token balance
 When the user asks to check native balance or ERC-20 token balances:
 1. **First** scan the user message for a `0x` address (42 chars) or an explicit wallet / address book name to query. If present → call `get_balance` with `address` / `get_token_balances` with `walletAddressOrName` set to that value. Do not use the UI wallet.
 2. Only if there is **no** address and **no** name (including "my wallet" / "my balance" / generic "check balance"): call the tool **immediately** with **no** wallet parameter. Never ask for confirmation that the active UI wallet is correct.
-3. For **native** balance (`get_balance`): output a clean, formatted summary (include the **address returned by the tool**, amount, symbol, and network).
+3. For **native** balance (`get_balance`), formulate your response depending on the tool result:
+   - If `success === true`:
+     - You MUST output only a very brief, concise, one-sentence introduction in the user's language that points them to the card below (e.g. "Here is your native balance:").
+     - You MUST NOT list, enumerate, or duplicate the balance amount, symbol, or address in your text response. The frontend will automatically render them in a custom graphic card below your text response.
+   - If `success === false`:
+     - Explain the error clearly in text.
 4. For **ERC-20** balances (`get_token_balances`), formulate your response depending on the tool result:
+
    - If `success === true` and `tokens` is a **non-empty** array:
      - You MUST output only a very brief, concise, one-sentence introduction in the user's language that points them to the table below (e.g. "ERC-20 balances are shown below:").
      - You MUST NOT list, enumerate, or summarize individual tokens in your text response (name, symbol, balance, valueUsd, contract address). The frontend will automatically render them in a custom table below your text.

@@ -20,6 +20,14 @@ import TrendingTokensCard from '../tools/get_trending_tokens/TrendingTokensCard'
 import TrendingTokensSkeleton from '../tools/get_trending_tokens/TrendingTokensSkeleton'
 import CryptoPriceCard from '../tools/get_crypto_price/CryptoPriceCard'
 import CryptoPriceSkeleton from '../tools/get_crypto_price/CryptoPriceSkeleton'
+import NativeBalanceCard from '../tools/get_balance/NativeBalanceCard'
+import NativeBalanceSkeleton from '../tools/get_balance/NativeBalanceSkeleton'
+import SwapQuoteCard from '../tools/get_swap_quote/SwapQuoteCard'
+import SwapQuoteSkeleton from '../tools/get_swap_quote/SwapQuoteSkeleton'
+import AddressBookCard from '../tools/get_address_book/AddressBookCard'
+import AddressBookSkeleton from '../tools/get_address_book/AddressBookSkeleton'
+import UserWalletsCard from '../tools/get_user_wallets/UserWalletsCard'
+import UserWalletsSkeleton from '../tools/get_user_wallets/UserWalletsSkeleton'
 import { messageHasReasoning, messageHasTools } from '../AgentAnalysisPanel'
 import { slideInUp } from '../../../lib/motion'
 import CopyMessageButton from './CopyMessageButton'
@@ -143,6 +151,10 @@ export default function MessageItem({
         const txHistoryParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_tx_history')
         const trendingTokensParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_trending_tokens')
         const cryptoPriceParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_crypto_price')
+        const nativeBalanceParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_balance')
+        const swapQuoteParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_swap_quote')
+        const addressBookParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_address_book')
+        const userWalletsParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_user_wallets')
 
         const showCustomComponents = !(isLast && isBusy)
 
@@ -244,10 +256,48 @@ export default function MessageItem({
                             }
                             return null
                         })}
+                        {nativeBalanceParts.map((part, i) => {
+                            if (part.state === 'executing' || part.state === 'requested') {
+                                return <NativeBalanceSkeleton key={`native-balance-skeleton-${i}`} />
+                            }
+                            if (part.state === 'output-available' && part.output?.success === true) {
+                                return <NativeBalanceCard key={`native-balance-card-${i}`} data={part.output} />
+                            }
+                            return null
+                        })}
+                        {swapQuoteParts.map((part, i) => {
+                            if (part.state === 'executing' || part.state === 'requested') {
+                                return <SwapQuoteSkeleton key={`swap-quote-skeleton-${i}`} />
+                            }
+                            if (part.state === 'output-available' && part.output?.success === true) {
+                                return <SwapQuoteCard key={`swap-quote-card-${i}`} data={part.output} />
+                            }
+                            return null
+                        })}
+                        {addressBookParts.map((part, i) => {
+                            if (part.state === 'executing' || part.state === 'requested') {
+                                return <AddressBookSkeleton key={`address-book-skeleton-${i}`} />
+                            }
+                            if (part.state === 'output-available' && part.output?.success === true) {
+                                return <AddressBookCard key={`address-book-card-${i}`} data={part.output} activeNetwork={activeNetwork} />
+                            }
+                            return null
+                        })}
+                        {userWalletsParts.map((part, i) => {
+                            if (part.state === 'executing' || part.state === 'requested') {
+                                return <UserWalletsSkeleton key={`user-wallets-skeleton-${i}`} />
+                            }
+                            if (part.state === 'output-available' && part.output?.success === true) {
+                                return <UserWalletsCard key={`user-wallets-card-${i}`} data={part.output} activeNetwork={activeNetwork} />
+                            }
+                            return null
+                        })}
+
                     </motion.div>
                 )}
             </div>
         )
+
     }
 
     if (message.role === 'user') {
