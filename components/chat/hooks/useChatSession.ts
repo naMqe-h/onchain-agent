@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useEveAgent } from 'eve/react'
 import { addMessage, updateChatSession, createChat, updateChatModel, updateChatNetwork, markChatAsRead } from '../../../app/actions/chat/chat'
 import { checkMyUsageQuota, getChatTokenUsageAction } from '../../../app/actions/usage/usage'
@@ -87,6 +87,7 @@ export function useChatSession({
     enabledModels,
 }: UseChatSessionProps) {
     const router = useRouter()
+    const pathname = usePathname()
     const [input, setInput] = useState('')
     const [displayMessages, setDisplayMessages] = useState<StoredMessage[]>(initialMessages)
     const [currentChatId, setCurrentChatId] = useState<string | null>(initialChatId)
@@ -323,6 +324,9 @@ export function useChatSession({
                         session.streamIndex ?? 0
                     )
                 }
+                if (chatId && pathname === `/chat/${chatId}`) {
+                    await markChatAsRead(chatId).catch(() => { })
+                }
                 void refreshChatTokens(chatId)
                 router.refresh()
             } catch (err) {
@@ -495,6 +499,9 @@ export function useChatSession({
                 )
             }
 
+            if (chatId && pathname === `/chat/${chatId}`) {
+                await markChatAsRead(chatId).catch(() => { })
+            }
             void refreshChatTokens(chatId)
             router.refresh()
         } catch (err) {
@@ -511,7 +518,7 @@ export function useChatSession({
                 }]
             })
         }
-    }, [router, refreshChatTokens])
+    }, [router, refreshChatTokens, pathname])
 
     const setChatRunning = useChatActivityStore((s) => s.setChatRunning)
 

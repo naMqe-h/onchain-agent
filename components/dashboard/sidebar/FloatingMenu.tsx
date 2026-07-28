@@ -66,7 +66,7 @@ export default function FloatingMenu({
                 ref={menuRef}
                 data-floating-menu
                 role="menu"
-                className="fixed z-110 max-h-[min(360px,calc(100vh-16px))] overflow-y-auto overscroll-contain bg-[#1f1f22] border border-white/10 rounded-xl shadow-xl py-1"
+                className="fixed z-110 max-h-[min(360px,calc(100dvh-16px))] overflow-y-auto overscroll-contain bg-[#1f1f22] border border-white/10 rounded-xl shadow-xl py-1"
                 style={{
                     width,
                     top: coords?.top ?? 0,

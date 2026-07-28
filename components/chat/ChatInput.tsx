@@ -27,6 +27,7 @@ interface ChatInputProps {
     onNetworkChange?: (network: string) => void
     enabledModels?: string[]
     isAuthenticated: boolean
+    isExpanded?: boolean
 }
 
 function shortAddress(address: string) {
@@ -45,7 +46,8 @@ export default function ChatInput({
     selectedNetwork,
     onNetworkChange,
     enabledModels,
-    isAuthenticated
+    isAuthenticated,
+    isExpanded
 }: ChatInputProps) {
     const [isModelOpen, setIsModelOpen] = useState(false)
     const [isWalletOpen, setIsWalletOpen] = useState(false)
@@ -94,7 +96,7 @@ export default function ChatInput({
             animate="animate"
             className="px-4 pt-3 pb-3 bg-transparent"
         >
-            <div className="max-w-3xl mx-auto flex flex-col gap-1.5">
+            <div className={`${isExpanded ? 'max-w-4xl' : 'max-w-3xl'} mx-auto flex flex-col gap-1.5 transition-all duration-300`}>
                 <form onSubmit={handleSubmit} data-tour="chat-input" className="flex gap-3 bg-[#1e1e20] rounded-full px-4 py-3 items-center shadow-lg border border-white/5 relative z-10">
                     <input
                         ref={inputRef}

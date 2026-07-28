@@ -27,7 +27,7 @@ export default async function DashboardLayout({
         : [[], [], null, []]
 
     return (
-        <div className="flex flex-col md:flex-row h-screen w-full overflow-hidden">
+        <div className="flex flex-col md:flex-row h-dvh w-full overflow-hidden">
             <AuthSessionWatcher />
             <ModelsBootstrap initialModels={modelCatalog} />
             <OnboardingController user={user} />

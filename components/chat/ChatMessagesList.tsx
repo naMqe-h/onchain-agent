@@ -69,11 +69,7 @@ export default function ChatMessagesList({
     }, [isBusy])
 
     if ((!messages || messages.length === 0) && !showError) {
-        return (
-            <div className="flex-1 flex flex-col items-center justify-center text-zinc-500">
-                <span className="text-xl">What can I help with?</span>
-            </div>
-        )
+        return null
     }
 
     return (

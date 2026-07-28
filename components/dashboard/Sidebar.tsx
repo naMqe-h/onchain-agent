@@ -443,7 +443,7 @@ export default function Sidebar({ user, chats, folders, profile }: SidebarProps)
                 variants={slideInLeft}
                 initial="initial"
                 animate="animate"
-                className={`hidden md:flex h-screen border-r border-white/5 bg-[#131314] flex-col shrink-0 transition-[width] duration-200 ease-out ${isCollapsed ? 'w-14' : 'w-56 lg:w-64'
+                className={`hidden md:flex h-dvh border-r border-white/5 bg-[#131314] flex-col shrink-0 transition-[width] duration-200 ease-out ${isCollapsed ? 'w-14' : 'w-56 lg:w-64'
                     }`}
             >
                 {renderSidebarContent(isCollapsed)}
