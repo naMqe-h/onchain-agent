@@ -107,9 +107,13 @@ export function formatPercent(percent: number | null | undefined): string {
     return `${sign}${p.toFixed(2)}%`
 }
 
-export function formatShortAddress(addr: string | null | undefined): string {
-    if (!addr || addr.length < 12) return addr || EMPTY_VALUE
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`
+export function formatShortAddress(
+    addr: string | null | undefined,
+    startLen: number = 6,
+    endLen: number = 4
+): string {
+    if (!addr || addr.length < startLen + endLen + 2) return addr || EMPTY_VALUE
+    return `${addr.slice(0, startLen)}...${addr.slice(-endLen)}`
 }
 
 export function formatRelativeTime(date: Date | string | number): string {

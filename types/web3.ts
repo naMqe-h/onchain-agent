@@ -194,6 +194,41 @@ export type TxHistoryData = {
     transactions: TxHistoryRow[]
 }
 
+export type TxTokenTransfer = {
+    from: string
+    to: string
+    tokenSymbol: string
+    tokenAddress?: string
+    amount: string
+}
+
+export type TxDetailsItem = {
+    hash: string
+    status: 'success' | 'reverted' | 'pending' | 'unknown'
+    blockNumber?: number | string | null
+    confirmations?: number | null
+    timestamp?: string | null
+    from: string
+    to?: string | null
+    value: string
+    fee?: string | null
+    gasUsed?: string | null
+    gasPrice?: string | null
+    method?: string | null
+    nonce?: number | null
+    tokenTransfers?: TxTokenTransfer[]
+}
+
+export type TxDetailsData = {
+    success?: boolean
+    hash: string
+    network: string
+    symbol?: string
+    tx?: TxDetailsItem
+    error?: string
+}
+
+
 export type TokenBalanceRow = {
     address: string
     symbol: string

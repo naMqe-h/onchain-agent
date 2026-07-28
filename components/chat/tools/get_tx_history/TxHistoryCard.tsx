@@ -9,6 +9,7 @@ import {
 } from '../../../../lib/format'
 import {
     getExplorerBaseUrl,
+    getNetworkIconSrc,
     getNetworkShortLabel,
     normalizeNetworkId,
 } from '../../../../lib/web3/config'
@@ -37,9 +38,16 @@ export default function TxHistoryCard({ data }: TxHistoryCardProps) {
                             {formatShortAddress(data.address)}
                         </span>
                     </div>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 bg-zinc-900/80 border border-zinc-800/80 px-2.5 py-1 rounded-full">
-                        {networkLabel || EMPTY_VALUE}
-                    </span>
+                    <div className="flex items-center gap-1.5 bg-zinc-900/80 border border-zinc-800/80 px-2.5 py-1 rounded-full shrink-0">
+                        <img
+                            src={getNetworkIconSrc(network)}
+                            alt={networkLabel}
+                            className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
+                        />
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                            {networkLabel || EMPTY_VALUE}
+                        </span>
+                    </div>
                 </div>
                 <div className="py-8 text-center">
                     <p className="text-sm text-zinc-500">No transactions found on the active network.</p>
@@ -81,9 +89,16 @@ export default function TxHistoryCard({ data }: TxHistoryCardProps) {
                         <FiExternalLink size={11} className="opacity-60 shrink-0" />
                     </a>
                 </div>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 bg-zinc-900/80 border border-zinc-800/80 px-2.5 py-1 rounded-full shrink-0">
-                    {networkLabel || EMPTY_VALUE}
-                </span>
+                <div className="flex items-center gap-1.5 bg-zinc-900/80 border border-zinc-800/80 px-2.5 py-1 rounded-full shrink-0">
+                    <img
+                        src={getNetworkIconSrc(network)}
+                        alt={networkLabel}
+                        className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
+                    />
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                        {networkLabel || EMPTY_VALUE}
+                    </span>
+                </div>
             </div>
 
             <div className="mt-3 space-y-2">

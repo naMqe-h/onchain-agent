@@ -16,6 +16,8 @@ import SwapCard from '../tools/swap_tokens/SwapCard'
 import SwapSkeleton from '../tools/swap_tokens/SwapSkeleton'
 import TxHistoryCard from '../tools/get_tx_history/TxHistoryCard'
 import TxHistorySkeleton from '../tools/get_tx_history/TxHistorySkeleton'
+import TxDetailsCard from '../tools/get_tx_details/TxDetailsCard'
+import TxDetailsSkeleton from '../tools/get_tx_details/TxDetailsSkeleton'
 import TrendingTokensCard from '../tools/get_trending_tokens/TrendingTokensCard'
 import TrendingTokensSkeleton from '../tools/get_trending_tokens/TrendingTokensSkeleton'
 import CryptoPriceCard from '../tools/get_crypto_price/CryptoPriceCard'
@@ -149,6 +151,7 @@ export default function MessageItem({
         const sendNativeParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'send_native')
         const swapParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'swap_tokens')
         const txHistoryParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_tx_history')
+        const txDetailsParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_tx_details')
         const trendingTokensParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_trending_tokens')
         const cryptoPriceParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_crypto_price')
         const nativeBalanceParts = message.parts.filter(part => part.type === 'dynamic-tool' && part.toolName === 'get_balance')
@@ -253,6 +256,15 @@ export default function MessageItem({
                             }
                             if (part.state === 'output-available' && part.output?.success === true) {
                                 return <TxHistoryCard key={`tx-history-card-${i}`} data={part.output} />
+                            }
+                            return null
+                        })}
+                        {txDetailsParts.map((part, i) => {
+                            if (part.state === 'executing' || part.state === 'requested') {
+                                return <TxDetailsSkeleton key={`tx-details-skeleton-${i}`} />
+                            }
+                            if (part.state === 'output-available') {
+                                return <TxDetailsCard key={`tx-details-card-${i}`} data={part.output} />
                             }
                             return null
                         })}

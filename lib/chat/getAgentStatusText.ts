@@ -23,6 +23,8 @@ export const getAgentStatusText = (agentEvents?: readonly any[]) => {
                 return 'Signing transaction...'
             case 'get_tx_history':
                 return 'Reading transaction history...'
+            case 'get_tx_details':
+                return 'Retrieving transaction details...'
             case 'get_address_book':
                 return 'Retrieving address book...'
             case 'get_token_info':
