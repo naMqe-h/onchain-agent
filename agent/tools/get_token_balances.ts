@@ -10,23 +10,11 @@ import {
 
 export default defineTool({
     description:
-        "Get ERC-20 token balances for a wallet on the session active network. " +
-        `Returns at most the top ${ERC20_BALANCES_TOP_LIMIT} tokens by approximate USD value (balance * price), not by token amount. ` +
-        "Each token includes name, symbol, contract address, balance, decimals, valueUsd, circulatingMarketCap, volume24h, and iconUrl (nullable when API omits them). " +
-        "If the wallet holds more tokens, totalCount / truncated / note explain that only the most valuable ones were returned. " +
-        "CRITICAL: If the user message includes a 0x address, a wallet name, or an address book name to check, you MUST pass it as walletAddressOrName - never omit it in that case (omitting queries the UI active wallet instead). " +
-        "Only omit walletAddressOrName for 'my tokens' / 'my balances' with no address/name in the message. " +
-        "CRITICAL presentation: On success with a non-empty tokens array, output ONLY a very brief one-sentence intro in the user's language that points to the table below (e.g. 'ERC-20 balances are shown below:'). " +
-        "Do NOT list, enumerate, or summarize individual tokens (name, symbol, balance, valueUsd, address) in your text - the frontend renders a custom table. " +
-        "On success with an empty tokens array, tell the user clearly that this wallet holds no ERC-20 tokens on the active network (include address and network); do not invent a table. " +
-        "On failure, report the error in text. " +
-        "Always call this tool again when the user asks for token balances, even if you answered earlier - the active network may have changed mid-chat. " +
-        "For transfers by ticker/name, prefer send_erc20 which resolves the contract from sender balances automatically.",
+        "Get ERC-20 token balances for a wallet on active network. " +
+        "Output ONLY a brief 1-sentence intro pointing to the rendered UI table - do NOT list tokens in text. " +
+        "Pass walletAddressOrName if user specified a 0x address, wallet name, or contact name.",
     inputSchema: z.object({
-        walletAddressOrName: z.string().optional().describe(
-            "REQUIRED when the user named a specific EVM address (0x…), wallet name, or address book entry name to inspect. " +
-            "Pass that value exactly. Only omit for 'my tokens' / generic own-balance checks so the chat UI active wallet is used."
-        ),
+        walletAddressOrName: z.string().optional().describe("Optional 0x address, wallet name, or contact name."),
     }),
     async execute({ walletAddressOrName }, ctx) {
         const input = walletAddressOrName?.trim()

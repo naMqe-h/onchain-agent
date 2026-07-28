@@ -100,28 +100,14 @@ function resolveTokenFromBalances(
 
 export default defineTool({
     description:
-        "Send an ERC-20 token (not native ETH/POL) from a user wallet on the session active network. " +
-        "Pass token as either a contract address (0x…) OR a ticker/name held on the sender wallet (e.g. USDC, USDT, or any other symbol/name the user provides). " +
-        "When a ticker/name is passed, this tool automatically loads the sender's ERC-20 balances and resolves the contract - no prior get_token_balances call is required. " +
-        "Any user-provided ticker/name may be a valid ERC-20 on this chain if it appears in the wallet balances; do not refuse based on off-chain assumptions. " +
-        "Uses the chat UI active wallet as sender unless fromAddressOrName is set. " +
-        "Recipient may be a 0x address, a wallet name, or an address book name (tool resolves names). " +
-        "Sender must be one of the user's own wallets - never an address book entry. " +
-        "Never use send_native for these transfers. " +
-        "Whether you must confirm with the user before calling this tool is controlled by the session TX confirmation policy " +
-        "(always / agent_decides / never). Read-only tools are unaffected.",
+        "Send ERC-20 tokens (not native ETH/POL) on active network. " +
+        "token parameter can be a contract address (0x…) OR ticker/name (e.g. USDC, USDT). " +
+        "Automatically resolves tickers from sender wallet balances. Recipient can be 0x address, wallet name, or contact name.",
     inputSchema: z.object({
-        token: z.string().describe(
-            "ERC-20 contract address (0x…) OR token ticker/name as the user said it (e.g. 'USDC', 'USDT', or any other symbol/name). " +
-            "Do not refuse tickers based on off-chain assumptions - resolve them against the sender wallet balances."
-        ),
-        toAddress: z.string().describe(
-            "Recipient: EVM address (0x…), wallet name, or address book entry name (e.g. 'secondary', 'exchange', 'Mom')."
-        ),
-        amount: z.string().describe("Amount of tokens in human-readable units (e.g. '2' or '10.5'), not raw wei."),
-        fromAddressOrName: z.string().optional().describe(
-            "Optional sender override (user wallet address or name only). If omitted, uses the active wallet selected in the chat UI."
-        ),
+        token: z.string().describe("ERC-20 contract address (0x…) or token symbol/name (e.g. USDC)."),
+        toAddress: z.string().describe("Recipient address (0x…), wallet name, or contact name."),
+        amount: z.string().describe("Human-readable amount (e.g. '10.5')."),
+        fromAddressOrName: z.string().optional().describe("Optional sender wallet override. Uses active UI wallet if omitted."),
     }),
     async execute({ token, toAddress, amount, fromAddressOrName }, ctx) {
         const userId = ctx.session?.auth?.current?.principalId

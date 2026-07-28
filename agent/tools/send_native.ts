@@ -34,24 +34,13 @@ function decryptKey(encryptedText: string): string {
 
 export default defineTool({
     description:
-        "Send native chain currency only (ETH on Robinhood/Ethereum, POL on Polygon) - not ERC-20 tokens. " +
-        "Uses the user's active wallet from the chat UI selector (session) unless fromAddressOrName is explicitly provided. " +
-        "Recipient (toAddress) may be a 0x address, a wallet name, or an address book name - the tool resolves names. " +
-        "Sender (fromAddressOrName) must be one of the user's own wallets (private key required) - never an address book entry. " +
-        "Uses the session active network. " +
-        "Use when the user means native currency (ETH / POL / Ether / native) or amount+recipient with no token contract and no token ticker. " +
-        "Do NOT use this tool if the user provided a token contract address (0x…) together with amount and from/to wallets - use send_erc20 instead. " +
-        "Do NOT use for USDC/USDT or any ERC-20 transfer. " +
-        "Whether you must confirm with the user before calling this tool is controlled by the session TX confirmation policy " +
-        "(always / agent_decides / never). Read-only tools are unaffected.",
+        "Send native chain currency (ETH or POL, not ERC-20). " +
+        "Uses active UI wallet as sender unless fromAddressOrName is set. " +
+        "toAddress can be a 0x address, wallet name, or contact name.",
     inputSchema: z.object({
-        toAddress: z.string().describe(
-            "Recipient: EVM address (0x…), wallet name, or address book entry name (e.g. 'exchange', 'Mom'). The tool resolves names to addresses."
-        ),
-        amount: z.string().describe("The amount of native currency to send (e.g. '0.01'). Never pass an ERC-20 token amount here."),
-        fromAddressOrName: z.string().optional().describe(
-            "Optional override: sender wallet address or name (user's own wallet only). If omitted, uses the active wallet selected in the chat UI."
-        ),
+        toAddress: z.string().describe("Recipient 0x address, wallet name, or contact name."),
+        amount: z.string().describe("Amount of native currency to send (e.g. '0.01')."),
+        fromAddressOrName: z.string().optional().describe("Optional sender wallet override."),
     }),
     async execute({ toAddress, amount, fromAddressOrName }, ctx) {
         const userId = ctx.session?.auth?.current?.principalId

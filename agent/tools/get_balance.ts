@@ -11,16 +11,10 @@ import { resolveNamedAddress } from "../../lib/web3/resolveNamedAddress"
 
 export default defineTool({
     description:
-        "Get the native currency balance (ETH on Robinhood/Ethereum, POL on Polygon) of an address, a wallet name, " +
-        "an address book name, or (if omitted) the user's active wallet from the chat UI selector. Uses the session active network. " +
-        "CRITICAL: If the user message includes a 0x address or a name (wallet or address book) to check, you MUST pass it as address - never omit it in that case. " +
-        "Only omit address for 'my wallet' / 'my balance' / generic own-balance checks with no address/name in the message. " +
-        "Always call this tool again when the user asks for a balance - do not reuse an earlier answer; the active network may have changed mid-chat.",
+        "Get native currency balance (ETH/POL) on active network. " +
+        "Pass address parameter if user specified a 0x address, wallet name, or contact name.",
     inputSchema: z.object({
-        address: z.string().optional().describe(
-            "REQUIRED when the user named a specific EVM address (0x…), wallet name, or address book entry name to inspect. " +
-            "Pass that value exactly. Only omit for 'my wallet' / generic own-balance checks so the chat UI active wallet is used."
-        ),
+        address: z.string().optional().describe("Optional 0x address, wallet name, or contact name."),
     }),
     async execute({ address }, ctx) {
         const input = address?.trim()

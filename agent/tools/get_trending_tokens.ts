@@ -49,10 +49,7 @@ export default defineTool({
         "Get top trending tokens (memecoins) on a specified blockchain network. " +
         "If chain is not specified, it defaults to the user's active network from the settings.",
     inputSchema: z.object({
-        chain: z.string().optional().describe(
-            "The blockchain network to get trending/top tokens for (e.g., 'ethereum', 'robinhood', 'polygon'). " +
-            "If not specified, it will use the user's active network."
-        ),
+        chain: z.string().optional().describe("Optional network name (e.g. 'ethereum', 'polygon'). Defaults to active network."),
     }),
     async execute({ chain }, ctx) {
         let geckoChainId = ""
