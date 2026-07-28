@@ -235,7 +235,7 @@ export default function ChatInput({
                                 {isNetworkOpen && (
                                     <>
                                         <div className="fixed inset-0 z-40" onClick={() => setIsNetworkOpen(false)} />
-                                        <div className="absolute bottom-full mb-1.5 right-0 sm:right-auto sm:left-0 w-64 max-w-[calc(100vw-32px)] bg-[#1f1f22] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden py-1.5 flex flex-col">
+                                        <div className="absolute bottom-full mb-1.5 left-0 w-64 max-w-[calc(100vw-32px)] bg-[#1f1f22] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden py-1.5 flex flex-col">
                                             <div className="px-3.5 py-1.5 flex items-center justify-between border-b border-white/5 mb-1 shrink-0">
                                                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Select Chain</span>
                                                 <button

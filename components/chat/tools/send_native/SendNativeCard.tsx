@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { FiCopy, FiCheck, FiExternalLink } from 'react-icons/fi'
-import { formatCompactAmount } from '@/lib/format'
+import { formatCompactAmount, formatGasFee } from '@/lib/format'
 import {
     getExplorerBaseUrl,
     getNativeCurrencySymbol,
@@ -134,7 +134,7 @@ export default function SendNativeCard({ tx }: SendNativeCardProps) {
                     <span className="text-base font-bold text-zinc-100 break-all">
                         {gasFee != null && gasFee !== '' ? (
                             <>
-                                {gasFee}{' '}
+                                {formatGasFee(gasFee)}{' '}
                                 <span className="text-sm font-semibold text-zinc-400">{symbol}</span>
                             </>
                         ) : (

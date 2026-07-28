@@ -124,3 +124,26 @@ export function formatTokens(n: number): string {
     if (n >= 10_000) return `${Math.round(n / 1000)}k`
     return n.toLocaleString()
 }
+
+export function formatGasFee(gasFee: string | number | null | undefined): string {
+    if (isEmpty(gasFee)) return EMPTY_VALUE
+    const num = toNumber(gasFee as string | number)
+    if (!Number.isFinite(num)) return String(gasFee)
+    if (num === 0) return '0'
+
+    const abs = Math.abs(num)
+
+    if (abs < 0.0001) {
+        if (abs < 0.000001) {
+            return '< 0.000001'
+        }
+        return num.toFixed(6).replace(/\.?0+$/, '')
+    }
+
+    if (abs >= 1000) {
+        return compactNumberFormatter.format(num)
+    }
+
+    return num.toFixed(4).replace(/\.?0+$/, '')
+}
+
