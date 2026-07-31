@@ -14,12 +14,12 @@ import {
     getChainConfig,
     getNativeCurrencySymbol,
     normalizeNetworkId,
-} from "../../lib/web3/config"
-import { resolveActingWallet } from "../../lib/web3/resolveActiveWallet"
-import { resolveNamedAddress } from "../../lib/web3/resolveNamedAddress"
-import { isAddressOnAllowlist } from "../../lib/web3/addressValidation"
-import { fetchWalletErc20Tokens, type BalanceToken } from "../../lib/web3/tokenBalances"
-import { gasFieldsFromReceipt, waitForTxReceipt } from "../../lib/web3/waitForTx"
+} from "../../../lib/web3/config"
+import { resolveActingWallet } from "../../../lib/web3/resolveActiveWallet"
+import { resolveNamedAddress } from "../../../lib/web3/resolveNamedAddress"
+import { isAddressOnAllowlist } from "../../../lib/web3/addressValidation"
+import { fetchWalletErc20Tokens, type BalanceToken } from "../../../lib/web3/tokenBalances"
+import { gasFieldsFromReceipt, waitForTxReceipt } from "../../../lib/web3/waitForTx"
 import { createHash, createDecipheriv } from "crypto"
 
 const getEncryptionKey = () => {

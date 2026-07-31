@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools"
 import { z } from "zod"
-import { normalizeNetworkId } from "../../lib/web3/config"
+import { normalizeNetworkId } from "../../../lib/web3/config"
 
 const GECKOTERMINAL_CHAIN_MAP: Record<string, string> = {
     "ethereum": "eth",

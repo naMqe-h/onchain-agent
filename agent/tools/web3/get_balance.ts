@@ -5,9 +5,9 @@ import {
     getChainConfig,
     getNativeCurrencySymbol,
     normalizeNetworkId,
-} from "../../lib/web3/config"
-import { resolveActingWallet } from "../../lib/web3/resolveActiveWallet"
-import { resolveNamedAddress } from "../../lib/web3/resolveNamedAddress"
+} from "../../../lib/web3/config"
+import { resolveActingWallet } from "../../../lib/web3/resolveActiveWallet"
+import { resolveNamedAddress } from "../../../lib/web3/resolveNamedAddress"
 
 export default defineTool({
     description:

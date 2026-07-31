@@ -53,7 +53,8 @@ function titleFromMessages(messages: readonly { parts?: unknown }[]): string | n
         for (const part of parts as any[]) {
             if (
                 part?.type === 'dynamic-tool' &&
-                part.toolName === 'update_chat_title' &&
+                typeof part.toolName === 'string' &&
+                part.toolName.endsWith('update_chat_title') &&
                 part.state === 'output-available' &&
                 part.output?.success === true
             ) {

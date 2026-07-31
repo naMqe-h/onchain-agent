@@ -24,8 +24,10 @@ function mapToolToTx(
     part: any,
     message: MessageLike
 ): ChatOnchainTx | null {
-    const toolName = part?.toolName as string | undefined
-    if (!toolName || !TX_TOOLS.has(toolName)) return null
+    const rawToolName = part?.toolName as string | undefined
+    if (!rawToolName) return null
+    const baseToolName = rawToolName.split('-').pop()
+    if (!baseToolName || !TX_TOOLS.has(baseToolName)) return null
     if (part.state !== "output-available") return null
 
     const output = part.output
@@ -40,7 +42,7 @@ function mapToolToTx(
     const createdAt = message.createdAt ?? null
     const status = asString(output.status) || undefined
 
-    if (toolName === "swap_tokens") {
+    if (baseToolName === "swap_tokens") {
         const nativeSymbol = getNativeCurrencySymbol(network)
         const inSymbol = asString(output.tokenIn?.symbol) || "IN"
         const outSymbol = asString(output.tokenOut?.symbol) || "OUT"
@@ -68,7 +70,7 @@ function mapToolToTx(
         }
     }
 
-    if (toolName === "send_native") {
+    if (baseToolName === "send_native") {
         return {
             id,
             kind: "send_native",

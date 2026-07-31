@@ -1,12 +1,12 @@
 import { defineTool } from "eve/tools"
 import { z } from "zod"
-import db from "../../lib/db"
+import db from "../../../lib/db"
 import {
     getDexScreenerChainIds,
     getExplorerBaseUrl,
     getNetworkLabel,
     normalizeNetworkId,
-} from "../../lib/web3/config"
+} from "../../../lib/web3/config"
 
 export default defineTool({
     description:

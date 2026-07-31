@@ -1,9 +1,9 @@
 import { defineTool } from "eve/tools"
 import { z } from "zod"
-import { resolveActingWallet } from "../../lib/web3/resolveActiveWallet"
-import { resolveNamedAddress } from "../../lib/web3/resolveNamedAddress"
-import { normalizeNetworkId, getNativeCurrencySymbol } from "../../lib/web3/config"
-import { fetchWalletTxHistory } from "../../lib/web3/txHistory"
+import { resolveActingWallet } from "../../../lib/web3/resolveActiveWallet"
+import { resolveNamedAddress } from "../../../lib/web3/resolveNamedAddress"
+import { normalizeNetworkId, getNativeCurrencySymbol } from "../../../lib/web3/config"
+import { fetchWalletTxHistory } from "../../../lib/web3/txHistory"
 
 export default defineTool({
     description:

@@ -1,24 +1,22 @@
 import { defineTool } from "eve/tools"
 import { z } from "zod"
+import { normalizeNetworkId } from "../../../lib/web3/config"
+import { resolveActingWallet } from "../../../lib/web3/resolveActiveWallet"
 import {
-    getNativeCurrencySymbol,
-    getNetworkLabel,
-    normalizeNetworkId,
-} from "../../lib/web3/config"
-import { resolveActingWallet } from "../../lib/web3/resolveActiveWallet"
-import {
-    assertSufficientBalance,
     DEFAULT_SLIPPAGE,
-    fetchSwapQuote,
+    executeSwap,
     prepareSwapContext,
-} from "../../lib/web3/swapCore"
+} from "../../../lib/web3/swapCore"
 
 export default defineTool({
     description:
-        "Get a Uniswap quote for swapping tokens on the active network without sending a transaction. " +
-        "Supports native ETH/POL and ERC-20; tokens may be tickers/names or 0x addresses (e.g. ETH, USDC). " +
-        "Use before swap_tokens when the TX confirmation policy requires confirmation, or when the user only asks how much they would receive. " +
-        "Not available on Robinhood Testnet. Supported: Ethereum, Ethereum Sepolia, Polygon, Robinhood.",
+        "Swap tokens on the active network via Uniswap (Trading API): native ETH/POL ↔ ERC-20 and ERC-20 ↔ ERC-20 when a route exists. " +
+        "Pass token tickers/names or 0x addresses (e.g. tokenIn=ETH tokenOut=USDC amount=0.001). " +
+        "Uses the chat UI active wallet unless fromAddressOrName is set. " +
+        "May send an ERC-20 approval transaction first, then the swap. " +
+        "Not available on Robinhood Testnet. " +
+        "Whether you must confirm with the user before calling is controlled by the session TX confirmation policy " +
+        "(always / agent_decides / never). Prefer get_swap_quote first when the policy requires confirmation.",
     inputSchema: z.object({
         tokenIn: z.string().describe(
             "Token to sell: native (ETH/POL), ticker/name (e.g. USDC), or contract address 0x…"
@@ -91,51 +89,13 @@ export default defineTool({
                 }
             }
 
-            const balanceCheck = await assertSufficientBalance(prepared.ctx)
-            if (!balanceCheck.ok) {
-                return { success: false, error: balanceCheck.error }
-            }
-
-            const { summary } = await fetchSwapQuote(prepared.ctx)
-            const c = prepared.ctx
-
-            return {
-                success: true,
-                network: activeNetwork,
-                networkLabel: getNetworkLabel(activeNetwork),
-                nativeSymbol: getNativeCurrencySymbol(activeNetwork),
-                from: wallet.address,
-                tokenIn: {
-                    address: c.tokenIn.address,
-                    symbol: c.tokenIn.symbol,
-                    name: c.tokenIn.name,
-                    decimals: c.tokenIn.decimals,
-                    isNative: c.tokenIn.isNative,
-                    source: c.tokenIn.source,
-                },
-                tokenOut: {
-                    address: c.tokenOut.address,
-                    symbol: c.tokenOut.symbol,
-                    name: c.tokenOut.name,
-                    decimals: c.tokenOut.decimals,
-                    isNative: c.tokenOut.isNative,
-                    source: c.tokenOut.source,
-                },
-                amountIn: summary.amountIn,
-                amountInRaw: summary.amountInRaw,
-                amountOut: summary.amountOut,
-                amountOutRaw: summary.amountOutRaw,
-                slippageTolerance: summary.slippageTolerance,
-                routing: summary.routing,
-                gasFeeUSD: summary.gasFeeUSD,
-                gasUseEstimate: summary.gasUseEstimate,
-            }
+            return await executeSwap(prepared.ctx)
         } catch (error: any) {
             return {
                 success: false,
                 error:
                     error?.message ||
-                    "Failed to get Uniswap swap quote.",
+                    "An error occurred while executing the Uniswap swap.",
             }
         }
     },

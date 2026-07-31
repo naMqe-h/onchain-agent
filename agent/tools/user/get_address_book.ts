@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools"
 import { z } from "zod"
-import db from "../../lib/db"
+import db from "../../../lib/db"
 
 export default defineTool({
     description:

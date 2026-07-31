@@ -7,7 +7,7 @@ export const getAgentStatusText = (agentEvents?: readonly any[]) => {
 
     if (lastEvent.type === 'actions.requested') {
         const firstAction = lastEvent.data?.actions?.[0]
-        const toolName = firstAction?.toolName
+        const toolName = typeof firstAction?.toolName === 'string' ? firstAction.toolName.split('-').pop() : firstAction?.toolName
 
         switch (toolName) {
             case 'get_balance':

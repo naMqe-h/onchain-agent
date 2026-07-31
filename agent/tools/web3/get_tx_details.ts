@@ -1,7 +1,7 @@
 import { defineTool } from "eve/tools"
 import { z } from "zod"
-import { normalizeNetworkId, getNativeCurrencySymbol } from "../../lib/web3/config"
-import { fetchTxDetails } from "../../lib/web3/txDetails"
+import { normalizeNetworkId, getNativeCurrencySymbol } from "../../../lib/web3/config"
+import { fetchTxDetails } from "../../../lib/web3/txDetails"
 
 export default defineTool({
     description:

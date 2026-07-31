@@ -1,12 +1,12 @@
 import { defineTool } from "eve/tools"
 import { z } from "zod"
-import { resolveActingWallet } from "../../lib/web3/resolveActiveWallet"
-import { resolveNamedAddress } from "../../lib/web3/resolveNamedAddress"
-import { normalizeNetworkId } from "../../lib/web3/config"
+import { resolveActingWallet } from "../../../lib/web3/resolveActiveWallet"
+import { resolveNamedAddress } from "../../../lib/web3/resolveNamedAddress"
+import { normalizeNetworkId } from "../../../lib/web3/config"
 import {
     ERC20_BALANCES_TOP_LIMIT,
     fetchWalletErc20Tokens,
-} from "../../lib/web3/tokenBalances"
+} from "../../../lib/web3/tokenBalances"
 
 export default defineTool({
     description:

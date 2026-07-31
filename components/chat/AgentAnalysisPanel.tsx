@@ -92,7 +92,7 @@ export function messageHasReasoning(message: { parts?: readonly any[] } | null |
 export function messageHasTools(message: { parts?: readonly any[] } | null | undefined): boolean {
     return Boolean(
         message?.parts?.some(
-            part => part.type === 'dynamic-tool' && part.toolName !== 'update_chat_title'
+            part => part.type === 'dynamic-tool' && (typeof part.toolName !== 'string' || !part.toolName.endsWith('update_chat_title'))
         )
     )
 }
@@ -156,7 +156,7 @@ export default function AgentAnalysisPanel({ activeMessage, onClose, agentEvents
                         )
                     }
                     if (!isReasoning && p.type === 'dynamic-tool') {
-                        if (p.toolName === 'update_chat_title') return null
+                        if (typeof p.toolName === 'string' && p.toolName.endsWith('update_chat_title')) return null
                         const toolMetrics = p.metrics || getToolMetrics(p.toolCallId, agentEvents)
                         return (
                             <div key={i} className="space-y-2 min-w-0 max-w-full">
