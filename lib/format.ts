@@ -122,6 +122,26 @@ export function formatRelativeTime(date: Date | string | number): string {
     return m.fromNow()
 }
 
+export function formatShortRelativeTime(date: Date | string | number): string {
+    if (!date) return EMPTY_VALUE
+    const d = new Date(date)
+    if (isNaN(d.getTime())) return EMPTY_VALUE
+    const diffMs = Date.now() - d.getTime()
+    if (diffMs < 0) return '0s'
+    const diffSec = Math.floor(diffMs / 1000)
+    if (diffSec < 60) return `${Math.max(1, diffSec)}s`
+    const diffMin = Math.floor(diffSec / 60)
+    if (diffMin < 60) return `${diffMin}m`
+    const diffHour = Math.floor(diffMin / 60)
+    if (diffHour < 24) return `${diffHour}h`
+    const diffDay = Math.floor(diffHour / 24)
+    if (diffDay < 30) return `${diffDay}d`
+    const diffMonth = Math.floor(diffDay / 30)
+    if (diffMonth < 12) return `${diffMonth}mo`
+    const diffYear = Math.floor(diffDay / 365)
+    return `${diffYear}y`
+}
+
 export function formatTokens(n: number): string {
     if (!Number.isFinite(n) || n < 0) return '0'
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M`
