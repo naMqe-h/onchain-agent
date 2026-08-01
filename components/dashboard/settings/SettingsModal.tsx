@@ -3,8 +3,10 @@
 import { ReactNode } from 'react'
 import { FiX, FiCreditCard, FiLock, FiGlobe, FiUser, FiCpu, FiArchive, FiBook, FiDisc, FiMonitor, FiBarChart2 } from 'react-icons/fi'
 import { User } from '@supabase/supabase-js'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useSettingsStore } from '../../../hooks/useSettingsStore'
 import { type SettingsTab, type PublicProfile } from '@/types'
+import { fadeInOut, scaleIn } from '../../../lib/motion'
 import WalletsTab from './WalletsTab'
 import AddressBookTab from './AddressBookTab'
 import CoinBookTab from './CoinBookTab'
@@ -24,7 +26,7 @@ interface SettingsModalProps {
 export default function SettingsModal({ user, profile }: SettingsModalProps) {
     const { isOpen, activeTab, closeSettings, setActiveTab } = useSettingsStore()
 
-    if (!isOpen || !user || !profile) return null
+    if (!user || !profile) return null
 
     const tabBtn = (tab: SettingsTab, label: string, icon: ReactNode) => (
         <button
@@ -41,63 +43,75 @@ export default function SettingsModal({ user, profile }: SettingsModalProps) {
     )
 
     return (
-        <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center"
-            onClick={closeSettings}
-        >
-            <div
-                data-tour="settings-modal"
-                className="bg-[#18181b] w-full h-full rounded-none max-w-none border-none md:max-w-4xl md:h-150 md:rounded-3xl md:border md:border-white/10 flex flex-col md:flex-row overflow-hidden shadow-2xl"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <div className="w-full md:w-60 pt-4 px-4 pb-5 md:p-5 flex flex-row md:flex-col justify-between md:justify-start gap-3 md:gap-4 bg-[#141416]/50 border-b border-white/5 md:border-b-0 md:border-r md:border-white/5 items-center md:items-stretch shrink-0">
-                    <div className="flex flex-row md:flex-col gap-1 flex-1 md:flex-initial overflow-x-auto pb-3 md:pb-0 -mb-0.5 md:mb-0">
-                        {tabBtn('profile', 'Profile', <FiUser size={16} />)}
-                        {tabBtn('wallets', 'Wallets', <FiCreditCard size={16} />)}
-                        {tabBtn('addressBook', 'Address Book', <FiBook size={16} />)}
-                        {tabBtn('coinBook', 'Coin Book', <FiDisc size={16} />)}
-                        {tabBtn('security', 'Security', <FiLock size={16} />)}
-                        {tabBtn('sessions', 'Sessions', <FiMonitor size={16} />)}
-                        {tabBtn('network', 'Network', <FiGlobe size={16} />)}
-                        {tabBtn('models', 'Models', <FiCpu size={16} />)}
-                        {tabBtn('usage', 'Usage', <FiBarChart2 size={16} />)}
-                        {tabBtn('archived', 'Archived', <FiArchive size={16} />)}
-                    </div>
+        <AnimatePresence>
+            {isOpen && (
+                <motion.div
+                    variants={fadeInOut}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-0 md:p-4"
+                    onClick={closeSettings}
+                >
+                    <motion.div
+                        variants={scaleIn}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        data-tour="settings-modal"
+                        className="bg-[#18181b] w-full h-full rounded-none max-w-none border-none md:max-w-4xl md:h-150 md:rounded-3xl md:border md:border-white/10 flex flex-col md:flex-row overflow-hidden shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="w-full md:w-60 pt-4 px-4 pb-5 md:p-5 flex flex-row md:flex-col justify-between md:justify-start gap-3 md:gap-4 bg-[#141416]/50 border-b border-white/5 md:border-b-0 md:border-r md:border-white/5 items-center md:items-stretch shrink-0">
+                            <div className="flex flex-row md:flex-col gap-1 flex-1 md:flex-initial overflow-x-auto pb-3 md:pb-0 -mb-0.5 md:mb-0">
+                                {tabBtn('profile', 'Profile', <FiUser size={16} />)}
+                                {tabBtn('wallets', 'Wallets', <FiCreditCard size={16} />)}
+                                {tabBtn('addressBook', 'Address Book', <FiBook size={16} />)}
+                                {tabBtn('coinBook', 'Coin Book', <FiDisc size={16} />)}
+                                {tabBtn('security', 'Security', <FiLock size={16} />)}
+                                {tabBtn('sessions', 'Sessions', <FiMonitor size={16} />)}
+                                {tabBtn('network', 'Network', <FiGlobe size={16} />)}
+                                {tabBtn('models', 'Models', <FiCpu size={16} />)}
+                                {tabBtn('usage', 'Usage', <FiBarChart2 size={16} />)}
+                                {tabBtn('archived', 'Archived', <FiArchive size={16} />)}
+                            </div>
 
-                    <div className="flex items-center md:mb-2 md:order-first">
-                        <button
-                            onClick={closeSettings}
-                            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-                        >
-                            <FiX size={16} />
-                        </button>
-                    </div>
-                </div>
+                            <div className="flex items-center md:mb-2 md:order-first">
+                                <button
+                                    onClick={closeSettings}
+                                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+                                >
+                                    <FiX size={16} />
+                                </button>
+                            </div>
+                        </div>
 
-                <div data-tour="settings-panel" className="flex-1 p-6 flex flex-col bg-[#18181b] overflow-hidden">
-                    {activeTab === 'profile' ? (
-                        <ProfileTab user={user} profile={profile} />
-                    ) : activeTab === 'wallets' ? (
-                        <WalletsTab user={user} />
-                    ) : activeTab === 'addressBook' ? (
-                        <AddressBookTab />
-                    ) : activeTab === 'coinBook' ? (
-                        <CoinBookTab user={user} />
-                    ) : activeTab === 'security' ? (
-                        <SecurityTab user={user} />
-                    ) : activeTab === 'sessions' ? (
-                        <SessionsTab />
-                    ) : activeTab === 'models' ? (
-                        <ModelsTab user={user} />
-                    ) : activeTab === 'usage' ? (
-                        <UsageTab />
-                    ) : activeTab === 'archived' ? (
-                        <ArchivedTab user={user} />
-                    ) : (
-                        <NetworkTab user={user} />
-                    )}
-                </div>
-            </div>
-        </div>
+                        <div data-tour="settings-panel" className="flex-1 p-6 flex flex-col bg-[#18181b] overflow-hidden">
+                            {activeTab === 'profile' ? (
+                                <ProfileTab user={user} profile={profile} />
+                            ) : activeTab === 'wallets' ? (
+                                <WalletsTab user={user} />
+                            ) : activeTab === 'addressBook' ? (
+                                <AddressBookTab />
+                            ) : activeTab === 'coinBook' ? (
+                                <CoinBookTab user={user} />
+                            ) : activeTab === 'security' ? (
+                                <SecurityTab user={user} />
+                            ) : activeTab === 'sessions' ? (
+                                <SessionsTab />
+                            ) : activeTab === 'models' ? (
+                                <ModelsTab user={user} />
+                            ) : activeTab === 'usage' ? (
+                                <UsageTab />
+                            ) : activeTab === 'archived' ? (
+                                <ArchivedTab user={user} />
+                            ) : (
+                                <NetworkTab user={user} />
+                            )}
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
     )
 }

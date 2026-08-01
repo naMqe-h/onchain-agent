@@ -25,6 +25,7 @@ import { type PublicProfile, type AnchorRect, type Chat, type Folder, type Sideb
 import { motion, AnimatePresence } from 'framer-motion'
 import { slideInLeft } from '../../lib/motion'
 import { useAuthModalStore } from '../../hooks/useAuthModalStore'
+import { useCommandPaletteStore } from '../../hooks/useCommandPaletteStore'
 import DeleteChatModal from './sidebar/DeleteChatModal'
 import DeleteFolderModal from './sidebar/DeleteFolderModal'
 import ChatActionMenu from './sidebar/ChatActionMenu'
@@ -322,7 +323,7 @@ export default function Sidebar({ user, chats, folders, profile }: SidebarProps)
                         unreadCount={unreadCount}
                         onToggleCollapse={toggleCollapse}
                         onNewChat={handleNewChat}
-                        onOpenSearch={() => setIsSearchOpen(true)}
+                        onOpenSearch={() => useCommandPaletteStore.getState().open()}
                     />
 
                     <div className="flex-1 min-h-0" />
@@ -358,7 +359,7 @@ export default function Sidebar({ user, chats, folders, profile }: SidebarProps)
                     hideTitleRow={hideTitleRow}
                     onToggleCollapse={toggleCollapse}
                     onNewChat={handleNewChat}
-                    onOpenSearch={() => setIsSearchOpen(true)}
+                    onOpenSearch={() => useCommandPaletteStore.getState().open()}
                 />
 
                 <SidebarNavigationList
@@ -453,7 +454,7 @@ export default function Sidebar({ user, chats, folders, profile }: SidebarProps)
                 variants={slideInLeft}
                 initial="initial"
                 animate="animate"
-                className={`hidden md:flex h-dvh border-r border-white/5 bg-[#131314] flex-col shrink-0 transition-[width] duration-200 ease-out ${isCollapsed ? 'w-14' : 'w-56 lg:w-64'
+                className={`hidden md:flex h-dvh border-r border-white/5 bg-[#131314] flex-col shrink-0 transition-[width] duration-200 ease-out ${isCollapsed ? 'w-14' : 'w-64 lg:w-72'
                     }`}
             >
                 {renderSidebarContent(isCollapsed)}

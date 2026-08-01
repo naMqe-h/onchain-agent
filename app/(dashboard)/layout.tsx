@@ -7,7 +7,9 @@ import SettingsModal from '@/components/dashboard/settings/SettingsModal'
 import LoginModal from '@/components/auth/LoginModal'
 import AuthSessionWatcher from '@/components/auth/AuthSessionWatcher'
 import ModelsBootstrap from '@/components/dashboard/ModelsBootstrap'
-import OnboardingController from '@/components/onboarding/OnboardingController'
+import OnboardingController from '../../components/onboarding/OnboardingController'
+import CommandPaletteModal from '../../components/dashboard/CommandPaletteModal'
+import CommandPaletteListener from '../../components/dashboard/CommandPaletteListener'
 
 export default async function DashboardLayout({
     children,
@@ -31,11 +33,13 @@ export default async function DashboardLayout({
             <AuthSessionWatcher />
             <ModelsBootstrap initialModels={modelCatalog} />
             <OnboardingController user={user} />
+            <CommandPaletteListener />
             <Sidebar user={user} chats={chats} folders={folders} profile={profile} />
             <main className="flex-1 flex flex-col overflow-hidden">
                 {children}
             </main>
             {user && <SettingsModal user={user} profile={profile} />}
+            <CommandPaletteModal user={user} chats={chats} />
             <LoginModal />
         </div>
     )

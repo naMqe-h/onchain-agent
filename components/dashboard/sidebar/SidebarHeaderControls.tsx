@@ -125,10 +125,15 @@ export default function SidebarHeaderControls({
                     type="button"
                     data-tour="search-chats"
                     onClick={onOpenSearch}
-                    className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl hover:bg-white/5 border border-transparent text-zinc-400 hover:text-zinc-100 text-sm font-medium transition-all cursor-pointer"
+                    className="flex items-center justify-between w-full px-3 py-2.5 rounded-xl hover:bg-white/5 border border-transparent text-zinc-400 hover:text-zinc-100 text-sm font-medium transition-all cursor-pointer group"
                 >
-                    <FiSearch size={16} className="shrink-0" />
-                    <span>Search chats</span>
+                    <div className="flex items-center gap-2">
+                        <FiSearch size={16} className="shrink-0" />
+                        <span>Search & Commands</span>
+                    </div>
+                    <kbd className="px-1.5 py-0.5 text-[10px] font-semibold text-zinc-400 bg-white/5 border border-white/10 rounded-md group-hover:border-white/20">
+                        Ctrl+K
+                    </kbd>
                 </button>
             )}
         </div>
