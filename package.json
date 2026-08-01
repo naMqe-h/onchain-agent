@@ -19,7 +19,7 @@
     "ethereum"
   ],
   "scripts": {
-    "dev": "next dev --webpack",
+    "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
@@ -35,7 +35,7 @@
     "@supabase/supabase-js": "^2.110.4",
     "ai": "^7.0.26",
     "driver.js": "^1.8.0",
-    "eve": "^0.29.2",
+    "eve": "^0.29.4",
     "framer-motion": "^12.42.2",
     "js-tiktoken": "^1.0.21",
     "lightweight-charts": "^5.2.0",

@@ -312,7 +312,7 @@ export default function Sidebar({ user, chats, folders, profile }: SidebarProps)
         return chats.filter((c) => c.hasUnread && pathname !== `/chat/${c.id}`).length
     }, [chats, pathname])
 
-    const renderSidebarContent = (collapsed: boolean) => {
+    const renderSidebarContent = (collapsed: boolean, hideTitleRow = false) => {
         if (collapsed) {
             return (
                 <>
@@ -355,6 +355,7 @@ export default function Sidebar({ user, chats, folders, profile }: SidebarProps)
                     collapsed={false}
                     user={user}
                     unreadCount={unreadCount}
+                    hideTitleRow={hideTitleRow}
                     onToggleCollapse={toggleCollapse}
                     onNewChat={handleNewChat}
                     onOpenSearch={() => setIsSearchOpen(true)}
@@ -429,7 +430,16 @@ export default function Sidebar({ user, chats, folders, profile }: SidebarProps)
                 >
                     <FiMenu size={20} />
                 </button>
-                <span className="font-medium text-[16px] text-zinc-100 tracking-tight">Onchain Agent</span>
+                <div className="flex items-center gap-2">
+                    <img
+                        src="/logo.png"
+                        alt="Onchain Agent Logo"
+                        width={22}
+                        height={22}
+                        className="w-5.5 h-5.5 rounded-lg object-contain shrink-0"
+                    />
+                    <span className="font-medium text-[16px] text-zinc-100 tracking-tight">Onchain Agent</span>
+                </div>
                 <button
                     type="button"
                     onClick={handleNewChat}
@@ -459,7 +469,16 @@ export default function Sidebar({ user, chats, folders, profile }: SidebarProps)
                         className="fixed inset-0 z-50 bg-[#131314] flex flex-col h-full w-full"
                     >
                         <div className="flex items-center justify-between px-4 h-14 border-b border-white/5 bg-[#131314] shrink-0">
-                            <span className="font-medium text-[16px] text-zinc-100 tracking-tight">Onchain Agent</span>
+                            <div className="flex items-center gap-2">
+                                <img
+                                    src="/logo.png"
+                                    alt="Onchain Agent Logo"
+                                    width={22}
+                                    height={22}
+                                    className="w-5.5 h-5.5 rounded-lg object-contain shrink-0"
+                                />
+                                <span className="font-medium text-[16px] text-zinc-100 tracking-tight">Onchain Agent</span>
+                            </div>
                             <button
                                 type="button"
                                 onClick={() => setIsMobileMenuOpen(false)}
@@ -468,7 +487,7 @@ export default function Sidebar({ user, chats, folders, profile }: SidebarProps)
                                 <FiX size={20} />
                             </button>
                         </div>
-                        {renderSidebarContent(false)}
+                        {renderSidebarContent(false, true)}
                     </motion.div>
                 )}
             </AnimatePresence>

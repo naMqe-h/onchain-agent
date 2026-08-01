@@ -142,15 +142,15 @@ export default function SidebarNavigationList({
     if (!user) return null
 
     return (
-        <div className="flex-1 px-4 pb-6 overflow-y-auto flex flex-col min-h-0 gap-4">
+        <div className="flex-1 px-4 pb-6 flex flex-col min-h-0 gap-4 overflow-hidden">
             {actionError && (
-                <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-2.5 py-1.5">
+                <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-2.5 py-1.5 shrink-0">
                     {actionError}
                 </p>
             )}
 
             {pinnedChats.length > 0 && (
-                <div className="flex flex-col gap-0.5">
+                <div className="flex flex-col gap-0.5 shrink-0">
                     {renderSectionHeader('pinned', 'Pinned', pinnedChats.length)}
                     {!collapsedSections.pinned &&
                         pinnedChats.map((chat) => (
@@ -172,7 +172,7 @@ export default function SidebarNavigationList({
                 </div>
             )}
 
-            <div data-tour="sidebar-folders" className="flex flex-col gap-0.5">
+            <div data-tour="sidebar-folders" className="flex flex-col gap-0.5 shrink-0 max-h-48 overflow-y-auto">
                 {renderSectionHeader(
                     'folders',
                     'Folders',
@@ -264,24 +264,27 @@ export default function SidebarNavigationList({
             </div>
 
             {recentChats.length > 0 && (
-                <div className="flex flex-col gap-0.5">
+                <div className="flex-1 flex flex-col gap-0.5 min-h-0 overflow-hidden">
                     {renderSectionHeader('recent', 'Recent', recentChats.length)}
-                    {!collapsedSections.recent &&
-                        recentChats.map((chat) => (
-                            <ChatRow
-                                key={chat.id}
-                                chat={chat}
-                                pathname={pathname}
-                                editingChatId={editingChatId}
-                                editTitle={editTitle}
-                                activeDropdownId={activeDropdownId}
-                                onSetEditTitle={onSetEditTitle}
-                                onSetEditingChatId={onSetEditingChatId}
-                                onRenameSubmit={onRenameChatSubmit}
-                                onOpenChatMenu={onOpenChatMenu}
-                                onCloseMobileMenu={onCloseMobileMenu}
-                            />
-                        ))}
+                    {!collapsedSections.recent && (
+                        <div className="flex-1 overflow-y-auto flex flex-col gap-0.5 min-h-0 pr-1">
+                            {recentChats.map((chat) => (
+                                <ChatRow
+                                    key={chat.id}
+                                    chat={chat}
+                                    pathname={pathname}
+                                    editingChatId={editingChatId}
+                                    editTitle={editTitle}
+                                    activeDropdownId={activeDropdownId}
+                                    onSetEditTitle={onSetEditTitle}
+                                    onSetEditingChatId={onSetEditingChatId}
+                                    onRenameSubmit={onRenameChatSubmit}
+                                    onOpenChatMenu={onOpenChatMenu}
+                                    onCloseMobileMenu={onCloseMobileMenu}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
         </div>

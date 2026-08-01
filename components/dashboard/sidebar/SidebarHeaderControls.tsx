@@ -7,6 +7,7 @@ interface SidebarHeaderControlsProps {
     collapsed: boolean
     user: User | null
     unreadCount?: number
+    hideTitleRow?: boolean
     onToggleCollapse: () => void
     onNewChat: () => void
     onOpenSearch: () => void
@@ -16,6 +17,7 @@ export default function SidebarHeaderControls({
     collapsed,
     user,
     unreadCount = 0,
+    hideTitleRow = false,
     onToggleCollapse,
     onNewChat,
     onOpenSearch,
@@ -23,6 +25,15 @@ export default function SidebarHeaderControls({
     if (collapsed) {
         return (
             <div className="pt-4 pb-3 flex flex-col items-center gap-2 shrink-0">
+                <div className="p-1 mb-1" title="Onchain Agent">
+                    <img
+                        src="/logo.png"
+                        alt="Onchain Agent Logo"
+                        width={24}
+                        height={24}
+                        className="w-6 h-6 rounded-lg object-contain shrink-0"
+                    />
+                </div>
                 <button
                     type="button"
                     onClick={onToggleCollapse}
@@ -75,19 +86,30 @@ export default function SidebarHeaderControls({
     }
 
     return (
-        <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
-            <div className="flex items-center justify-between px-2">
-                <span className="font-medium text-[17px] text-zinc-100 tracking-tight">Onchain Agent</span>
-                <button
-                    type="button"
-                    onClick={onToggleCollapse}
-                    className="p-1.5 -mr-1 rounded-lg text-zinc-500 hover:text-zinc-100 hover:bg-white/5 transition-colors cursor-pointer"
-                    aria-label="Collapse sidebar"
-                    title="Collapse sidebar"
-                >
-                    <FiChevronsLeft size={16} />
-                </button>
-            </div>
+        <div className={`px-4 ${hideTitleRow ? 'pt-4' : 'pt-6'} pb-4 flex flex-col gap-4`}>
+            {!hideTitleRow && (
+                <div className="flex items-center justify-between px-2">
+                    <div className="flex items-center gap-2.5">
+                        <img
+                            src="/logo.png"
+                            alt="Onchain Agent Logo"
+                            width={24}
+                            height={24}
+                            className="w-6 h-6 rounded-lg object-contain shrink-0"
+                        />
+                        <span className="font-medium text-[17px] text-zinc-100 tracking-tight">Onchain Agent</span>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onToggleCollapse}
+                        className="p-1.5 -mr-1 rounded-lg text-zinc-500 hover:text-zinc-100 hover:bg-white/5 transition-colors cursor-pointer"
+                        aria-label="Collapse sidebar"
+                        title="Collapse sidebar"
+                    >
+                        <FiChevronsLeft size={16} />
+                    </button>
+                </div>
+            )}
 
             <button
                 type="button"
@@ -112,3 +134,5 @@ export default function SidebarHeaderControls({
         </div>
     )
 }
+
+
