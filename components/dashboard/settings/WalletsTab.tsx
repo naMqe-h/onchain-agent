@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { User } from '@supabase/supabase-js'
-import { FiPlus, FiCreditCard, FiCopy, FiCheck, FiKey } from 'react-icons/fi'
+import { FiPlus, FiCreditCard, FiCopy, FiCheck, FiKey, FiTrash2 } from 'react-icons/fi'
 import { getUserWallets, createWallet, revealWalletPrivateKey } from '../../../app/actions/wallet'
 import { useWalletStore } from '../../../hooks/useWalletStore'
 import PasswordVerifyModal from './wallets/PasswordVerifyModal'
 import PrivateKeyDisplayModal from './wallets/PrivateKeyDisplayModal'
+import DeleteWalletModal from './wallets/DeleteWalletModal'
 
 interface WalletsTabProps {
     user: User
@@ -23,6 +24,7 @@ export default function WalletsTab({ user }: WalletsTabProps) {
 
     const [selectedWalletForPk, setSelectedWalletForPk] = useState<{ id: string; name: string; address: string; type: string } | null>(null)
     const [decryptedPrivateKey, setDecryptedPrivateKey] = useState<string | null>(null)
+    const [selectedWalletForDelete, setSelectedWalletForDelete] = useState<{ id: string; name: string; address: string } | null>(null)
 
     const setStoreWallets = useWalletStore(s => s.setWallets)
 
@@ -214,6 +216,13 @@ export default function WalletsTab({ user }: WalletsTabProps) {
                                     >
                                         {copiedId === wallet.id ? <FiCheck size={14} className="text-emerald-400" /> : <FiCopy size={14} />}
                                     </button>
+                                    <button
+                                        onClick={() => setSelectedWalletForDelete(wallet)}
+                                        className="p-2 rounded-lg bg-white/5 hover:bg-red-500/10 text-zinc-400 hover:text-red-400 transition-colors cursor-pointer shrink-0"
+                                        title="Delete wallet"
+                                    >
+                                        <FiTrash2 size={14} />
+                                    </button>
                                 </div>
                             </div>
                         ))}
@@ -238,6 +247,15 @@ export default function WalletsTab({ user }: WalletsTabProps) {
                 }}
                 walletName={selectedWalletForPk?.name || ''}
                 privateKey={decryptedPrivateKey || ''}
+            />
+
+            <DeleteWalletModal
+                isOpen={selectedWalletForDelete !== null}
+                onClose={() => setSelectedWalletForDelete(null)}
+                walletId={selectedWalletForDelete?.id || ''}
+                walletName={selectedWalletForDelete?.name || ''}
+                walletAddress={selectedWalletForDelete?.address || ''}
+                onDeleted={fetchWallets}
             />
         </div>
     )

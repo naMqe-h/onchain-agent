@@ -18,6 +18,8 @@ model Wallet {
   address      String
   type         String
   encryptedKey String
+  iv           String?
+  salt         String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

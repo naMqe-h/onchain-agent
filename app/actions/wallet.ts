@@ -2,37 +2,9 @@
 
 import db from '../../lib/db'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
-import { createHash, randomBytes, createCipheriv, createDecipheriv } from 'crypto'
 import { createClient } from '../../lib/supabase/server'
 import { PublicWallet } from '@/types'
-
-const getEncryptionKey = () => {
-    const secret = process.env.WALLET_ENCRYPTION_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'default-fallback-key-secret-1234'
-    return createHash('sha256').update(secret).digest()
-}
-
-function encryptKey(text: string): string {
-    const iv = randomBytes(16)
-    const key = getEncryptionKey()
-    const cipher = createCipheriv('aes-256-cbc', key, iv)
-    let encrypted = cipher.update(text, 'utf8', 'hex')
-    encrypted += cipher.final('hex')
-    return `${iv.toString('hex')}:${encrypted}`
-}
-
-function decryptKey(encryptedText: string): string {
-    const parts = encryptedText.split(':')
-    if (parts.length !== 2) {
-        throw new Error('Invalid encrypted key format')
-    }
-    const iv = Buffer.from(parts[0], 'hex')
-    const encrypted = parts[1]
-    const key = getEncryptionKey()
-    const decipher = createDecipheriv('aes-256-cbc', key, iv)
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8')
-    decrypted += decipher.final('utf8')
-    return decrypted
-}
+import { encryptWalletKey, decryptWalletKey } from '../../lib/web3/walletCrypto'
 
 export async function getUserWallets(userId: string): Promise<PublicWallet[]> {
     return db.wallet.findMany({
@@ -99,7 +71,7 @@ export async function createWallet(userId: string, name: string, type: 'burner' 
     }
 
     const account = privateKeyToAccount(privateKey as `0x${string}`)
-    const encrypted = encryptKey(privateKey)
+    const encryptedData = encryptWalletKey(privateKey)
 
     const wallet = await db.wallet.create({
         data: {
@@ -107,7 +79,9 @@ export async function createWallet(userId: string, name: string, type: 'burner' 
             name: name.trim(),
             address: account.address,
             type,
-            encryptedKey: encrypted
+            encryptedKey: encryptedData.encryptedKey,
+            iv: encryptedData.iv,
+            salt: encryptedData.salt
         }
     })
 
@@ -135,7 +109,7 @@ export async function getWalletPrivateKey(userId: string, address: string) {
     }
 
     try {
-        return decryptKey(wallet.encryptedKey)
+        return decryptWalletKey(wallet)
     } catch (error) {
         throw new Error("Failed to decrypt private key: " + (error instanceof Error ? error.message : String(error)))
     }
@@ -167,6 +141,49 @@ export async function revealWalletPrivateKey(address: string, password: string) 
         return { privateKey }
     } catch (err: unknown) {
         return { error: err instanceof Error ? err.message : 'Failed to retrieve private key' }
+    }
+}
+
+export async function deleteWallet(walletId: string, password: string) {
+    try {
+        const supabase = await createClient()
+        const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+        if (userError || !user) {
+            return { error: 'Unauthorized' }
+        }
+
+        if (!user.email) {
+            return { error: 'Account has no email address' }
+        }
+
+        const { error: verifyError } = await supabase.auth.signInWithPassword({
+            email: user.email,
+            password
+        })
+
+        if (verifyError) {
+            return { error: 'Incorrect password' }
+        }
+
+        const wallet = await db.wallet.findFirst({
+            where: {
+                id: walletId,
+                userId: user.id
+            }
+        })
+
+        if (!wallet) {
+            return { error: 'Wallet not found' }
+        }
+
+        await db.wallet.delete({
+            where: { id: walletId }
+        })
+
+        return { success: true }
+    } catch (err: unknown) {
+        return { error: err instanceof Error ? err.message : 'Failed to delete wallet' }
     }
 }
 

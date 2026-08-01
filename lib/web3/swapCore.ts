@@ -76,6 +76,8 @@ export type PreparedSwapContext = {
     chainId: number
     walletAddress: string
     encryptedKey: string
+    iv?: string | null
+    salt?: string | null
     tokenIn: ResolvedToken
     tokenOut: ResolvedToken
     amountHuman: string
@@ -88,6 +90,8 @@ export async function prepareSwapContext(params: {
     network: NetworkId
     walletAddress: string
     encryptedKey: string
+    iv?: string | null
+    salt?: string | null
     tokenInQuery: string
     tokenOutQuery: string
     amount: string
@@ -158,6 +162,8 @@ export async function prepareSwapContext(params: {
             chainId: getChainId(params.network),
             walletAddress: params.walletAddress,
             encryptedKey: params.encryptedKey,
+            iv: params.iv,
+            salt: params.salt,
             tokenIn,
             tokenOut,
             amountHuman: params.amount.trim(),
@@ -262,7 +268,7 @@ export async function fetchSwapQuote(ctx: PreparedSwapContext) {
 }
 
 function createClients(ctx: PreparedSwapContext) {
-    const privateKey = decryptWalletKey(ctx.encryptedKey)
+    const privateKey = decryptWalletKey(ctx)
     const account = privateKeyToAccount(privateKey as `0x${string}`)
     const chain = getChainConfig(ctx.network)
     const walletClient = createWalletClient({

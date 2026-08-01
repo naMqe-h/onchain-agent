@@ -77,6 +77,8 @@ export default defineTool({
                 network: activeNetwork,
                 walletAddress: wallet.address,
                 encryptedKey: wallet.encryptedKey,
+                iv: wallet.iv,
+                salt: wallet.salt,
                 tokenInQuery: tokenIn,
                 tokenOutQuery: tokenOut,
                 amount,

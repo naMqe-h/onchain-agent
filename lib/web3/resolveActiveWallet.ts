@@ -19,6 +19,8 @@ export type ResolvedWallet = {
     address: string
     type: string
     encryptedKey: string
+    iv?: string | null
+    salt?: string | null
 }
 
 export async function resolveActingWallet(
