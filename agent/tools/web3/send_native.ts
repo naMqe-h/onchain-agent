@@ -1,7 +1,8 @@
 import { defineTool } from "eve/tools"
 import { z } from "zod"
-import { createWalletClient, createPublicClient, http, parseEther, type Hash } from "viem"
+import { parseEther, type Hash } from "viem"
 import { privateKeyToAccount } from "viem/accounts"
+import { getPublicClient, getWalletClient } from "../../../lib/web3/providers"
 import {
     getChainConfig,
     getNativeCurrencySymbol,
@@ -65,16 +66,8 @@ export default defineTool({
             const privateKey = decryptWalletKey(wallet)
 
             const account = privateKeyToAccount(privateKey as `0x${string}`)
-            const chain = getChainConfig(activeNetwork)
-            const walletClient = createWalletClient({
-                account,
-                chain,
-                transport: http(),
-            })
-            const publicClient = createPublicClient({
-                chain,
-                transport: http(),
-            })
+            const walletClient = getWalletClient(account, activeNetwork)
+            const publicClient = getPublicClient(activeNetwork)
 
             const hash = (await walletClient.sendTransaction({
                 to: recipientAddress as `0x${string}`,

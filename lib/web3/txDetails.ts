@@ -1,5 +1,6 @@
-import { formatUnits, formatGwei, createPublicClient, http } from "viem"
-import { getTokenBalancesApi, getChainConfig, type NetworkId } from "./config"
+import { formatUnits, formatGwei } from "viem"
+import { getPublicClient } from "./providers"
+import { getTokenBalancesApi, type NetworkId } from "./config"
 import type { TxDetailsItem, TxTokenTransfer } from "../../types/web3"
 
 export type FetchTxDetailsResult =
@@ -134,11 +135,7 @@ export async function fetchTxDetails(
     }
 
     try {
-        const chain = getChainConfig(networkId)
-        const publicClient = createPublicClient({
-            chain,
-            transport: http()
-        })
+        const publicClient = getPublicClient(networkId)
 
         const [tx, receipt] = await Promise.all([
             publicClient.getTransaction({ hash: cleanHash as `0x${string}` }),

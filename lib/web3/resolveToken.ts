@@ -1,7 +1,7 @@
-import { createPublicClient, erc20Abi, http, isAddress } from "viem"
+import { erc20Abi, isAddress } from "viem"
 import db from "../db"
+import { getPublicClient } from "./providers"
 import {
-    getChainConfig,
     getDexScreenerChainIds,
     getNativeCurrencySymbol,
     getNetworkLabel,
@@ -103,10 +103,7 @@ async function readErc20Meta(
     network: NetworkId
 ): Promise<{ symbol: string; name: string; decimals: number } | null> {
     try {
-        const publicClient = createPublicClient({
-            chain: getChainConfig(network),
-            transport: http(),
-        })
+        const publicClient = getPublicClient(network)
         const [decimals, symbol, name] = await Promise.all([
             publicClient.readContract({
                 address,

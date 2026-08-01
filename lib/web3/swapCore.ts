@@ -1,15 +1,12 @@
 import {
-    createPublicClient,
-    createWalletClient,
     erc20Abi,
     formatUnits,
-    http,
     parseUnits,
     type Hash,
 } from "viem"
 import { privateKeyToAccount } from "viem/accounts"
+import { getPublicClient, getWalletClient } from "./providers"
 import {
-    getChainConfig,
     getChainId,
     getNativeCurrencySymbol,
     getNetworkLabel,
@@ -177,10 +174,7 @@ export async function prepareSwapContext(params: {
 export async function assertSufficientBalance(
     ctx: PreparedSwapContext
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-    const publicClient = createPublicClient({
-        chain: getChainConfig(ctx.network),
-        transport: http(),
-    })
+    const publicClient = getPublicClient(ctx.network)
     const owner = ctx.walletAddress as `0x${string}`
 
     if (ctx.tokenIn.isNative || isNativeTokenAddress(ctx.tokenIn.address)) {
@@ -270,22 +264,14 @@ export async function fetchSwapQuote(ctx: PreparedSwapContext) {
 function createClients(ctx: PreparedSwapContext) {
     const privateKey = decryptWalletKey(ctx)
     const account = privateKeyToAccount(privateKey as `0x${string}`)
-    const chain = getChainConfig(ctx.network)
-    const walletClient = createWalletClient({
-        account,
-        chain,
-        transport: http(),
-    })
-    const publicClient = createPublicClient({
-        chain,
-        transport: http(),
-    })
+    const walletClient = getWalletClient(account, ctx.network)
+    const publicClient = getPublicClient(ctx.network)
     return { account, walletClient, publicClient }
 }
 
 async function sendBuiltTx(
-    walletClient: ReturnType<typeof createWalletClient>,
-    publicClient: ReturnType<typeof createPublicClient>,
+    walletClient: ReturnType<typeof getWalletClient>,
+    publicClient: ReturnType<typeof getPublicClient>,
     tx: {
         to: string
         data: string

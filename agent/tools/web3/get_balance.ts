@@ -1,6 +1,7 @@
 import { defineTool } from "eve/tools"
 import { z } from "zod"
-import { createPublicClient, http, formatEther } from "viem"
+import { formatEther } from "viem"
+import { getPublicClient } from "../../../lib/web3/providers"
 import {
     getChainConfig,
     getNativeCurrencySymbol,
@@ -62,11 +63,7 @@ export default defineTool({
         }
 
         try {
-            const chain = getChainConfig(activeNetwork)
-            const publicClient = createPublicClient({
-                chain,
-                transport: http(),
-            })
+            const publicClient = getPublicClient(activeNetwork)
 
             const balance = await publicClient.getBalance({
                 address: targetAddress as `0x${string}`,
