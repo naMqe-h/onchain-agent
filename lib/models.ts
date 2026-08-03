@@ -5,7 +5,7 @@ import {
     type SupportedModelConfig,
     type ChatModelOption,
     type SupportedModelId,
-} from '@/types'
+} from '../types'
 
 export type {
     LatencyTier,

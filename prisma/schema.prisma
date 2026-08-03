@@ -166,3 +166,32 @@ model UserUsageDaily {
   @@unique([userId, day])
   @@index([userId])
 }
+
+model UserProviderKey {
+  id           String   @id @default(uuid())
+  userId       String
+  provider     String
+  encryptedKey String
+  iv           String
+  salt         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, provider])
+  @@index([userId])
+}
+
+model UserCustomModel {
+  id            String   @id @default(uuid())
+  userId        String
+  modelId       String
+  name          String
+  provider      String
+  isReasoning   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, modelId])
+  @@index([userId])
+}
+

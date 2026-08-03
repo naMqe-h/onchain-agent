@@ -1,18 +1,20 @@
 'use server'
 
-import { type ChatModelOption, type UserModelPreferences } from '@/types'
-import { getEnabledModelCatalog } from '@/lib/modelCatalog'
-import { resolveUserModelPreferences } from '@/lib/modelPreferences'
-import { createClient } from '@/lib/supabase/server'
+import { type ChatModelOption, type UserModelPreferences } from '../../../types'
+import { getEnabledModelCatalog } from '../../../lib/modelCatalog'
+import { resolveUserModelPreferences } from '../../../lib/modelPreferences'
+import { createClient } from '../../../lib/supabase/server'
 
 export async function fetchModelCatalog(): Promise<ChatModelOption[]> {
-    return getEnabledModelCatalog()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    return getEnabledModelCatalog(user?.id)
 }
 
 export async function getUserModelPreferences(): Promise<UserModelPreferences> {
-    const catalog = await getEnabledModelCatalog()
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
+    const catalog = await getEnabledModelCatalog(user?.id)
 
     const prefs = resolveUserModelPreferences(catalog, {
         defaultModel: user?.user_metadata?.defaultModel as string | undefined,

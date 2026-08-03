@@ -1,4 +1,4 @@
-import { UserModelPreferences, type ChatModelOption, type SupportedModelId } from '@/types'
+import { UserModelPreferences, type ChatModelOption, type SupportedModelId } from '../types'
 import {
     DEFAULT_MODEL_ID,
     isSupportedModelId,
@@ -23,11 +23,12 @@ export function resolveUserModelPreferences(
         }
     }
 
+    const userModelIds = catalog.filter((m) => m.section === 'user').map((m) => m.id)
     const rawEnabled = metadata?.enabledModels
     const hasExplicitEnabled = Array.isArray(rawEnabled) && rawEnabled.length > 0
 
     let enabledModelIds = hasExplicitEnabled
-        ? rawEnabled.filter((id) => catalogIds.includes(id))
+        ? Array.from(new Set([...rawEnabled.filter((id) => catalogIds.includes(id)), ...userModelIds]))
         : [...catalogIds]
 
     if (hasExplicitEnabled && enabledModelIds.length === 0) {
@@ -82,6 +83,8 @@ export function mapChatModelRow(row: {
     contextTokens: number
     icon?: string | null
 }): ChatModelOption {
+    const mappedIcon = row.icon ? row.icon.replace(/\.svg$/, '.png') : null
+
     return {
         id: row.id,
         name: row.name,
@@ -90,6 +93,8 @@ export function mapChatModelRow(row: {
         isReasoning: row.isReasoning,
         latencyMs: row.latencyMs,
         contextTokens: row.contextTokens,
-        icon: row.icon ?? null,
+        icon: mappedIcon,
+        section: 'app',
+        isCustom: false,
     }
 }

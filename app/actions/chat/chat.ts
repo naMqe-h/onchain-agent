@@ -105,7 +105,7 @@ export async function getChatWithMessagesAndResolvedModel(
     const chat = await getChatWithMessages(chatId, userId)
     if (!chat) return null
 
-    const catalog = await getEnabledModelCatalog()
+    const catalog = await getEnabledModelCatalog(userId)
     const catalogIds = catalog.map((m) => m.id)
     const resolvedModel = await ensureChatModelAllowed(
         chat.id,
@@ -348,8 +348,8 @@ export async function deleteChat(chatId: string) {
 
 export async function updateChatModel(chatId: string, model: string) {
     await getAuthenticatedUserAndChat(chatId)
-    if (!isSupportedModelId(model)) {
-        throw new Error('Unsupported model')
+    if (!model || typeof model !== 'string') {
+        throw new Error('Invalid model')
     }
     await db.chat.update({
         where: { id: chatId },

@@ -3,19 +3,37 @@
 import { useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
-import { FiCheck, FiAlertCircle, FiChevronDown, FiZap, FiDatabase } from 'react-icons/fi'
-import { TbBrain } from 'react-icons/tb'
+import { FiAlertCircle, FiCpu, FiKey } from 'react-icons/fi'
 import { createClient } from '../../../lib/supabase/client'
 import {
     DEFAULT_MODEL_ID,
-    formatContextWindow,
-    getContextTier,
-    getLatencyTier,
     type ContextTier,
     type LatencyTier,
 } from '../../../lib/models'
 import { useModelsStore } from '../../../hooks/useModelsStore'
 import { resolveUserModelPreferences } from '../../../lib/modelPreferences'
+import {
+    getUserProviderKeys,
+    saveUserProviderKey,
+    deleteUserProviderKey,
+    type PublicProviderKeyInfo,
+} from '../../../app/actions/models/providerKeys'
+import {
+    getUserCustomModels,
+    addCustomModel,
+    deleteCustomModel,
+    type CustomModelRecord,
+} from '../../../app/actions/models/customModels'
+import {
+    BYOK_PROVIDER_CATALOG,
+    type PredefinedBYOKModel,
+} from '../../../lib/byokModelsCatalog'
+
+import DefaultModelSelector from './models/DefaultModelSelector'
+import AppModelsList from './models/AppModelsList'
+import BYOKProviderCatalog from './models/BYOKProviderCatalog'
+import AdvancedCustomModelForm from './models/AdvancedCustomModelForm'
+import ProviderApiKeysList from './models/ProviderApiKeysList'
 
 const LATENCY_TIER_CLASS: Record<LatencyTier, string> = {
     Low: 'text-emerald-400',
@@ -28,6 +46,14 @@ const CONTEXT_TIER_CLASS: Record<ContextTier, string> = {
     Medium: 'text-amber-400',
     Small: 'text-rose-400',
 }
+
+const KNOWN_PROVIDERS = [
+    { id: 'openai', label: 'OpenAI', icon: 'openai.png', placeholder: 'sk-proj-...' },
+    { id: 'openrouter', label: 'OpenRouter', icon: 'openrouter.png', placeholder: 'sk-or-v1-...' },
+    { id: 'google', label: 'Google Gemini', icon: 'gemini.png', placeholder: 'AIzaSy...' },
+    { id: 'anthropic', label: 'Anthropic Claude', icon: 'claude.png', placeholder: 'sk-ant-...' },
+    { id: 'xai', label: 'xAI (Grok)', icon: 'grok.png', placeholder: 'xai-...' },
+]
 
 interface ModelsTabProps {
     user: User | null
@@ -45,6 +71,7 @@ export default function ModelsTab({ user }: ModelsTabProps) {
         }
     }, [status, loadModels])
 
+    const [activeSubTab, setActiveSubTab] = useState<'models' | 'providers'>('models')
     const [enabledModels, setEnabledModels] = useState<string[]>([])
     const [selectedDefaultModel, setSelectedDefaultModel] = useState<string>(DEFAULT_MODEL_ID)
     const [prefsHydrated, setPrefsHydrated] = useState(false)
@@ -52,6 +79,49 @@ export default function ModelsTab({ user }: ModelsTabProps) {
     const [successMessage, setSuccessMessage] = useState('')
     const [errorMessage, setErrorMessage] = useState('')
     const [isDefaultOpen, setIsDefaultOpen] = useState(false)
+
+    const [keyInputs, setKeyInputs] = useState<Record<string, string>>({})
+    const [editingProviderId, setEditingProviderId] = useState<string | null>(null)
+    const [providerKeys, setProviderKeys] = useState<PublicProviderKeyInfo[]>([])
+    const [customModels, setCustomModels] = useState<CustomModelRecord[]>([])
+    const [savingProvider, setSavingProvider] = useState<string | null>(null)
+    const [deletingProvider, setDeletingProvider] = useState<string | null>(null)
+
+    const [expandedProviders, setExpandedProviders] = useState<Record<string, boolean>>({
+        openai: true,
+        anthropic: true,
+        google: false,
+        xai: false,
+        openrouter: false,
+    })
+    const [togglingModelId, setTogglingModelId] = useState<string | null>(null)
+
+    const [showManualForm, setShowManualForm] = useState(false)
+    const [newModelId, setNewModelId] = useState('')
+    const [newModelName, setNewModelName] = useState('')
+    const [newModelProvider, setNewModelProvider] = useState('openai')
+    const [isCustomModelProviderOpen, setIsCustomModelProviderOpen] = useState(false)
+    const [newModelReasoning, setNewModelReasoning] = useState(false)
+    const [isAddingModel, setIsAddingModel] = useState(false)
+
+    const fetchBYOKData = async () => {
+        try {
+            const [keys, userModels] = await Promise.all([
+                getUserProviderKeys(),
+                getUserCustomModels(),
+            ])
+            setProviderKeys(keys)
+            setCustomModels(userModels)
+        } catch (err) {
+            console.error('Failed to load BYOK data:', err)
+        }
+    }
+
+    useEffect(() => {
+        if (user) {
+            void fetchBYOKData()
+        }
+    }, [user])
 
     useEffect(() => {
         if (catalog.length === 0) return
@@ -152,154 +222,222 @@ export default function ModelsTab({ user }: ModelsTabProps) {
         await saveSettings(enabledModels, modelId)
     }
 
+    const handleSaveKey = async (provider: string) => {
+        const val = keyInputs[provider]?.trim()
+        if (!val) return
+        setSavingProvider(provider)
+        setErrorMessage('')
+        setSuccessMessage('')
+
+        try {
+            await saveUserProviderKey(provider, val)
+            setKeyInputs((prev) => ({ ...prev, [provider]: '' }))
+            setEditingProviderId(null)
+            setSuccessMessage(`API Key for ${provider.toUpperCase()} saved successfully`)
+            await fetchBYOKData()
+            await loadModels(true)
+        } catch (err: any) {
+            setErrorMessage(err.message || 'Failed to save provider API key')
+        } finally {
+            setSavingProvider(null)
+        }
+    }
+
+    const handleDeleteKey = async (provider: string) => {
+        setDeletingProvider(provider)
+        setErrorMessage('')
+        setSuccessMessage('')
+
+        try {
+            await deleteUserProviderKey(provider)
+            setEditingProviderId(null)
+            setSuccessMessage(`API Key for ${provider.toUpperCase()} deleted`)
+            await fetchBYOKData()
+            await loadModels(true)
+        } catch (err: any) {
+            setErrorMessage(err.message || 'Failed to delete provider API key')
+        } finally {
+            setDeletingProvider(null)
+        }
+    }
+
+    const handleToggleBYOKModel = async (model: PredefinedBYOKModel) => {
+        setTogglingModelId(model.modelId)
+        setErrorMessage('')
+        setSuccessMessage('')
+
+        try {
+            const existingRecord = customModels.find((cm) => cm.modelId === model.modelId)
+
+            if (existingRecord) {
+                await deleteCustomModel(existingRecord.id)
+                setSuccessMessage(`Model '${model.name}' disabled`)
+            } else {
+                await addCustomModel({
+                    modelId: model.modelId,
+                    name: model.name,
+                    provider: model.provider,
+                    isReasoning: Boolean(model.isReasoning),
+                })
+                setSuccessMessage(`Model '${model.name}' enabled`)
+            }
+
+            await fetchBYOKData()
+            await loadModels(true)
+        } catch (err: any) {
+            setErrorMessage(err.message || 'Failed to update BYOK model status')
+        } finally {
+            setTogglingModelId(null)
+        }
+    }
+
+    const handleAddManualCustomModel = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!newModelId.trim()) return
+
+        setIsAddingModel(true)
+        setErrorMessage('')
+        setSuccessMessage('')
+
+        try {
+            await addCustomModel({
+                modelId: newModelId.trim(),
+                name: newModelName.trim() || newModelId.trim(),
+                provider: newModelProvider,
+                isReasoning: newModelReasoning,
+            })
+
+            setNewModelId('')
+            setNewModelName('')
+            setNewModelReasoning(false)
+            setShowManualForm(false)
+            setSuccessMessage(`Custom model '${newModelId.trim()}' added successfully`)
+            await fetchBYOKData()
+            await loadModels(true)
+        } catch (err: any) {
+            setErrorMessage(err.message || 'Failed to add custom model')
+        } finally {
+            setIsAddingModel(false)
+        }
+    }
+
+    const appModels = catalog.filter((m) => m.section === 'app' || !m.section)
+    const userModels = catalog.filter((m) => m.section === 'user')
+    const activeProviders = new Set(providerKeys.map((k) => k.provider.toLowerCase()))
+    const currentCustomModelProviderInfo = KNOWN_PROVIDERS.find((p) => p.id === newModelProvider)
+
     if (status === 'loading' || (status === 'idle' && catalog.length === 0) || !prefsHydrated) {
         return (
             <div className="flex flex-col h-full overflow-hidden">
                 <div className="pb-3 border-b border-white/5 shrink-0">
                     <h2 className="text-lg font-medium text-zinc-100">Models Settings</h2>
-                    <p className="text-xs text-zinc-500 mt-0.5">Configure available models and choose the default model for new chats.</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">Configure available models and set up your own provider API keys (BYOK).</p>
                 </div>
                 <div className="flex-1 pt-6 text-xs text-zinc-500 animate-pulse">Loading models…</div>
             </div>
         )
     }
 
-    if (catalog.length === 0) {
-        return (
-            <div className="flex flex-col h-full overflow-hidden">
-                <div className="pb-3 border-b border-white/5 shrink-0">
-                    <h2 className="text-lg font-medium text-zinc-100">Models Settings</h2>
-                </div>
-                <div className="flex-1 pt-6 text-xs text-zinc-500">No models available.</div>
-            </div>
-        )
-    }
-
     return (
         <div className="flex flex-col h-full overflow-hidden">
-            <div className="pb-3 border-b border-white/5 shrink-0">
-                <h2 className="text-lg font-medium text-zinc-100">Models Settings</h2>
-                <p className="text-xs text-zinc-500 mt-0.5">Configure available models and choose the default model for new chats.</p>
+            <div className="pb-3 border-b border-white/5 shrink-0 flex flex-col gap-3">
+                <div>
+                    <h2 className="text-lg font-medium text-zinc-100">Models & Providers</h2>
+                    <p className="text-xs text-zinc-500 mt-0.5">Manage model availability, default options, and API key providers.</p>
+                </div>
+
+                <div className="flex items-center gap-1.5 p-1 bg-[#141416] rounded-xl border border-white/5 w-fit">
+                    <button
+                        type="button"
+                        onClick={() => setActiveSubTab('models')}
+                        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${activeSubTab === 'models' ? 'bg-white/10 text-zinc-100' : 'text-zinc-400 hover:text-zinc-200'}`}
+                    >
+                        <FiCpu size={14} />
+                        <span>Models</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setActiveSubTab('providers')}
+                        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${activeSubTab === 'providers' ? 'bg-white/10 text-zinc-100' : 'text-zinc-400 hover:text-zinc-200'}`}
+                    >
+                        <FiKey size={14} />
+                        <span>Providers</span>
+                    </button>
+                </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto pt-6 flex flex-col gap-6 pr-1">
-                <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                        Default Model
-                    </label>
-                    <div className="relative">
-                        <button
-                            type="button"
-                            disabled={isUpdating}
-                            onClick={() => setIsDefaultOpen(!isDefaultOpen)}
-                            className="w-full flex items-center justify-between bg-[#1c1c1f] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-white/20 transition-colors cursor-pointer disabled:opacity-50"
-                        >
-                            <span className="flex items-center gap-2 min-w-0">
-                                {activeDefaultModel?.icon && (
-                                    <img src={`/models/${activeDefaultModel.icon}`} alt="" className="w-4 h-4 object-contain shrink-0" />
-                                )}
-                                <span className="truncate">
-                                    {activeDefaultModel ? activeDefaultModel.name : 'Select model'}
-                                </span>
-                            </span>
-                            <FiChevronDown className={`transition-transform duration-200 text-zinc-400 ${isDefaultOpen ? 'rotate-180' : ''}`} size={16} />
-                        </button>
+            <div className="flex-1 overflow-y-auto pt-4 flex flex-col gap-6 pr-1">
+                {activeSubTab === 'models' && (
+                    <>
+                        <DefaultModelSelector
+                            selectedDefaultModel={selectedDefaultModel}
+                            activeDefaultModel={activeDefaultModel}
+                            isUpdating={isUpdating}
+                            isDefaultOpen={isDefaultOpen}
+                            setIsDefaultOpen={setIsDefaultOpen}
+                            appModels={appModels}
+                            userModels={userModels}
+                            enabledModels={enabledModels}
+                            handleSetDefaultModel={handleSetDefaultModel}
+                        />
 
-                        {isDefaultOpen && (
-                            <>
-                                <div className="fixed inset-0 z-40" onClick={() => setIsDefaultOpen(false)} />
-                                <div className="absolute top-full left-0 right-0 mt-1.5 bg-[#1f1f22] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden py-1 flex flex-col max-h-56">
-                                    {catalog.filter((m) => enabledModels.includes(m.id)).map((m) => {
-                                        const isSelected = selectedDefaultModel === m.id
-                                        return (
-                                            <button
-                                                key={m.id}
-                                                type="button"
-                                                onClick={() => {
-                                                    handleSetDefaultModel(m.id)
-                                                    setIsDefaultOpen(false)
-                                                }}
-                                                className={`w-full text-left px-3.5 py-2.5 text-xs transition-colors flex items-center justify-between cursor-pointer ${isSelected ? 'bg-white/5 text-zinc-100 font-medium' : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
-                                                    }`}
-                                            >
-                                                <span className="truncate flex items-center gap-2">
-                                                    {m.icon && (
-                                                        <img src={`/models/${m.icon}`} alt="" className="w-4 h-4 object-contain shrink-0" />
-                                                    )}
-                                                    <span className="truncate">{m.name}</span>
-                                                </span>
-                                                {isSelected && (
-                                                    <FiCheck size={14} className="text-purple-400 shrink-0" />
-                                                )}
-                                            </button>
-                                        )
-                                    })}
-                                </div>
-                            </>
-                        )}
-                    </div>
-                </div>
+                        <AppModelsList
+                            appModels={appModels}
+                            enabledModels={enabledModels}
+                            handleToggleModel={handleToggleModel}
+                            LATENCY_TIER_CLASS={LATENCY_TIER_CLASS}
+                            CONTEXT_TIER_CLASS={CONTEXT_TIER_CLASS}
+                        />
 
-                <div className="flex flex-col gap-3">
-                    <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Active Models</span>
-                    <div className="flex flex-col">
-                        {catalog.map((m) => {
-                            const isEnabled = enabledModels.includes(m.id)
-                            const latencyTier = getLatencyTier(m.latencyMs ?? 0)
-                            const contextTier = getContextTier(m.contextTokens ?? 0)
-                            const contextLabel = formatContextWindow(m.contextTokens ?? 0)
-                            return (
-                                <div
-                                    key={m.id}
-                                    onClick={() => handleToggleModel(m.id)}
-                                    className={`flex items-center justify-between py-2.5 border-b border-white/5 last:border-0 transition-opacity cursor-pointer ${isEnabled ? 'opacity-100' : 'opacity-50'
-                                        }`}
-                                >
-                                    <div className="flex items-center gap-2 text-sm font-medium text-zinc-200 select-none flex-1 mr-4 min-w-0">
-                                        {m.icon && (
-                                            <img src={`/models/${m.icon}`} alt="" className="w-4 h-4 object-contain shrink-0" />
-                                        )}
-                                        <span className="truncate">{m.name}</span>
-                                        <span className="inline-flex items-center gap-2 shrink-0">
-                                            {m.isReasoning && (
-                                                <span
-                                                    className="inline-flex items-center text-purple-400"
-                                                    title="Reasoning"
-                                                    aria-label="Reasoning"
-                                                >
-                                                    <TbBrain size={13} />
-                                                </span>
-                                            )}
-                                            <span
-                                                className={`inline-flex items-center ${LATENCY_TIER_CLASS[latencyTier]}`}
-                                                title={`Latency: ${latencyTier}`}
-                                                aria-label={`Latency: ${latencyTier}`}
-                                            >
-                                                <FiZap size={12} />
-                                            </span>
-                                            <span
-                                                className={`inline-flex items-center ${CONTEXT_TIER_CLASS[contextTier]}`}
-                                                title={`Context: ${contextLabel}`}
-                                                aria-label={`Context: ${contextLabel}`}
-                                            >
-                                                <FiDatabase size={12} />
-                                            </span>
-                                        </span>
-                                    </div>
-                                    <div
-                                        className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors duration-200 shrink-0 ${isEnabled ? 'bg-purple-600' : 'bg-zinc-700'
-                                            }`}
-                                    >
-                                        <div
-                                            className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ${isEnabled ? 'translate-x-4' : 'translate-x-0'
-                                                }`}
-                                        />
-                                    </div>
-                                </div>
-                            )
-                        })}
-                    </div>
-                </div>
+                        <BYOKProviderCatalog
+                            BYOK_PROVIDER_CATALOG={BYOK_PROVIDER_CATALOG}
+                            activeProviders={activeProviders}
+                            expandedProviders={expandedProviders}
+                            setExpandedProviders={setExpandedProviders}
+                            customModels={customModels}
+                            togglingModelId={togglingModelId}
+                            handleToggleBYOKModel={handleToggleBYOKModel}
+                            setActiveSubTab={setActiveSubTab}
+                            CONTEXT_TIER_CLASS={CONTEXT_TIER_CLASS}
+                        />
+
+                        <AdvancedCustomModelForm
+                            showManualForm={showManualForm}
+                            setShowManualForm={setShowManualForm}
+                            newModelId={newModelId}
+                            setNewModelId={setNewModelId}
+                            newModelName={newModelName}
+                            setNewModelName={setNewModelName}
+                            newModelProvider={newModelProvider}
+                            setNewModelProvider={setNewModelProvider}
+                            isCustomModelProviderOpen={isCustomModelProviderOpen}
+                            setIsCustomModelProviderOpen={setIsCustomModelProviderOpen}
+                            newModelReasoning={newModelReasoning}
+                            setNewModelReasoning={setNewModelReasoning}
+                            isAddingModel={isAddingModel}
+                            activeProviders={activeProviders}
+                            KNOWN_PROVIDERS={KNOWN_PROVIDERS}
+                            currentCustomModelProviderInfo={currentCustomModelProviderInfo}
+                            handleAddManualCustomModel={handleAddManualCustomModel}
+                        />
+                    </>
+                )}
+
+                {activeSubTab === 'providers' && (
+                    <ProviderApiKeysList
+                        KNOWN_PROVIDERS={KNOWN_PROVIDERS}
+                        providerKeys={providerKeys}
+                        editingProviderId={editingProviderId}
+                        setEditingProviderId={setEditingProviderId}
+                        keyInputs={keyInputs}
+                        setKeyInputs={setKeyInputs}
+                        savingProvider={savingProvider}
+                        deletingProvider={deletingProvider}
+                        handleSaveKey={handleSaveKey}
+                        handleDeleteKey={handleDeleteKey}
+                    />
+                )}
 
                 {isUpdating && (
                     <div className="text-xs text-zinc-500 animate-pulse flex items-center gap-2 mt-2">

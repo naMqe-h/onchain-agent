@@ -1,63 +1,151 @@
 import { defineAgent, defineDynamic } from "eve"
 import { createOpenRouter } from "@openrouter/ai-sdk-provider"
 import { createOpenAI } from "@ai-sdk/openai"
+import { createGoogleGenerativeAI } from "@ai-sdk/google"
+import { createAnthropic } from "@ai-sdk/anthropic"
 import db from "../lib/db"
-import { type SupportedModelId } from "@/types"
+import { type SupportedModelId } from "../types"
 import { DEFAULT_MODEL_ID, SUPPORTED_MODELS } from "../lib/models"
+import { decryptProviderKey } from "../lib/providerCrypto"
 
 const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
+    apiKey: process.env.OPENROUTER_API_KEY,
 })
 
 const openai = createOpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+    apiKey: process.env.OPENAI_API_KEY,
 })
 
-function resolveLanguageModel(id: SupportedModelId) {
-  const config = SUPPORTED_MODELS[id]
-  if (config.provider === "openai") {
-    return openai(config.modelId)
-  }
-  return openrouter(config.modelId)
+async function getDecryptedUserKey(userId: string, provider: string): Promise<string | null> {
+    try {
+        const keyRecord = await db.userProviderKey.findUnique({
+            where: {
+                userId_provider: {
+                    userId,
+                    provider: provider.toLowerCase(),
+                },
+            },
+        })
+        if (!keyRecord) return null
+        return decryptProviderKey({
+            encryptedKey: keyRecord.encryptedKey,
+            iv: keyRecord.iv,
+            salt: keyRecord.salt,
+        })
+    } catch (err) {
+        console.error(`Failed to decrypt key for provider ${provider}:`, err)
+        return null
+    }
 }
 
-const defaultModel = resolveLanguageModel(DEFAULT_MODEL_ID)
+function resolveModelForProvider(modelId: string, provider: string, apiKey?: string | null) {
+    const cleanProvider = provider.toLowerCase()
 
-const MODELS: Record<string, ReturnType<typeof resolveLanguageModel>> = Object.fromEntries(
-  (Object.keys(SUPPORTED_MODELS) as SupportedModelId[]).map((id) => [id, resolveLanguageModel(id)])
-)
+    if (cleanProvider === 'openai') {
+        const client = apiKey ? createOpenAI({ apiKey }) : openai
+        return client(modelId)
+    }
+
+    if (cleanProvider === 'openrouter') {
+        const client = apiKey ? createOpenRouter({ apiKey }) : openrouter
+        return client(modelId)
+    }
+
+    if (cleanProvider === 'google') {
+        const googleClient = createGoogleGenerativeAI({
+            apiKey: apiKey || process.env.GOOGLE_GENERATIVE_AI_API_KEY || '',
+        })
+        return googleClient(modelId)
+    }
+
+    if (cleanProvider === 'anthropic') {
+        const anthropicClient = createAnthropic({
+            apiKey: apiKey || process.env.ANTHROPIC_API_KEY || '',
+        })
+        return anthropicClient(modelId)
+    }
+
+    if (cleanProvider === 'xai' || cleanProvider === 'grok') {
+        const xaiClient = createOpenAI({
+            baseURL: 'https://api.x.ai/v1',
+            apiKey: apiKey || process.env.XAI_API_KEY || '',
+        })
+        return xaiClient(modelId)
+    }
+
+
+
+    const fallbackClient = apiKey ? createOpenRouter({ apiKey }) : openrouter
+    return fallbackClient(modelId)
+}
+
+function resolveDefaultStaticModel(id: SupportedModelId) {
+    const config = SUPPORTED_MODELS[id]
+    if (config.provider === "openai") {
+        return openai(config.modelId)
+    }
+    return openrouter(config.modelId)
+}
+
+const defaultModel = resolveDefaultStaticModel(DEFAULT_MODEL_ID)
 
 export default defineAgent({
-  model: defineDynamic({
-    fallback: defaultModel,
-    events: {
-      "step.started": async (event, ctx) => {
-        const headerModel = ctx.session.auth.current?.attributes?.modelName
-        if (typeof headerModel === "string" && MODELS[headerModel]) {
-          return MODELS[headerModel]
-        }
+    model: defineDynamic({
+        fallback: defaultModel,
+        events: {
+            "step.started": async (event, ctx) => {
+                const headerModel = ctx.session.auth.current?.attributes?.modelName
 
-        if (ctx.session.id) {
-          const chat = await db.chat.findFirst({
-            where: {
-              eveSessionId: ctx.session.id,
-            },
-            select: {
-              model: true,
-            },
-          })
-          if (chat?.model && MODELS[chat.model]) {
-            return MODELS[chat.model]
-          }
-        }
+                let eveSessionId: string | null = ctx.session.id || null
+                let chatModel: string | null = null
+                let userId: string | null = null
 
-        return defaultModel
-      },
+                if (eveSessionId) {
+                    const chat = await db.chat.findFirst({
+                        where: { eveSessionId },
+                        select: { id: true, model: true, userId: true },
+                    })
+                    if (chat) {
+                        chatModel = chat.model
+                        userId = chat.userId
+                    }
+                }
+
+                const requestedModelId = chatModel || (typeof headerModel === 'string' ? headerModel : DEFAULT_MODEL_ID)
+
+                if (userId) {
+                    const customModel = await db.userCustomModel.findFirst({
+                        where: { userId, modelId: requestedModelId },
+                    })
+
+                    if (customModel) {
+                        const apiKey = await getDecryptedUserKey(userId, customModel.provider)
+                        if (!apiKey) {
+                            throw new Error(`API key required for ${customModel.provider.toUpperCase()}. Please configure your API key in Settings -> Providers.`)
+                        }
+                        return resolveModelForProvider(customModel.modelId, customModel.provider, apiKey)
+                    }
+
+                    if (requestedModelId in SUPPORTED_MODELS) {
+                        const staticConfig = SUPPORTED_MODELS[requestedModelId as SupportedModelId]
+                        const userKey = await getDecryptedUserKey(userId, staticConfig.provider)
+                        if (userKey) {
+                            return resolveModelForProvider(staticConfig.modelId, staticConfig.provider, userKey)
+                        }
+                    }
+                }
+
+                if (requestedModelId in SUPPORTED_MODELS) {
+                    return resolveDefaultStaticModel(requestedModelId as SupportedModelId)
+                }
+
+                return defaultModel
+            },
+        },
+    }),
+    modelContextWindowTokens: 256000,
+    limits: {
+        maxInputTokensPerSession: 2_000_000,
+        maxOutputTokensPerSession: 500_000,
     },
-  }),
-  modelContextWindowTokens: 256000,
-  limits: {
-    maxInputTokensPerSession: 2_000_000,
-    maxOutputTokensPerSession: 500_000,
-  },
 })

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { FiArrowUp, FiChevronUp, FiCreditCard, FiSquare } from 'react-icons/fi'
+import { FiArrowUp, FiChevronUp, FiCreditCard, FiSquare, FiKey } from 'react-icons/fi'
 import { TbBrain } from 'react-icons/tb'
 import { motion } from 'framer-motion'
 import { slideInUp } from '../../lib/motion'
@@ -33,6 +33,26 @@ interface ChatInputProps {
 function shortAddress(address: string) {
     if (address.length < 10) return address
     return `${address.slice(0, 6)}…${address.slice(-4)}`
+}
+
+const PROVIDER_NAMES: Record<string, string> = {
+    openai: 'OpenAI',
+    openrouter: 'OpenRouter',
+    google: 'Google',
+    anthropic: 'Anthropic',
+    xai: 'xAI',
+    grok: 'xAI',
+    cohere: 'Cohere',
+    mistral: 'Mistral',
+}
+
+function formatProviderName(provider: string): string {
+    if (!provider) return ''
+    const lower = provider.toLowerCase()
+    if (PROVIDER_NAMES[lower]) {
+        return PROVIDER_NAMES[lower]
+    }
+    return provider.charAt(0).toUpperCase() + provider.slice(1)
 }
 
 export default function ChatInput({
@@ -314,9 +334,11 @@ export default function ChatInput({
                                     className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] text-zinc-500 hover:text-zinc-300 hover:bg-white/5 transition-colors cursor-pointer disabled:opacity-50"
                                     title={activeModel.isReasoning ? 'Reasoning model (thought process)' : undefined}
                                 >
-                                    {activeModel.icon && (
+                                    {activeModel.icon ? (
                                         <img src={`/models/${activeModel.icon}`} alt="" className="w-3.5 h-3.5 object-contain shrink-0" />
-                                    )}
+                                    ) : activeModel.section === 'user' ? (
+                                        <FiKey size={13} className="text-purple-400 shrink-0" />
+                                    ) : null}
                                     <span>{activeModel.shortName}</span>
                                     {activeModel.isReasoning && (
                                         <TbBrain size={13} className="text-purple-400 shrink-0" aria-hidden />
@@ -356,9 +378,11 @@ export default function ChatInput({
                                                             }`}
                                                     >
                                                         <span className="flex items-center gap-1.5 min-w-0">
-                                                            {m.icon && (
+                                                            {m.icon ? (
                                                                 <img src={`/models/${m.icon}`} alt="" className="w-4 h-4 object-contain shrink-0" />
-                                                            )}
+                                                            ) : m.section === 'user' ? (
+                                                                <FiKey size={14} className="text-purple-400 shrink-0" />
+                                                            ) : null}
                                                             <span className={`font-medium truncate ${selectedModel === m.id ? 'text-zinc-100' : 'text-zinc-200'}`}>{m.name}</span>
                                                             {m.isReasoning && (
                                                                 <TbBrain
@@ -370,7 +394,7 @@ export default function ChatInput({
                                                             )}
                                                         </span>
                                                         <span className="text-[10px] text-zinc-500">
-                                                            {m.provider}
+                                                            {formatProviderName(m.provider)}
                                                             {m.isReasoning ? ' · Reasoning' : ''}
                                                         </span>
                                                     </button>

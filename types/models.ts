@@ -1,7 +1,7 @@
 export type LatencyTier = 'Low' | 'Medium' | 'High'
 export type ContextTier = 'Small' | 'Medium' | 'Large'
 
-export type ModelProvider = 'openai' | 'openrouter'
+export type ModelProvider = 'openai' | 'openrouter' | 'google' | 'anthropic' | 'xai' | 'grok' | 'mistral' | 'cohere'
 
 export type SupportedModelConfig = {
     provider: ModelProvider
@@ -26,7 +26,17 @@ export type ChatModelOption = {
     contextTokens?: number
     isDefault?: boolean
     icon?: string | null
+    isCustom?: boolean
+    section?: 'app' | 'user'
+    customId?: string
 }
+
+export type UserProviderKeyInfo = {
+    provider: string
+    maskedKey: string
+    updatedAt: string
+}
+
 
 export type UserModelPreferences = {
     catalog: ChatModelOption[]

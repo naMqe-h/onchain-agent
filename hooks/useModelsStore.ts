@@ -1,11 +1,11 @@
 import { create } from 'zustand'
 import { fetchModelCatalog } from '../app/actions/models/models'
-import type { ChatModelOption } from '@/types'
+import type { ChatModelOption } from '../types'
 
 interface ModelsStore {
     models: ChatModelOption[]
     status: 'idle' | 'loading' | 'ready' | 'error'
-    loadModels: () => Promise<void>
+    loadModels: (force?: boolean) => Promise<void>
     setModels: (models: ChatModelOption[]) => void
 }
 
@@ -13,9 +13,9 @@ export const useModelsStore = create<ModelsStore>((set, get) => ({
     models: [],
     status: 'idle',
     setModels: (models) => set({ models, status: 'ready' }),
-    loadModels: async () => {
+    loadModels: async (force = false) => {
         const { status } = get()
-        if (status === 'loading' || status === 'ready') return
+        if (!force && (status === 'loading' || status === 'ready')) return
 
         set({ status: 'loading' })
         try {

@@ -31,9 +31,38 @@ import {
 } from '@/types'
 
 export const AGENT_ERROR_TEXT = 'Something went wrong'
+export const API_KEY_ERROR_TEXT = 'Invalid API key provided. Please check your provider API key in Settings -> Providers.'
 
-export function createAgentErrorParts() {
-    return [{ type: 'error' as const, text: AGENT_ERROR_TEXT }]
+export function detectErrorMessage(err: any): string {
+    if (!err) return AGENT_ERROR_TEXT
+    const msg = typeof err === 'string'
+        ? err
+        : err.message || err.error || err.cause?.message || (typeof err === 'object' ? JSON.stringify(err) : String(err))
+    const lower = String(msg).toLowerCase()
+
+    if (
+        lower.includes('api key') ||
+        lower.includes('apikey') ||
+        lower.includes('invalid_api_key') ||
+        lower.includes('incorrect api key') ||
+        lower.includes('authenticationerror') ||
+        lower.includes('unauthorized') ||
+        lower.includes('401') ||
+        lower.includes('invalid key') ||
+        lower.includes('bad key') ||
+        lower.includes('auth error')
+    ) {
+        if (typeof msg === 'string' && msg.includes('Settings -> Providers')) {
+            return msg
+        }
+        return API_KEY_ERROR_TEXT
+    }
+
+    return AGENT_ERROR_TEXT
+}
+
+export function createAgentErrorParts(errorText: string = AGENT_ERROR_TEXT) {
+    return [{ type: 'error' as const, text: errorText }]
 }
 
 function assistantHasUsefulContent(message: any | undefined): boolean {
@@ -149,7 +178,7 @@ export function useChatSession({
     }, [currentChatId, userId, refreshChatTokens])
 
     const handleModelChange = async (model: string) => {
-        if (!isSupportedModelId(model)) return
+        if (!model) return
         setSelectedModel(model)
         if (currentChatId) {
             await updateChatModel(currentChatId, model)
@@ -404,7 +433,9 @@ export function useChatSession({
         }
 
         const localErrorId = `local-error-${Date.now()}`
-        const errorParts = createAgentErrorParts()
+        const rawErr = snapshot?.error || agentRef.current?.error || (snapshot?.data as any)?.error
+        const errorText = detectErrorMessage(rawErr)
+        const errorParts = createAgentErrorParts(errorText)
 
         setDisplayMessages(prev => {
             let next = prev
@@ -414,7 +445,7 @@ export function useChatSession({
                     next = [...next, {
                         id: localErrorId,
                         role: 'assistant' as const,
-                        content: AGENT_ERROR_TEXT,
+                        content: errorText,
                         parts: errorParts,
                         createdAt: new Date(),
                     }]
@@ -472,14 +503,14 @@ export function useChatSession({
                 const alreadyHasDbError = displayMessagesRef.current.some(
                     m =>
                         m.role === 'assistant' &&
-                        m.content === AGENT_ERROR_TEXT &&
+                        (m.content === errorText || m.content === AGENT_ERROR_TEXT) &&
                         Array.isArray(m.parts) &&
                         (m.parts as any[]).some((p: any) => p.type === 'error') &&
                         !String(m.id).startsWith('local-error-')
                 )
 
                 if (!alreadyHasDbError) {
-                    await addMessage(chatId, 'assistant', AGENT_ERROR_TEXT, errorParts)
+                    await addMessage(chatId, 'assistant', errorText, errorParts)
                 }
             } else if (lastAssistant && assistantHasUsefulContent(lastAssistant)) {
                 await addMessage(
@@ -691,7 +722,7 @@ export function useChatSession({
                             : '',
                 }
             })
-        } catch {
+        } catch (sendErr: any) {
             setChatRunning(targetChatId, false)
             setIsStreaming(false)
             setAgentError(true)
@@ -720,32 +751,37 @@ export function useChatSession({
                     }
                 }
 
-                const errorParts = createAgentErrorParts()
-                const savedError = await addMessage(targetChatId, 'assistant', AGENT_ERROR_TEXT, errorParts)
+                const rawErr = sendErr || agentRef.current?.error || (agentRef.current?.data as any)?.error
+                const errorMsg = detectErrorMessage(rawErr)
+                const errorParts = createAgentErrorParts(errorMsg)
+                const savedError = await addMessage(targetChatId, 'assistant', errorMsg, errorParts)
                 setDisplayMessages(prev => {
                     if (
                         prev[prev.length - 1]?.role === 'assistant' &&
-                        prev[prev.length - 1]?.content === AGENT_ERROR_TEXT
+                        (prev[prev.length - 1]?.content === errorMsg || prev[prev.length - 1]?.content === AGENT_ERROR_TEXT)
                     ) {
                         return prev
                     }
                     return [...prev, {
                         id: savedError.id,
                         role: 'assistant' as const,
-                        content: AGENT_ERROR_TEXT,
+                        content: errorMsg,
                         parts: errorParts,
                         createdAt: savedError.createdAt,
                     }]
                 })
             } catch (persistErr) {
                 console.error('Failed to persist error turn:', persistErr)
+                const rawErr = sendErr || agentRef.current?.error
+                const errorMsg = detectErrorMessage(rawErr)
+                const errorParts = createAgentErrorParts(errorMsg)
                 setDisplayMessages(prev => {
-                    if (prev[prev.length - 1]?.content === AGENT_ERROR_TEXT) return prev
+                    if (prev[prev.length - 1]?.content === errorMsg || prev[prev.length - 1]?.content === AGENT_ERROR_TEXT) return prev
                     return [...prev, {
                         id: `local-error-${Date.now()}`,
                         role: 'assistant',
-                        content: AGENT_ERROR_TEXT,
-                        parts: createAgentErrorParts(),
+                        content: errorMsg,
+                        parts: errorParts,
                         createdAt: new Date(),
                     }]
                 })
