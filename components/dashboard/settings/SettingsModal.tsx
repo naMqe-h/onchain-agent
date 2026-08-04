@@ -1,11 +1,11 @@
 'use client'
 
 import { ReactNode } from 'react'
-import { FiX, FiCreditCard, FiLock, FiGlobe, FiUser, FiCpu, FiArchive, FiBook, FiDisc, FiMonitor, FiBarChart2 } from 'react-icons/fi'
+import { FiX, FiCreditCard, FiLock, FiGlobe, FiUser, FiCpu, FiArchive, FiBook, FiDisc, FiMonitor, FiBarChart2, FiMic } from 'react-icons/fi'
 import { User } from '@supabase/supabase-js'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSettingsStore } from '../../../hooks/useSettingsStore'
-import { type SettingsTab, type PublicProfile } from '@/types'
+import { type SettingsTab, type PublicProfile } from '../../../types/user'
 import { fadeInOut, scaleIn } from '../../../lib/motion'
 import WalletsTab from './WalletsTab'
 import AddressBookTab from './AddressBookTab'
@@ -17,6 +17,7 @@ import ProfileTab from './ProfileTab'
 import ModelsTab from './ModelsTab'
 import UsageTab from './UsageTab'
 import ArchivedTab from './ArchivedTab'
+import VoiceTab from './VoiceTab'
 
 interface SettingsModalProps {
     user: User | null
@@ -68,6 +69,7 @@ export default function SettingsModal({ user, profile }: SettingsModalProps) {
                                 {tabBtn('wallets', 'Wallets', <FiCreditCard size={16} />)}
                                 {tabBtn('addressBook', 'Address Book', <FiBook size={16} />)}
                                 {tabBtn('coinBook', 'Coin Book', <FiDisc size={16} />)}
+                                {tabBtn('voice', 'Voice', <FiMic size={16} />)}
                                 {tabBtn('security', 'Security', <FiLock size={16} />)}
                                 {tabBtn('sessions', 'Sessions', <FiMonitor size={16} />)}
                                 {tabBtn('network', 'Network', <FiGlobe size={16} />)}
@@ -95,6 +97,8 @@ export default function SettingsModal({ user, profile }: SettingsModalProps) {
                                 <AddressBookTab />
                             ) : activeTab === 'coinBook' ? (
                                 <CoinBookTab user={user} />
+                            ) : activeTab === 'voice' ? (
+                                <VoiceTab />
                             ) : activeTab === 'security' ? (
                                 <SecurityTab user={user} />
                             ) : activeTab === 'sessions' ? (

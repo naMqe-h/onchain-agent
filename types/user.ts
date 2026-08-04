@@ -59,3 +59,4 @@ export type SettingsTab =
     | 'models'
     | 'usage'
     | 'archived'
+    | 'voice'

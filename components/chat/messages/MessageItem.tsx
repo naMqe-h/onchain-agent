@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { TbBrain, TbTool } from 'react-icons/tb'
+import { FiVolume2, FiVolumeX } from 'react-icons/fi'
 import ReactMarkdown from 'react-markdown'
 import { motion } from 'framer-motion'
 import TokenInfoCard from '../tools/get_token_info/TokenInfoCard'
@@ -32,8 +33,9 @@ import UserWalletsCard from '../tools/get_user_wallets/UserWalletsCard'
 import UserWalletsSkeleton from '../tools/get_user_wallets/UserWalletsSkeleton'
 import { messageHasReasoning, messageHasTools } from '../AgentAnalysisPanel'
 import { slideInUp } from '../../../lib/motion'
+import { useVoiceStore } from '../../../hooks/useVoiceStore'
 import CopyMessageButton from './CopyMessageButton'
-import { type Message } from '@/types'
+import { type Message } from '../../../types/chat'
 
 interface MessageItemProps {
     message: Message
@@ -329,6 +331,11 @@ export default function MessageItem({
         )
     }
 
+    const isSpeaking = useVoiceStore(s => s.isSpeaking)
+    const speakingMessageId = useVoiceStore(s => s.speakingMessageId)
+    const toggleSpeak = useVoiceStore(s => s.toggleSpeak)
+    const isThisSpeaking = isSpeaking && speakingMessageId === message.id
+
     const isWriting = message.role === 'assistant' && isLast && isBusy && !isErrorMessage
 
     return (
@@ -344,6 +351,20 @@ export default function MessageItem({
                 <div className="flex items-center gap-2 mt-1 text-zinc-500">
                     <span className="text-[11px] font-medium">{time}</span>
                     {canCopy && <CopyMessageButton text={plainText} />}
+                    {!isErrorMessage && plainText && message.role === 'assistant' && (
+                        <button
+                            onClick={() => toggleSpeak(plainText, message.id)}
+                            className={`p-1.5 rounded-full transition-colors cursor-pointer ${
+                                isThisSpeaking
+                                    ? 'bg-indigo-600/30 text-indigo-400 border border-indigo-500/40 animate-pulse'
+                                    : 'hover:bg-[#1e1e20] hover:text-zinc-200'
+                            }`}
+                            title={isThisSpeaking ? 'Stop reading message' : 'Read message aloud'}
+                            aria-label="Toggle text to speech"
+                        >
+                            {isThisSpeaking ? <FiVolumeX size={16} /> : <FiVolume2 size={16} />}
+                        </button>
+                    )}
                     {!isErrorMessage && (hasReasoning || hasTools) && (
                         <div className="flex items-center gap-1.5">
                             {hasReasoning && (

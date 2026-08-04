@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { FiArrowUp, FiChevronUp, FiCreditCard, FiSquare, FiKey } from 'react-icons/fi'
+import { FiArrowUp, FiChevronUp, FiCreditCard, FiSquare, FiKey, FiMic, FiMicOff } from 'react-icons/fi'
 import { TbBrain } from 'react-icons/tb'
 import { motion } from 'framer-motion'
 import { slideInUp } from '../../lib/motion'
@@ -8,6 +8,7 @@ import { useSettingsStore } from '../../hooks/useSettingsStore'
 import { useAuthModalStore } from '../../hooks/useAuthModalStore'
 import { DEFAULT_MODEL_ID } from '../../lib/models'
 import { useModelsStore } from '../../hooks/useModelsStore'
+import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
 import {
     NETWORK_OPTIONS,
     getNetworkIconSrc,
@@ -75,6 +76,17 @@ export default function ChatInput({
     const inputRef = useRef<HTMLInputElement>(null)
     const openAuthModal = useAuthModalStore(s => s.open)
 
+    const { isSupported, isListening, startListening, stopListening } = useSpeechRecognition({
+        onResult: (text) => {
+            if (handleInputChange) {
+                const fakeEvent = {
+                    target: { value: text }
+                } as React.ChangeEvent<HTMLInputElement>
+                handleInputChange(fakeEvent)
+            }
+        }
+    })
+
     const wallets = useWalletStore(s => s.wallets)
     const selectedAddress = useWalletStore(s => s.selectedAddress)
     const isLoadingWallets = useWalletStore(s => s.isLoading)
@@ -128,9 +140,33 @@ export default function ChatInput({
                         readOnly={!isAuthenticated}
                         onClick={!isAuthenticated ? () => openAuthModal() : undefined}
                         onFocus={!isAuthenticated ? () => openAuthModal() : undefined}
-                        placeholder={isAuthenticated ? (isBusy ? 'Agent is working…' : 'Ask Agent') : 'Sign in to start chatting…'}
+                        placeholder={
+                            isAuthenticated
+                                ? isListening
+                                    ? 'Listening… (speak now)'
+                                    : isBusy
+                                        ? 'Agent is working…'
+                                        : 'Ask Agent'
+                                : 'Sign in to start chatting…'
+                        }
                         className="flex-1 bg-transparent text-zinc-200 placeholder-zinc-500 focus:outline-none transition-colors disabled:opacity-50 text-[15px] ml-2 min-w-0 cursor-text"
                     />
+
+                    {isSupported && isAuthenticated && (
+                        <button
+                            type="button"
+                            onClick={isListening ? stopListening : startListening}
+                            disabled={isBusy}
+                            title={isListening ? 'Stop voice recording' : 'Record voice command'}
+                            className={`p-2 rounded-full flex items-center justify-center transition-all cursor-pointer shrink-0 ${
+                                isListening
+                                    ? 'bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse'
+                                    : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/5'
+                            }`}
+                        >
+                            {isListening ? <FiMicOff size={18} /> : <FiMic size={18} />}
+                        </button>
+                    )}
 
                     {isBusy && onStop ? (
                         <button

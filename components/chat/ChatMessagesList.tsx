@@ -3,7 +3,8 @@ import { motion } from 'framer-motion'
 import { slideInUp, staggerContainer } from '../../lib/motion'
 import { getAgentStatusText } from '../../lib/chat/getAgentStatusText'
 import MessageItem from './messages/MessageItem'
-import { type Message, type AnalysisPanelMode } from '@/types'
+import { useVoiceStore } from '../../hooks/useVoiceStore'
+import { type Message } from '../../types/chat'
 
 interface ChatMessagesListProps {
     chatId: string | null
@@ -17,9 +18,23 @@ interface ChatMessagesListProps {
     activeNetwork?: string
 }
 
-const hasTextContent = (message: Message) => {
-    if (!message.parts || message.parts.length === 0) return false
-    return message.parts.some(part => part.type === 'text' && part.text && part.text.trim().length > 0)
+function hasTextContent(message: Message): boolean {
+    if (!message) return false
+    if (!message.parts || message.parts.length === 0) {
+        return typeof (message as any).content === 'string' && (message as any).content.trim().length > 0
+    }
+    return message.parts.some(part => part.type === 'text' && typeof part.text === 'string' && part.text.trim().length > 0)
+}
+
+function getMessageText(message: Message): string {
+    if (!message.parts || message.parts.length === 0) {
+        return typeof (message as any).content === 'string' ? (message as any).content : ''
+    }
+    return message.parts
+        .filter(part => part.type === 'text' && typeof part.text === 'string')
+        .map(part => part.text.trim())
+        .filter(Boolean)
+        .join('\n\n')
 }
 
 export default function ChatMessagesList({
@@ -35,6 +50,10 @@ export default function ChatMessagesList({
 }: ChatMessagesListProps) {
     const containerRef = useRef<HTMLDivElement>(null)
     const isAtBottomRef = useRef(true)
+    const prevIsBusyRef = useRef(isBusy)
+
+    const autoRead = useVoiceStore(s => s.autoRead)
+    const speakText = useVoiceStore(s => s.speakText)
 
     const handleScroll = useCallback(() => {
         const container = containerRef.current
@@ -66,7 +85,17 @@ export default function ChatMessagesList({
         if (isBusy && containerRef.current) {
             containerRef.current.scrollTop = containerRef.current.scrollHeight
         }
-    }, [isBusy])
+        if (prevIsBusyRef.current && !isBusy && autoRead && messages.length > 0) {
+            const lastMsg = messages[messages.length - 1]
+            if (lastMsg && lastMsg.role === 'assistant') {
+                const text = getMessageText(lastMsg)
+                if (text) {
+                    speakText(text, lastMsg.id)
+                }
+            }
+        }
+        prevIsBusyRef.current = isBusy
+    }, [isBusy, autoRead, messages, speakText])
 
     if ((!messages || messages.length === 0) && !showError) {
         return null
