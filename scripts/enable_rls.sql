@@ -121,3 +121,28 @@ CREATE POLICY "UserUsageDaily_service_all" ON "UserUsageDaily"
   FOR ALL TO service_role
   USING (true)
   WITH CHECK (true);
+
+ALTER TABLE "UserProviderKey" ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "UserProviderKey_select_owner" ON "UserProviderKey";
+CREATE POLICY "UserProviderKey_select_owner" ON "UserProviderKey"
+  FOR SELECT TO anon, authenticated
+  USING ("userId" = auth.uid()::text);
+
+DROP POLICY IF EXISTS "UserProviderKey_service_all" ON "UserProviderKey";
+CREATE POLICY "UserProviderKey_service_all" ON "UserProviderKey"
+  FOR ALL TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+ALTER TABLE "UserCustomModel" ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "UserCustomModel_select_owner" ON "UserCustomModel";
+CREATE POLICY "UserCustomModel_select_owner" ON "UserCustomModel"
+  FOR SELECT TO anon, authenticated
+  USING ("userId" = auth.uid()::text);
+
+DROP POLICY IF EXISTS "UserCustomModel_service_all" ON "UserCustomModel";
+CREATE POLICY "UserCustomModel_service_all" ON "UserCustomModel"
+  FOR ALL TO service_role
+  USING (true)
+  WITH CHECK (true);
+
