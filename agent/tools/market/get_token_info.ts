@@ -7,6 +7,7 @@ import {
     getNetworkLabel,
     normalizeNetworkId,
 } from "../../../lib/web3/config"
+import { getCache, setCache } from "../../../lib/redis"
 
 export default defineTool({
     description:
@@ -30,6 +31,13 @@ export default defineTool({
         const activeNetwork = normalizeNetworkId(
             typeof activeNetworkAttr === "string" ? activeNetworkAttr : activeNetworkAttr?.[0]
         )
+
+        const cacheKey = `market:info:${activeNetwork}:${trimmedQuery.toLowerCase()}`
+        const cached = await getCache<any>(cacheKey)
+        if (cached) {
+            return cached
+        }
+
         const networkLabel = getNetworkLabel(activeNetwork)
         const allowedChainIds = new Set(
             getDexScreenerChainIds(activeNetwork).map((id) => id.toLowerCase())
@@ -166,12 +174,14 @@ export default defineTool({
                 return volB - volA
             })
 
-            return {
+            const result = {
                 success: true,
                 found: true,
                 network: activeNetwork,
                 token: tokens[0],
             }
+            await setCache(cacheKey, result, 60)
+            return result
         } catch (error: any) {
             return {
                 success: false,

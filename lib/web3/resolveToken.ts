@@ -10,6 +10,7 @@ import {
 import { fetchWalletErc20Tokens, type BalanceToken } from "./tokenBalances"
 import { lookupRegistryToken, type RegistryToken } from "./tokenRegistry"
 import { NATIVE_TOKEN_ADDRESS } from "./uniswap/client"
+import { getCache, setCache } from "../redis"
 
 export type ResolvedToken = {
     address: string
@@ -102,6 +103,10 @@ async function readErc20Meta(
     address: `0x${string}`,
     network: NetworkId
 ): Promise<{ symbol: string; name: string; decimals: number } | null> {
+    const cacheKey = `web3:erc20meta:${network}:${address.toLowerCase()}`
+    const cached = await getCache<{ symbol: string; name: string; decimals: number }>(cacheKey)
+    if (cached) return cached
+
     try {
         const publicClient = getPublicClient(network)
         const [decimals, symbol, name] = await Promise.all([
@@ -125,11 +130,13 @@ async function readErc20Meta(
                 })
                 .catch(() => "Unknown Token"),
         ])
-        return {
+        const result = {
             decimals: Number(decimals),
             symbol: String(symbol),
             name: String(name),
         }
+        await setCache(cacheKey, result, 86400)
+        return result
     } catch {
         return null
     }
