@@ -1,6 +1,7 @@
 import { defineTool } from "eve/tools"
 import { z } from "zod"
 import { normalizeNetworkId } from "../../../lib/web3/config"
+import { getCache, setCache } from "../../../lib/redis"
 
 const GECKOTERMINAL_CHAIN_MAP: Record<string, string> = {
     "ethereum": "eth",
@@ -71,6 +72,12 @@ export default defineTool({
                 success: false,
                 error: "Trending tokens are not supported on testnets. Please switch to a mainnet network"
             }
+        }
+
+        const cacheKey = `market:trending:${geckoChainId}`
+        const cached = await getCache<any>(cacheKey)
+        if (cached) {
+            return cached
         }
 
         try {
@@ -168,12 +175,14 @@ export default defineTool({
                 }
             }
 
-            return {
+            const result = {
                 success: true,
                 found: true,
                 chain: prettyChainName,
                 tokens: top10Tokens,
             }
+            await setCache(cacheKey, result, 300)
+            return result
         } catch (error: any) {
             return {
                 success: false,

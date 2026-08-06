@@ -1,5 +1,6 @@
 import { defineTool } from "eve/tools"
 import { z } from "zod"
+import { getCache, setCache } from "../../../lib/redis"
 
 const COMMON_COIN_IDS: Record<string, string> = {
     btc: "bitcoin",
@@ -51,6 +52,12 @@ export default defineTool({
         }
 
         const normalizedQuery = query.toLowerCase()
+        const cacheKey = `market:price:${normalizedQuery}`
+        const cached = await getCache<any>(cacheKey)
+        if (cached) {
+            return cached
+        }
+
         let coinId: string | null = COMMON_COIN_IDS[normalizedQuery] || null
 
         const apiKey = process.env.COINGECKO_API_KEY
@@ -153,7 +160,7 @@ export default defineTool({
                 }
             }
 
-            return {
+            const result = {
                 success: true,
                 found: true,
                 priceInfo: {
@@ -173,6 +180,8 @@ export default defineTool({
                     chartData,
                 },
             }
+            await setCache(cacheKey, result, 20)
+            return result
         } catch (err: any) {
             return {
                 success: false,
