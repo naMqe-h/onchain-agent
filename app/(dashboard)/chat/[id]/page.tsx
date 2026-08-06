@@ -29,7 +29,6 @@ export default async function ChatPage({ params }: ChatPageProps) {
     const initialSession = chat.eveSessionId
         ? {
             sessionId: chat.eveSessionId,
-            continuationToken: chat.eveContinuationToken ?? undefined,
             streamIndex: chat.eveStreamIndex ?? 0
         }
         : { streamIndex: 0 }

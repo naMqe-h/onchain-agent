@@ -48,7 +48,6 @@ export type AnalysisPanelMode = 'reasoning' | 'tools'
 export interface SessionState {
     messages?: StoredMessage[]
     sessionId?: string
-    continuationToken?: string
     streamIndex?: number
     activePanelMessageId?: string | null
     activePanelMode?: AnalysisPanelMode | null

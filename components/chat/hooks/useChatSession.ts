@@ -348,7 +348,6 @@ export function useChatSession({
                     await updateChatSession(
                         chatId,
                         session.sessionId,
-                        session.continuationToken ?? '',
                         session.streamIndex ?? 0
                     )
                 }
@@ -524,7 +523,6 @@ export function useChatSession({
                 await updateChatSession(
                     chatId,
                     session.sessionId,
-                    session.continuationToken ?? '',
                     session.streamIndex ?? 0
                 )
             }
@@ -559,10 +557,12 @@ export function useChatSession({
     }, [currentChatId])
 
     const agent = useEveAgent({
-        initialSession: {
-            ...initialSession,
-            streamIndex: initialSession.streamIndex ?? 0,
-        },
+        initialSession: initialSession.sessionId
+            ? {
+                sessionId: initialSession.sessionId,
+                streamIndex: initialSession.streamIndex ?? 0,
+            }
+            : undefined,
         onError: useCallback(() => {
             if (chatIdRef.current) {
                 setChatRunning(chatIdRef.current, false)
@@ -695,8 +695,7 @@ export function useChatSession({
         }
 
         try {
-            await agentRef.current.send({
-                message: messageText,
+            await agentRef.current.send(messageText, {
                 headers: {
                     'x-model-name': model,
                     'x-chat-id': targetChatId,

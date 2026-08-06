@@ -188,15 +188,15 @@ export async function markChatAsRead(chatId: string) {
 export async function updateChatSession(
     chatId: string,
     eveSessionId: string,
-    eveContinuationToken: string,
-    eveStreamIndex: number
+    eveStreamIndex: number,
+    eveContinuationToken?: string
 ) {
     await getAuthenticatedUserAndChat(chatId)
     await db.chat.update({
         where: { id: chatId },
         data: {
             eveSessionId,
-            eveContinuationToken,
+            ...(eveContinuationToken !== undefined ? { eveContinuationToken } : {}),
             eveStreamIndex,
             updatedAt: new Date(),
         },
