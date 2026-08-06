@@ -1,0 +1,178 @@
+name: Dependency Security Audit
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+  schedule:
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Run NPM Audit
+        id: audit
+        continue-on-error: true
+        run: |
+          AUDIT_OUTPUT=$(npm audit --audit-level=high --json 2>/dev/null || true)
+          VULNERABILITIES=$(echo "$AUDIT_OUTPUT" | python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('metadata', {}).get('vulnerabilities', {}).get('total', 0))" 2>/dev/null || echo "0")
+          HIGH_CRITICAL=$(echo "$AUDIT_OUTPUT" | python3 -c "import sys, json; data=json.load(sys.stdin); vulns=data.get('metadata', {}).get('vulnerabilities', {}); print(vulns.get('high', 0) + vulns.get('critical', 0))" 2>/dev/null || echo "0")
+          
+          echo "total_vulns=${VULNERABILITIES}" >> $GITHUB_OUTPUT
+          echo "high_critical=${HIGH_CRITICAL}" >> $GITHUB_OUTPUT
+          
+          if [ "$HIGH_CRITICAL" -gt 0 ]; then
+            echo "Security audit failed: ${HIGH_CRITICAL} high/critical vulnerabilities found."
+            exit 1
+          else
+            echo "Security audit passed."
+          fi
+
+      - name: Post or Update PR Comment
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const auditOutcome = "${{ steps.audit.outcome }}";
+            const highCritical = "${{ steps.audit.outputs.high_critical }}" || "0";
+            const totalVulns = "${{ steps.audit.outputs.total_vulns }}" || "0";
+
+            const status = auditOutcome === 'success' ? '✅ Passed' : '❌ Failed';
+            const summary = auditOutcome === 'success'
+              ? 'No high or critical vulnerabilities detected in dependencies! 🚀'
+              : `Found **${highCritical}** high/critical vulnerabilities (total: ${totalVulns}). Run \`npm audit fix\` to resolve. ⚠️`;
+
+            const commentHeader = '### 🛡️ Dependency Security Audit Results';
+            const body = `${commentHeader}
+
+            | Audit Parameter | Result |
+            | :--- | :--- |
+            | **Security Status** | ${status} |
+            | **High / Critical Issues** | **${highCritical}** |
+            | **Total Vulnerabilities** | ${totalVulns} |
+
+            **Summary:** ${summary}`;
+
+            try {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+              });
+
+              const botComment = comments.find(comment => comment.body.includes(commentHeader));
+
+              if (botComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: botComment.id,
+                  body: body,
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.payload.pull_request.number,
+                  body: body,
+                });
+              }
+            } catch (error) {
+              console.log('Failed to post security audit PR comment (e.g. PR from fork):', error.message);
+            }
+
+            if (auditOutcome !== 'success') {
+              core.setFailed('Security audit failed due to high or critical vulnerabilities.');
+            }
+
+      - name: Send Discord Notification (Cron / Dispatch)
+        if: always() && github.event_name != 'pull_request'
+        run: |
+          WEBHOOK_URL="${{ secrets.DISCORD_WEBHOOK_SECURITY }}"
+          if [ -z "$WEBHOOK_URL" ]; then
+            echo "DISCORD_WEBHOOK_SECURITY secret is not set, skipping Discord notification."
+            exit 0
+          fi
+
+          AUDIT_OUTCOME="${{ steps.audit.outcome }}"
+          HIGH_CRITICAL="${{ steps.audit.outputs.high_critical }}"
+          TOTAL_VULNS="${{ steps.audit.outputs.total_vulns }}"
+
+          if [ "$AUDIT_OUTCOME" = "success" ]; then
+            COLOR=3066993
+            TITLE="🛡️ Weekly Security Audit Passed"
+            DESC="No high or critical vulnerabilities detected in npm dependencies."
+          else
+            COLOR=15158332
+            TITLE="🚨 SECURITY ALERT: Vulnerabilities Found!"
+            DESC="Found **${HIGH_CRITICAL:-0}** high/critical vulnerabilities in project dependencies."
+          fi
+
+          REPO="${{ github.repository }}"
+          RUN_ID="${{ github.run_id }}"
+          ACTION_URL="https://github.com/${REPO}/actions/runs/${RUN_ID}"
+
+          PAYLOAD=$(cat <<EOF
+          {
+            "embeds": [
+              {
+                "title": "${TITLE}",
+                "description": "${DESC}",
+                "color": ${COLOR},
+                "fields": [
+                  {
+                    "name": "High/Critical Issues",
+                    "value": "${HIGH_CRITICAL:-0}",
+                    "inline": true
+                  },
+                  {
+                    "name": "Total Vulnerabilities",
+                    "value": "${TOTAL_VULNS:-0}",
+                    "inline": true
+                  },
+                  {
+                    "name": "Recommended Action",
+                    "value": "Run \`npm audit fix\` in project",
+                    "inline": false
+                  },
+                  {
+                    "name": "Workflow Run",
+                    "value": "[View Run Logs](${ACTION_URL})",
+                    "inline": false
+                  }
+                ],
+                "footer": {
+                  "text": "NPM Security Audit Pipeline"
+                }
+              }
+            ]
+          }
+          EOF
+          )
+
+          curl -H "Content-Type: application/json" -X POST -d "$PAYLOAD" "$WEBHOOK_URL"
+
+      - name: Set Job Final Status
+        if: github.event_name != 'pull_request'
+        run: |
+          if [ "${{ steps.audit.outcome }}" != "success" ]; then
+            echo "Security audit failed due to vulnerabilities."
+            exit 1
+          fi
