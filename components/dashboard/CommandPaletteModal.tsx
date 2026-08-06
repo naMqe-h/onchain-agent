@@ -295,7 +295,6 @@ export default function CommandPaletteModal({ user, chats = [] }: CommandPalette
                     title: net.label,
                     subtitle: `Chain ID: ${net.chainId} • ${net.environment}`,
                     icon: (
-                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                             src={getNetworkIconSrc(net.id)}
                             alt=""
@@ -363,7 +362,7 @@ export default function CommandPaletteModal({ user, chats = [] }: CommandPalette
         }
 
         return list
-    }, [query, selectedAddress, wallets, activeNetwork, searchResults, chats, copied])
+    }, [query, selectedAddress, wallets, activeNetwork, searchResults, chats, copied, close, handleCopyAddress, handleNetworkChange, openSettings, router, setSelectedAddress])
 
     useEffect(() => {
         setSelectedIndex(0)

@@ -29,13 +29,6 @@ export default function TrendingTokensCard({ data, activeNetwork }: TrendingToke
         }
     }
 
-    const getRankColor = (rank: number) => {
-        if (rank === 1) return 'bg-amber-500/25 border-amber-500/50 text-amber-300'
-        if (rank === 2) return 'bg-slate-400/25 border-slate-400/50 text-slate-300'
-        if (rank === 3) return 'bg-amber-700/25 border-amber-800/50 text-amber-600'
-        return 'bg-zinc-800 border-zinc-700/50 text-zinc-400'
-    }
-
     return (
         <div className="w-full bg-[#171719]/90 border border-zinc-800/85 rounded-2xl p-4 md:p-6 backdrop-blur-md shadow-xl transition-all duration-300 hover:border-zinc-700/60 my-3 overflow-hidden">
             <div className="flex items-center justify-between pb-4 border-b border-zinc-800/60 mb-4">

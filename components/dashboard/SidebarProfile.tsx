@@ -127,7 +127,6 @@ export default function SidebarProfile({
         profile?.displayName || user.email?.split('@')[0] || 'User'
     const avatarUrl = profile?.avatarUrl
     const initial = displayName.charAt(0).toUpperCase()
-    const activeNetwork = user.user_metadata?.activeNetwork
 
     const handleLogout = async () => {
         const supabase = createClient()
@@ -142,7 +141,6 @@ export default function SidebarProfile({
         const dim = size === 'md' ? 'w-8 h-8 text-xs' : 'w-8 h-8 text-xs'
         if (avatarUrl) {
             return (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img
                     src={avatarUrl}
                     alt={displayName}

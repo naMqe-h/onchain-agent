@@ -24,7 +24,6 @@ export default function TxHistoryCard({ data }: TxHistoryCardProps) {
 
     if (!data.transactions?.length) {
         const network = normalizeNetworkId(data.network)
-        const base = getExplorerBaseUrl(network)
         const networkLabel = getNetworkShortLabel(network)
 
         return (

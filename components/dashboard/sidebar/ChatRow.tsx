@@ -137,7 +137,6 @@ export default function ChatRow({
                 <div className="flex items-center justify-between text-xs min-h-4.5 text-zinc-500 gap-2">
                     <div className="flex items-center justify-between flex-1 min-w-0 gap-2 pr-1">
                         <div className="flex items-center gap-1.5 min-w-0">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={getNetworkIconSrc(chat.network)}
                                 alt={getNetworkShortLabel(chat.network)}
@@ -151,7 +150,6 @@ export default function ChatRow({
 
                         <div className="flex items-center gap-1.5 min-w-0">
                             {modelInfo?.icon ? (
-                                /* eslint-disable-next-line @next/next/no-img-element */
                                 <img
                                     src={`/models/${modelInfo.icon}`}
                                     alt={modelInfo.shortName || chat.model || ''}

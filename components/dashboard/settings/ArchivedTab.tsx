@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { FiArchive, FiRotateCcw, FiTrash2 } from 'react-icons/fi'
@@ -31,7 +31,7 @@ export default function ArchivedTab({ user }: ArchivedTabProps) {
     const [busyId, setBusyId] = useState<string | null>(null)
     const [deleteConfirmationId, setDeleteConfirmationId] = useState<string | null>(null)
 
-    const fetchArchived = async () => {
+    const fetchArchived = useCallback(async () => {
         setIsLoading(true)
         setError('')
         try {
@@ -43,11 +43,11 @@ export default function ArchivedTab({ user }: ArchivedTabProps) {
         } finally {
             setIsLoading(false)
         }
-    }
+    }, [user.id])
 
     useEffect(() => {
         fetchArchived()
-    }, [user.id])
+    }, [fetchArchived])
 
     const formatCreatedAt = (date: Date) => {
         const d = new Date(date)
@@ -127,7 +127,6 @@ export default function ArchivedTab({ user }: ArchivedTabProps) {
                                         {chat.title}
                                     </p>
                                     <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 mt-0.5 min-w-0">
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
                                             src={getNetworkIconSrc(chat.network)}
                                             alt={getNetworkShortLabel(chat.network)}

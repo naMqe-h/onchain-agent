@@ -100,7 +100,7 @@ export default defineAgent({
             "step.started": async (event, ctx) => {
                 const headerModel = ctx.session.auth.current?.attributes?.modelName
 
-                let eveSessionId: string | null = ctx.session.id || null
+                const eveSessionId: string | null = ctx.session.id || null
                 let chatModel: string | null = null
                 let userId: string | null = null
 
