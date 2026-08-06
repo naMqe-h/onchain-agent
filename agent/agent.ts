@@ -8,13 +8,19 @@ import { type SupportedModelId } from "../types"
 import { DEFAULT_MODEL_ID, SUPPORTED_MODELS } from "../lib/models"
 import { decryptProviderKey } from "../lib/providerCrypto"
 
-const openrouter = createOpenRouter({
-    apiKey: process.env.OPENROUTER_API_KEY,
-})
+function getOpenRouterClient(apiKey?: string | null) {
+    const key = (apiKey || process.env.OPENROUTER_API_KEY || '').trim()
+    return createOpenRouter({
+        apiKey: key,
+    })
+}
 
-const openai = createOpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-})
+function getOpenAIClient(apiKey?: string | null) {
+    const key = (apiKey || process.env.OPENAI_API_KEY || '').trim()
+    return createOpenAI({
+        apiKey: key,
+    })
+}
 
 async function getDecryptedUserKey(userId: string, provider: string): Promise<string | null> {
     try {
@@ -42,25 +48,25 @@ function resolveModelForProvider(modelId: string, provider: string, apiKey?: str
     const cleanProvider = provider.toLowerCase()
 
     if (cleanProvider === 'openai') {
-        const client = apiKey ? createOpenAI({ apiKey }) : openai
+        const client = getOpenAIClient(apiKey)
         return client(modelId)
     }
 
     if (cleanProvider === 'openrouter') {
-        const client = apiKey ? createOpenRouter({ apiKey }) : openrouter
+        const client = getOpenRouterClient(apiKey)
         return client(modelId)
     }
 
     if (cleanProvider === 'google') {
         const googleClient = createGoogleGenerativeAI({
-            apiKey: apiKey || process.env.GOOGLE_GENERATIVE_AI_API_KEY || '',
+            apiKey: (apiKey || process.env.GOOGLE_GENERATIVE_AI_API_KEY || '').trim(),
         })
         return googleClient(modelId)
     }
 
     if (cleanProvider === 'anthropic') {
         const anthropicClient = createAnthropic({
-            apiKey: apiKey || process.env.ANTHROPIC_API_KEY || '',
+            apiKey: (apiKey || process.env.ANTHROPIC_API_KEY || '').trim(),
         })
         return anthropicClient(modelId)
     }
@@ -68,23 +74,21 @@ function resolveModelForProvider(modelId: string, provider: string, apiKey?: str
     if (cleanProvider === 'xai' || cleanProvider === 'grok') {
         const xaiClient = createOpenAI({
             baseURL: 'https://api.x.ai/v1',
-            apiKey: apiKey || process.env.XAI_API_KEY || '',
+            apiKey: (apiKey || process.env.XAI_API_KEY || '').trim(),
         })
         return xaiClient(modelId)
     }
 
-
-
-    const fallbackClient = apiKey ? createOpenRouter({ apiKey }) : openrouter
+    const fallbackClient = getOpenRouterClient(apiKey)
     return fallbackClient(modelId)
 }
 
 function resolveDefaultStaticModel(id: SupportedModelId) {
     const config = SUPPORTED_MODELS[id]
     if (config.provider === "openai") {
-        return openai(config.modelId)
+        return getOpenAIClient()(config.modelId)
     }
-    return openrouter(config.modelId)
+    return getOpenRouterClient()(config.modelId)
 }
 
 const defaultModel = resolveDefaultStaticModel(DEFAULT_MODEL_ID)
@@ -139,7 +143,7 @@ export default defineAgent({
                     return resolveDefaultStaticModel(requestedModelId as SupportedModelId)
                 }
 
-                return defaultModel
+                return resolveDefaultStaticModel(DEFAULT_MODEL_ID)
             },
         },
     }),
