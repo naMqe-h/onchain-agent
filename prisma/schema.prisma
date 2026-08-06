@@ -55,7 +55,7 @@ model Chat {
   // Manual only: bumped on conversation activity (messages / session), not pin/rename/folder/etc.
   updatedAt            DateTime    @default(now())
   messages             Message[]
-  model                String      @default("gpt-4.1-nano")
+  model                String      @default("cohere/north-mini-code:free")
   network              String      @default("ethereum")
   hasUnread            Boolean     @default(false)
 

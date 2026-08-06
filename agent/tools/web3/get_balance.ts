@@ -3,7 +3,6 @@ import { z } from "zod"
 import { formatEther } from "viem"
 import { getPublicClient } from "../../../lib/web3/providers"
 import {
-    getChainConfig,
     getNativeCurrencySymbol,
     normalizeNetworkId,
 } from "../../../lib/web3/config"

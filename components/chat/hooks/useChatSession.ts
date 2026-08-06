@@ -8,9 +8,8 @@ import { checkMyUsageQuota, getChatTokenUsageAction } from '../../../app/actions
 import { useWalletStore } from '../../../hooks/useWalletStore'
 import { useAuthModalStore } from '../../../hooks/useAuthModalStore'
 import { useChatActivityStore } from '../../../hooks/useChatActivityStore'
-import { createClient } from '../../../lib/supabase/client'
 import { normalizeNetworkId } from '../../../lib/web3/config'
-import { DEFAULT_MODEL_ID, isSupportedModelId } from '../../../lib/models'
+import { DEFAULT_MODEL_ID } from '../../../lib/models'
 import { extractOnchainTransactions } from '../../../lib/chat/extractOnchainTransactions'
 import {
     writePendingChatSend,
@@ -114,7 +113,6 @@ export function useChatSession({
     initialTitle = 'New Chat',
     activeNetwork,
     userId,
-    enabledModels,
 }: UseChatSessionProps) {
     const router = useRouter()
     const pathname = usePathname()
@@ -240,7 +238,7 @@ export function useChatSession({
         setStreamStartIndex(0)
         streamStartIndexRef.current = 0
         setAnalysisPanel(null)
-        setTxPanelOpen(false)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialChatId])
 
     const lastIsPersistedError = (msgs: StoredMessage[]) => {
@@ -279,7 +277,7 @@ export function useChatSession({
             const existingText = assistantText.trim()
             const finalContent = existingText ? `${existingText}\n\n${stoppedNotice}` : stoppedNotice
 
-            let finalParts: any[] = lastAssistant?.parts ? [...lastAssistant.parts] : []
+            const finalParts: any[] = lastAssistant?.parts ? [...lastAssistant.parts] : []
             const lastTextIdx = finalParts.findLastIndex((p: any) => p.type === 'text')
             if (lastTextIdx >= 0) {
                 finalParts[lastTextIdx] = {
@@ -580,7 +578,7 @@ export function useChatSession({
         }, [persistTurn, setChatRunning])
     })
 
-    const agentRef = useRef(agent)
+    const agentRef = useRef<typeof agent>(null as unknown as typeof agent)
     useEffect(() => {
         agentRef.current = agent
     }, [agent])
@@ -617,18 +615,6 @@ export function useChatSession({
         }
         setIsStreaming(false)
     }, [initialSession, persistTurn, setChatRunning])
-
-    const resolveNetworkForTurn = useCallback(async () => {
-        let networkForTurn = normalizeNetworkId(activeNetwork)
-        try {
-            const supabase = createClient()
-            const { data: { user: supabaseUser } } = await supabase.auth.getUser()
-            if (supabaseUser?.user_metadata?.activeNetwork) {
-                networkForTurn = normalizeNetworkId(supabaseUser.user_metadata.activeNetwork)
-            }
-        } catch { }
-        return networkForTurn
-    }, [activeNetwork])
 
     const runAgentSend = useCallback(async (opts: {
         messageText: string
@@ -787,7 +773,7 @@ export function useChatSession({
                 })
             }
         }
-    }, [])
+    }, [persistTurn, setChatRunning])
 
     useEffect(() => {
         if (!initialChatId || !userId) return

@@ -190,7 +190,6 @@ export default function ProfileTab({ user, profile: initialProfile }: ProfileTab
                     <div className="flex items-center gap-4">
                         <div className="relative shrink-0">
                             {profile.avatarUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
                                 <img
                                     src={profile.avatarUrl}
                                     alt={profile.displayName}

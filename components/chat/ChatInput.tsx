@@ -158,11 +158,10 @@ export default function ChatInput({
                             onClick={isListening ? stopListening : startListening}
                             disabled={isBusy}
                             title={isListening ? 'Stop voice recording' : 'Record voice command'}
-                            className={`p-2 rounded-full flex items-center justify-center transition-all cursor-pointer shrink-0 ${
-                                isListening
-                                    ? 'bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse'
-                                    : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/5'
-                            }`}
+                            className={`p-2 rounded-full flex items-center justify-center transition-all cursor-pointer shrink-0 ${isListening
+                                ? 'bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse'
+                                : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/5'
+                                }`}
                         >
                             {isListening ? <FiMicOff size={18} /> : <FiMic size={18} />}
                         </button>
@@ -277,7 +276,6 @@ export default function ChatInput({
                                     className="inline-flex items-center gap-1.5 max-w-full px-2.5 py-1 rounded-lg text-[11px] text-zinc-500 hover:text-zinc-300 hover:bg-white/5 transition-colors cursor-pointer disabled:opacity-50"
                                     title="Active chain for chat"
                                 >
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
                                         src={getNetworkIconSrc(currentNetworkId)}
                                         alt=""
@@ -320,7 +318,6 @@ export default function ChatInput({
                                                                 }`}
                                                         >
                                                             <div className="flex items-center gap-2.5 min-w-0">
-                                                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                                                 <img
                                                                     src={getNetworkIconSrc(opt.id)}
                                                                     alt=""

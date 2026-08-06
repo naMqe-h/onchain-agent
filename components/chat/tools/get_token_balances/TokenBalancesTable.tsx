@@ -82,7 +82,6 @@ export default function TokenBalancesTable({ data, activeNetwork }: TokenBalance
                                     <td className="py-2.5 px-2 min-w-0">
                                         <div className="flex items-center gap-2.5 min-w-0">
                                             {hasIcon ? (
-                                                // eslint-disable-next-line @next/next/no-img-element
                                                 <img
                                                     src={token.iconUrl as string}
                                                     alt=""
