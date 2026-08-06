@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 import { ensureChatModelAllowed, getEnabledModelCatalog } from "@/lib/modelCatalog"
 import { clampToSupportedModelId } from "@/lib/modelPreferences"
-import { DEFAULT_MODEL_ID, isSupportedModelId } from "@/lib/models"
+import { DEFAULT_MODEL_ID } from "@/lib/models"
 import { normalizeNetworkId } from "@/lib/web3/config"
 import type { ChatSearchResult } from "@/types"
 

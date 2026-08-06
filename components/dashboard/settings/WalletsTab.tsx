@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { User } from '@supabase/supabase-js'
 import { FiPlus, FiCreditCard, FiCopy, FiCheck, FiKey, FiTrash2 } from 'react-icons/fi'
 import { getUserWallets, createWallet, revealWalletPrivateKey } from '../../../app/actions/wallet'
@@ -28,7 +28,7 @@ export default function WalletsTab({ user }: WalletsTabProps) {
 
     const setStoreWallets = useWalletStore(s => s.setWallets)
 
-    const fetchWallets = async () => {
+    const fetchWallets = useCallback(async () => {
         setIsLoadingWallets(true)
         setWalletError('')
         try {
@@ -40,13 +40,13 @@ export default function WalletsTab({ user }: WalletsTabProps) {
         } finally {
             setIsLoadingWallets(false)
         }
-    }
+    }, [user.id, setStoreWallets])
 
     useEffect(() => {
         fetchWallets()
         setShowCreateForm(false)
         setWalletError('')
-    }, [user.id])
+    }, [fetchWallets])
 
     const handleCopy = (id: string, address: string) => {
         navigator.clipboard.writeText(address)

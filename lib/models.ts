@@ -35,7 +35,7 @@ export const SUPPORTED_MODELS = {
     },
 } as const satisfies Record<string, SupportedModelConfig>
 
-export const DEFAULT_MODEL_ID: SupportedModelId = 'gpt-4.1-nano'
+export const DEFAULT_MODEL_ID: SupportedModelId = 'cohere/north-mini-code:free'
 
 export const SUPPORTED_MODEL_IDS = Object.keys(SUPPORTED_MODELS) as SupportedModelId[]
 

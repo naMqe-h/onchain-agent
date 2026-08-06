@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import {
     FiX,
@@ -59,7 +59,7 @@ export default function WelcomeOnboardingModal({ user }: WelcomeOnboardingModalP
     const [direction, setDirection] = useState(0)
     const backdropRef = useRef<HTMLDivElement>(null)
 
-    const syncMetadata = async () => {
+    const syncMetadata = useCallback(async () => {
         completeWelcome()
         if (user) {
             try {
@@ -69,7 +69,7 @@ export default function WelcomeOnboardingModal({ user }: WelcomeOnboardingModalP
                 })
             } catch { }
         }
-    }
+    }, [completeWelcome, user])
 
     useEffect(() => {
         if (!isWelcomeOpen) return

@@ -193,7 +193,6 @@ export default function FeaturesModal({ isOpen, onClose }: FeaturesModalProps) {
                                                     className="p-4 text-xs font-semibold text-zinc-400 uppercase tracking-wider text-center"
                                                 >
                                                     <div className="flex flex-col items-center gap-1.5 justify-center">
-                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
                                                         <img
                                                             src={getNetworkIconSrc(networkId)}
                                                             alt={getNetworkShortLabel(networkId)}

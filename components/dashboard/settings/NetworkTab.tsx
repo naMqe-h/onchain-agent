@@ -57,18 +57,17 @@ function NetworkOptionRow({
             onClick={() => onSelect(option.id)}
             disabled={isUpdating}
             className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer text-left ${selected
-                    ? ACCENT_SELECTED[option.accent]
-                    : 'bg-[#1c1c1f]/30 border-white/5 hover:border-white/10'
+                ? ACCENT_SELECTED[option.accent]
+                : 'bg-[#1c1c1f]/30 border-white/5 hover:border-white/10'
                 }`}
         >
             <div className="flex items-start gap-3">
                 <div
                     className={`p-2.5 rounded-xl shrink-0 mt-0.5 ${selected
-                            ? ACCENT_ICON[option.accent]
-                            : 'bg-white/5 text-zinc-400'
+                        ? ACCENT_ICON[option.accent]
+                        : 'bg-white/5 text-zinc-400'
                         }`}
                 >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                         src={getNetworkIconSrc(option.id)}
                         alt=""

@@ -86,10 +86,17 @@ export default function MessageItem({
     isBusy,
     activeNetwork,
 }: MessageItemProps) {
+    const isSpeaking = useVoiceStore(s => s.isSpeaking)
+    const speakingMessageId = useVoiceStore(s => s.speakingMessageId)
+    const toggleSpeak = useVoiceStore(s => s.toggleSpeak)
+    const isThisSpeaking = isSpeaking && speakingMessageId === message.id
+
     const [time] = useState(() => {
         const d = (message as any).createdAt || (message as any).timestamp
-        if (d) return new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        if (!d) return ''
+        const dateObj = d instanceof Date ? d : new Date(d)
+        if (isNaN(dateObj.getTime())) return ''
+        return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     })
 
     const usageLimitPart = message.parts?.find((part: any) => part.type === 'usage-limit')
@@ -330,11 +337,6 @@ export default function MessageItem({
             </motion.div>
         )
     }
-
-    const isSpeaking = useVoiceStore(s => s.isSpeaking)
-    const speakingMessageId = useVoiceStore(s => s.speakingMessageId)
-    const toggleSpeak = useVoiceStore(s => s.toggleSpeak)
-    const isThisSpeaking = isSpeaking && speakingMessageId === message.id
 
     const isWriting = message.role === 'assistant' && isLast && isBusy && !isErrorMessage
 

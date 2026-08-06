@@ -22,7 +22,9 @@ export default function LoginModal() {
 
     const backdropRef = useRef<HTMLDivElement>(null)
 
-    useEffect(() => {
+    const [prevIsOpen, setPrevIsOpen] = useState(isOpen)
+    if (isOpen !== prevIsOpen) {
+        setPrevIsOpen(isOpen)
         if (isOpen) {
             setIsLogin(true)
             setError(null)
@@ -30,7 +32,7 @@ export default function LoginModal() {
             setPassword('')
             setIsLoading(false)
         }
-    }, [isOpen])
+    }
 
     useEffect(() => {
         if (!isOpen) return

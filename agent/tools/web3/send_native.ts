@@ -4,7 +4,6 @@ import { parseEther, type Hash } from "viem"
 import { privateKeyToAccount } from "viem/accounts"
 import { getPublicClient, getWalletClient } from "../../../lib/web3/providers"
 import {
-    getChainConfig,
     getNativeCurrencySymbol,
     normalizeNetworkId,
 } from "../../../lib/web3/config"
