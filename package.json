@@ -37,7 +37,7 @@
     "@upstash/redis": "^1.38.2",
     "ai": "^7.0.26",
     "driver.js": "^1.8.0",
-    "eve": "^0.31.0",
+    "eve": "^0.31.3",
     "framer-motion": "^12.42.2",
     "js-tiktoken": "^1.0.21",
     "lightweight-charts": "^5.2.0",

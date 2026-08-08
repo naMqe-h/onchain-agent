@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEveAgent } from 'eve/react'
-import { addMessage, updateChatSession, createChat, updateChatModel, updateChatNetwork, markChatAsRead } from '../../../app/actions/chat/chat'
+import { addMessage, updateChatSession, createChat, updateChatModel, updateChatNetwork, markChatAsRead, compactEveSession, clearEveSession } from '../../../app/actions/chat/chat'
 import { checkMyUsageQuota, getChatTokenUsageAction } from '../../../app/actions/usage/usage'
 import { useWalletStore } from '../../../hooks/useWalletStore'
 import { useAuthModalStore } from '../../../hooks/useAuthModalStore'
@@ -129,6 +129,8 @@ export function useChatSession({
     const [selectedModel, setSelectedModel] = useState(initialModel || DEFAULT_MODEL_ID)
     const [selectedNetwork, setSelectedNetwork] = useState<string>(normalizeNetworkId(activeNetwork))
     const [agentError, setAgentError] = useState(false)
+    const [isCompacting, setIsCompacting] = useState(false)
+    const [isClearing, setIsClearing] = useState(false)
 
     const loadWallets = useWalletStore(s => s.loadWallets)
     const openAuthModal = useAuthModalStore(s => s.open)
@@ -1004,6 +1006,37 @@ export function useChatSession({
         if (liveTitle) setChatTitle(liveTitle)
     }, [enrichedMessages])
 
+    const handleCompactContext = useCallback(async () => {
+        if (!currentChatId || isCompacting || isBusy) return
+        setIsCompacting(true)
+        try {
+            agentRef.current.reset()
+            const noticeMsg = await compactEveSession(currentChatId)
+            if (noticeMsg) {
+                setDisplayMessages(prev => [...prev, noticeMsg as StoredMessage])
+            }
+        } catch (err) {
+            console.error('Failed to compact context:', err)
+        } finally {
+            setIsCompacting(false)
+        }
+    }, [currentChatId, isCompacting, isBusy])
+
+    const handleClearContext = useCallback(async () => {
+        if (!currentChatId || isClearing || isBusy) return
+        setIsClearing(true)
+        try {
+            agentRef.current.reset()
+            const noticeMsg = await clearEveSession(currentChatId)
+            setDisplayMessages(noticeMsg ? [noticeMsg as StoredMessage] : [])
+            setTotalTokens(0)
+        } catch (err) {
+            console.error('Failed to clear context:', err)
+        } finally {
+            setIsClearing(false)
+        }
+    }, [currentChatId, isClearing, isBusy])
+
     return {
         input,
         setInput,
@@ -1013,6 +1046,8 @@ export function useChatSession({
         selectedModel,
         selectedNetwork,
         isBusy,
+        isCompacting,
+        isClearing,
         agentError: agentError || agent.status === 'error',
         txPanelOpen,
         chatTitle,
@@ -1029,5 +1064,7 @@ export function useChatSession({
         handleOpenTransactions,
         handleCloseTxPanel,
         handleStop,
+        handleCompactContext,
+        handleClearContext,
     }
 }

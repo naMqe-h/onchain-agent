@@ -113,6 +113,19 @@ export default function MessageItem({
     const hasTools = !isErrorMessage && !isUsageLimitMessage && messageHasTools(message)
 
     if (isUsageLimitMessage) {
+        if (message.role === 'system' && !usageLimitPart) {
+            return (
+                <motion.div
+                    variants={slideInUp}
+                    className="flex w-full items-center justify-center py-2"
+                >
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-purple-800/40 bg-purple-950/20 text-xs font-medium text-purple-300 shadow-xs">
+                        {plainText}
+                    </span>
+                </motion.div>
+            )
+        }
+
         const title =
             (typeof usageLimitPart?.title === 'string' && usageLimitPart.title) ||
             'Limit reached'

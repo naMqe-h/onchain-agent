@@ -438,3 +438,60 @@ export async function searchChats(query: string): Promise<ChatSearchResult[]> {
         }
     })
 }
+
+export async function compactEveSession(chatId: string) {
+    await getAuthenticatedUserAndChat(chatId)
+
+    const systemMessage = await db.message.create({
+        data: {
+            chatId,
+            role: 'system',
+            content: 'Chat context has been compressed and optimized.',
+            parts: [{ type: 'text', text: 'Chat context has been compressed and optimized.' }],
+        },
+    })
+
+    await db.chat.update({
+        where: { id: chatId },
+        data: {
+            eveSessionId: null,
+            eveContinuationToken: null,
+            eveStreamIndex: 0,
+            updatedAt: new Date(),
+        },
+    })
+
+    revalidatePath('/')
+    return systemMessage
+}
+
+export async function clearEveSession(chatId: string) {
+    await getAuthenticatedUserAndChat(chatId)
+
+    await db.message.deleteMany({
+        where: { chatId },
+    })
+
+    const systemMessage = await db.message.create({
+        data: {
+            chatId,
+            role: 'system',
+            content: 'Chat context has been cleared.',
+            parts: [{ type: 'text', text: 'Chat context has been cleared.' }],
+        },
+    })
+
+    await db.chat.update({
+        where: { id: chatId },
+        data: {
+            eveSessionId: null,
+            eveContinuationToken: null,
+            eveStreamIndex: 0,
+            updatedAt: new Date(),
+        },
+    })
+
+    revalidatePath('/')
+    return systemMessage
+}
+
