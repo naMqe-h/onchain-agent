@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { FiMoreHorizontal } from 'react-icons/fi'
+import { FiMoreHorizontal, FiMinimize2, FiTrash2, FiLoader } from 'react-icons/fi'
 import { AnimatePresence, motion } from 'framer-motion'
 import { formatTokens } from '@/lib/format'
 import { scaleIn } from '../../lib/motion'
@@ -10,12 +10,20 @@ interface ChatMobileMetaFabProps {
     totalTokens: number | null
     txCount: number
     onOpenTransactions: () => void
+    onRequestCompact?: () => void
+    onRequestClear?: () => void
+    isCompacting?: boolean
+    isClearing?: boolean
 }
 
 export default function ChatMobileMetaFab({
     totalTokens,
     txCount,
     onOpenTransactions,
+    onRequestCompact,
+    onRequestClear,
+    isCompacting = false,
+    isClearing = false,
 }: ChatMobileMetaFabProps) {
     const [open, setOpen] = useState(false)
     const rootRef = useRef<HTMLDivElement>(null)
@@ -79,11 +87,10 @@ export default function ChatMobileMetaFab({
                                 setOpen(false)
                                 onOpenTransactions()
                             }}
-                            className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left transition-colors ${
-                                txCount === 0
+                            className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left transition-colors ${txCount === 0
                                     ? 'cursor-not-allowed opacity-60'
                                     : 'hover:bg-zinc-800/70 cursor-pointer'
-                            }`}
+                                }`}
                         >
                             <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">
                                 Transactions
@@ -92,6 +99,48 @@ export default function ChatMobileMetaFab({
                                 {txCount}
                             </span>
                         </button>
+
+                        {onRequestCompact && (
+                            <button
+                                type="button"
+                                disabled={isCompacting || isClearing}
+                                onClick={() => {
+                                    setOpen(false)
+                                    onRequestCompact()
+                                }}
+                                className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left border-t border-zinc-800/80 hover:bg-purple-950/30 text-purple-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                            >
+                                <span className="flex items-center gap-2 text-xs font-medium">
+                                    {isCompacting ? (
+                                        <FiLoader className="animate-spin text-purple-400" size={14} />
+                                    ) : (
+                                        <FiMinimize2 size={14} />
+                                    )}
+                                    <span>Compact context</span>
+                                </span>
+                            </button>
+                        )}
+
+                        {onRequestClear && (
+                            <button
+                                type="button"
+                                disabled={isCompacting || isClearing}
+                                onClick={() => {
+                                    setOpen(false)
+                                    onRequestClear()
+                                }}
+                                className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left border-t border-zinc-800/80 hover:bg-red-950/30 text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                            >
+                                <span className="flex items-center gap-2 text-xs font-medium">
+                                    {isClearing ? (
+                                        <FiLoader className="animate-spin text-red-400" size={14} />
+                                    ) : (
+                                        <FiTrash2 size={14} />
+                                    )}
+                                    <span>Clear context</span>
+                                </span>
+                            </button>
+                        )}
                     </motion.div>
                 )}
             </AnimatePresence>

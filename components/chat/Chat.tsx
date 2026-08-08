@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ChatInput from './ChatInput'
 import ChatMessagesList from './ChatMessagesList'
@@ -7,9 +8,12 @@ import ChatTopbar from './ChatTopbar'
 import ChatMobileMetaFab from './ChatMobileMetaFab'
 import ChatTransactionsPanel from './ChatTransactionsPanel'
 import AgentAnalysisPanel from './AgentAnalysisPanel'
+import ConfirmContextModal, { type ContextModalMode } from './ConfirmContextModal'
 import { useChatSession, type UseChatSessionProps } from './hooks/useChatSession'
 
 export default function Chat(props: UseChatSessionProps) {
+    const [confirmModalMode, setConfirmModalMode] = useState<ContextModalMode | null>(null)
+
     const {
         input,
         setInput,
@@ -18,6 +22,8 @@ export default function Chat(props: UseChatSessionProps) {
         selectedModel,
         selectedNetwork,
         isBusy,
+        isCompacting,
+        isClearing,
         agentError,
         txPanelOpen,
         chatTitle,
@@ -34,6 +40,8 @@ export default function Chat(props: UseChatSessionProps) {
         handleOpenTransactions,
         handleCloseTxPanel,
         handleStop,
+        handleCompactContext,
+        handleClearContext,
     } = useChatSession(props)
 
     const showChatMeta = Boolean(props.chatId)
@@ -48,6 +56,10 @@ export default function Chat(props: UseChatSessionProps) {
                         totalTokens={totalTokens}
                         txCount={onchainTxs.length}
                         onOpenTransactions={handleOpenTransactions}
+                        onRequestCompact={() => setConfirmModalMode('compact')}
+                        onRequestClear={() => setConfirmModalMode('clear')}
+                        isCompacting={isCompacting}
+                        isClearing={isClearing}
                     />
                 )}
                 {isChatEmpty ? (
@@ -102,6 +114,10 @@ export default function Chat(props: UseChatSessionProps) {
                                     totalTokens={totalTokens}
                                     txCount={onchainTxs.length}
                                     onOpenTransactions={handleOpenTransactions}
+                                    onRequestCompact={() => setConfirmModalMode('compact')}
+                                    onRequestClear={() => setConfirmModalMode('clear')}
+                                    isCompacting={isCompacting}
+                                    isClearing={isClearing}
                                 />
                             )}
                             <ChatInput
@@ -139,6 +155,22 @@ export default function Chat(props: UseChatSessionProps) {
                     />
                 ) : null}
             </AnimatePresence>
+
+            <ConfirmContextModal
+                isOpen={!!confirmModalMode}
+                mode={confirmModalMode}
+                isPending={isCompacting || isClearing}
+                onClose={() => setConfirmModalMode(null)}
+                onConfirm={async () => {
+                    const targetMode = confirmModalMode
+                    setConfirmModalMode(null)
+                    if (targetMode === 'compact') {
+                        await handleCompactContext()
+                    } else if (targetMode === 'clear') {
+                        await handleClearContext()
+                    }
+                }}
+            />
         </div>
     )
 }

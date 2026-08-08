@@ -147,6 +147,9 @@ export default defineAgent({
             },
         },
     }),
+    compaction: {
+        thresholdPercent: 0.8,
+    },
     modelContextWindowTokens: 256000,
     limits: {
         maxInputTokensPerSession: 2_000_000,
