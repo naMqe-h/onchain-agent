@@ -46,7 +46,7 @@ export const FEATURES_REGISTRY: FeatureSupport[] = [
         name: 'Token Info',
         description: 'Fetch name, symbol, decimals, and supply for a specific token address.',
         support: {
-            'robinhood-testnet': { status: 'partial', details: 'Missing informations' },
+            'robinhood-testnet': { status: 'partial', details: 'Limited Data' },
             'robinhood': { status: 'supported', details: 'Supported' },
             'ethereum': { status: 'supported', details: 'Supported' },
             'ethereum-sepolia': { status: 'supported', details: 'Supported' },
@@ -67,6 +67,17 @@ export const FEATURES_REGISTRY: FeatureSupport[] = [
     {
         name: 'Transaction History',
         description: 'View wallet transaction history on the explorer.',
+        support: {
+            'robinhood-testnet': { status: 'supported', details: 'Supported' },
+            'robinhood': { status: 'supported', details: 'Supported' },
+            'ethereum': { status: 'supported', details: 'Supported' },
+            'ethereum-sepolia': { status: 'supported', details: 'Supported' },
+            'polygon': { status: 'supported', details: 'Supported' },
+        }
+    },
+    {
+        name: 'Transaction Inspection',
+        description: 'Inspect detailed tx status, gas used, confirmations, and event logs by hash.',
         support: {
             'robinhood-testnet': { status: 'supported', details: 'Supported' },
             'robinhood': { status: 'supported', details: 'Supported' },
