@@ -9,11 +9,11 @@ export type NetworkId =
     | "polygon"
 
 export const NETWORK_IDS: NetworkId[] = [
-    "robinhood-testnet",
-    "robinhood",
     "ethereum",
-    "ethereum-sepolia",
     "polygon",
+    "robinhood",
+    "ethereum-sepolia",
+    "robinhood-testnet",
 ]
 
 export const DEFAULT_NETWORK_ID: NetworkId = "ethereum"

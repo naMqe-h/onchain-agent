@@ -179,99 +179,98 @@ export default function FeaturesModal({ isOpen, onClose }: FeaturesModalProps) {
                             </button>
                         </div>
 
-                        <div className="hidden md:block flex-1 overflow-x-auto p-6 bg-[#18181b]">
-                            <div className="rounded-xl border border-white/10 overflow-hidden bg-zinc-950/20 min-w-[768px]">
-                                <table className="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr className="border-b border-white/5 bg-white/2">
-                                            <th className="p-4 text-xs font-semibold text-zinc-400 uppercase tracking-wider w-[240px]">
-                                                Feature
-                                            </th>
-                                            {NETWORK_IDS.map((networkId) => (
-                                                <th
-                                                    key={networkId}
-                                                    className="p-4 text-xs font-semibold text-zinc-400 uppercase tracking-wider text-center"
-                                                >
-                                                    <div className="flex flex-col items-center gap-1.5 justify-center">
-                                                        <img
-                                                            src={getNetworkIconSrc(networkId)}
-                                                            alt={getNetworkShortLabel(networkId)}
-                                                            className="w-6 h-6 object-contain rounded-md"
-                                                        />
-                                                        <div className="flex flex-col items-center">
-                                                            {getNetworkShortLabel(networkId).split(' ').map((part, i) => (
-                                                                <span
-                                                                    key={i}
-                                                                    className="text-[11px] font-medium text-zinc-300 block leading-tight text-center"
-                                                                >
-                                                                    {part}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-white/5">
-                                        {FEATURES_REGISTRY.map((feature, idx) => (
-                                            <tr
-                                                key={idx}
-                                                className="hover:bg-white/2 transition-colors"
+                        <div className="hidden md:block flex-1 overflow-auto bg-[#18181b]">
+                            <table className="w-full text-left border-collapse min-w-3xl">
+                                <thead className="sticky top-0 z-10 bg-[#141416] border-b border-white/5 shadow-xs">
+                                    <tr>
+                                        <th className="px-6 py-4 text-xs font-semibold text-zinc-400 uppercase tracking-wider w-60">
+                                            Feature
+                                        </th>
+                                        {NETWORK_IDS.map((networkId) => (
+                                            <th
+                                                key={networkId}
+                                                className="px-6 py-4 text-xs font-semibold text-zinc-400 uppercase tracking-wider text-center"
                                             >
-                                                <td className="p-4 align-top">
-                                                    <div className="flex flex-col gap-0.5">
-                                                        <span className="text-sm font-medium text-zinc-200">
-                                                            {feature.name}
-                                                        </span>
-                                                        <span className="text-xs text-zinc-500 leading-normal">
-                                                            {feature.description}
-                                                        </span>
+                                                <div className="flex flex-col items-center gap-1.5 justify-center">
+                                                    <img
+                                                        src={getNetworkIconSrc(networkId)}
+                                                        alt={getNetworkShortLabel(networkId)}
+                                                        className="w-6 h-6 object-contain rounded-md"
+                                                    />
+                                                    <div className="flex flex-col items-center">
+                                                        {getNetworkShortLabel(networkId).split(' ').map((part, i) => (
+                                                            <span
+                                                                key={i}
+                                                                className="text-[11px] font-medium text-zinc-300 block leading-tight text-center"
+                                                            >
+                                                                {part}
+                                                            </span>
+                                                        ))}
                                                     </div>
-                                                </td>
-                                                {NETWORK_IDS.map((networkId) => {
-                                                    const supportInfo = feature.support[networkId]
-                                                    return (
-                                                        <td
-                                                            key={networkId}
-                                                            className="p-4 text-center align-middle"
-                                                        >
-                                                            <div className="flex flex-col items-center justify-center gap-1">
-                                                                {supportInfo.status === 'supported' && (
-                                                                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-400">
-                                                                        <FiCheck size={14} />
-                                                                    </div>
-                                                                )}
-                                                                {supportInfo.status === 'partial' && (
-                                                                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-500/10 text-amber-400 animate-pulse">
-                                                                        <FiAlertTriangle size={12} />
-                                                                    </div>
-                                                                )}
-                                                                {supportInfo.status === 'unsupported' && (
-                                                                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-rose-500/10 text-rose-400">
-                                                                        <FiAlertCircle size={14} />
-                                                                    </div>
-                                                                )}
-                                                                <span
-                                                                    className={`text-[11px] font-medium whitespace-normal wrap-break-word text-center block max-w-[85px] mx-auto ${supportInfo.status === 'supported'
-                                                                        ? 'text-zinc-300'
-                                                                        : supportInfo.status === 'partial'
-                                                                            ? 'text-amber-400/90'
-                                                                            : 'text-zinc-500'
-                                                                        }`}
-                                                                >
-                                                                    {supportInfo.details}
-                                                                </span>
-                                                            </div>
-                                                        </td>
-                                                    )
-                                                })}
-                                            </tr>
+                                                </div>
+                                            </th>
                                         ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                    {FEATURES_REGISTRY.map((feature, idx) => (
+                                        <tr
+                                            key={idx}
+                                            className="hover:bg-white/2 transition-colors"
+                                        >
+                                            <td className="px-6 py-4 align-top">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className="text-sm font-medium text-zinc-200">
+                                                        {feature.name}
+                                                    </span>
+                                                    <span className="text-xs text-zinc-500 leading-normal">
+                                                        {feature.description}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            {NETWORK_IDS.map((networkId) => {
+                                                const supportInfo = feature.support[networkId]
+                                                return (
+                                                    <td
+                                                        key={networkId}
+                                                        className="px-6 py-4 text-center align-middle"
+                                                    >
+                                                        <div className="flex flex-col items-center justify-center gap-1">
+                                                            {supportInfo.status === 'supported' && (
+                                                                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-400">
+                                                                    <FiCheck size={14} />
+                                                                </div>
+                                                            )}
+                                                            {supportInfo.status === 'partial' && (
+                                                                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-500/10 text-amber-400 animate-pulse">
+                                                                    <FiAlertTriangle size={12} />
+                                                                </div>
+                                                            )}
+                                                            {supportInfo.status === 'unsupported' && (
+                                                                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-rose-500/10 text-rose-400">
+                                                                    <FiAlertCircle size={14} />
+                                                                </div>
+                                                            )}
+                                                            <span
+                                                                className={`text-[11px] font-medium whitespace-normal wrap-break-word text-center block max-w-21.25 mx-auto ${supportInfo.status === 'supported'
+                                                                    ? 'text-zinc-300'
+                                                                    : supportInfo.status === 'partial'
+                                                                        ? 'text-amber-400/90'
+                                                                        : 'text-zinc-500'
+                                                                    }`}
+                                                            >
+                                                                {supportInfo.details}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                )
+                                            })}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
+
 
                         <div className="block md:hidden flex-1 overflow-y-auto p-4 bg-[#18181b] space-y-3 max-h-[70vh]">
                             {FEATURES_REGISTRY.map((feature, idx) => (
