@@ -34,6 +34,7 @@ import UserWalletsSkeleton from '../tools/get_user_wallets/UserWalletsSkeleton'
 import { messageHasReasoning, messageHasTools } from '../AgentAnalysisPanel'
 import { slideInUp } from '../../../lib/motion'
 import { useVoiceStore } from '../../../hooks/useVoiceStore'
+import { useDevModeStore } from '../../../hooks/useDevModeStore'
 import CopyMessageButton from './CopyMessageButton'
 import { type Message } from '../../../types/chat'
 
@@ -90,6 +91,7 @@ export default function MessageItem({
     const speakingMessageId = useVoiceStore(s => s.speakingMessageId)
     const toggleSpeak = useVoiceStore(s => s.toggleSpeak)
     const isThisSpeaking = isSpeaking && speakingMessageId === message.id
+    const isDevModeEnabled = useDevModeStore(s => s.isDevModeEnabled)
 
     const [time] = useState(() => {
         const d = (message as any).createdAt || (message as any).timestamp
@@ -380,7 +382,7 @@ export default function MessageItem({
                             {isThisSpeaking ? <FiVolumeX size={16} /> : <FiVolume2 size={16} />}
                         </button>
                     )}
-                    {!isErrorMessage && (hasReasoning || hasTools) && (
+                    {!isErrorMessage && isDevModeEnabled && (hasReasoning || hasTools) && (
                         <div className="flex items-center gap-1.5">
                             {hasReasoning && (
                                 <button

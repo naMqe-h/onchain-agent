@@ -34,6 +34,7 @@ import AppModelsList from './models/AppModelsList'
 import BYOKProviderCatalog from './models/BYOKProviderCatalog'
 import AdvancedCustomModelForm from './models/AdvancedCustomModelForm'
 import ProviderApiKeysList from './models/ProviderApiKeysList'
+import { useDevModeStore } from '@/hooks/useDevModeStore'
 
 const LATENCY_TIER_CLASS: Record<LatencyTier, string> = {
     Low: 'text-emerald-400',
@@ -61,6 +62,7 @@ interface ModelsTabProps {
 
 export default function ModelsTab({ user }: ModelsTabProps) {
     const router = useRouter()
+    const isDevModeEnabled = useDevModeStore((s) => s.isDevModeEnabled)
     const catalog = useModelsStore((s) => s.models)
     const status = useModelsStore((s) => s.status)
     const loadModels = useModelsStore((s) => s.loadModels)
@@ -402,25 +404,27 @@ export default function ModelsTab({ user }: ModelsTabProps) {
                             CONTEXT_TIER_CLASS={CONTEXT_TIER_CLASS}
                         />
 
-                        <AdvancedCustomModelForm
-                            showManualForm={showManualForm}
-                            setShowManualForm={setShowManualForm}
-                            newModelId={newModelId}
-                            setNewModelId={setNewModelId}
-                            newModelName={newModelName}
-                            setNewModelName={setNewModelName}
-                            newModelProvider={newModelProvider}
-                            setNewModelProvider={setNewModelProvider}
-                            isCustomModelProviderOpen={isCustomModelProviderOpen}
-                            setIsCustomModelProviderOpen={setIsCustomModelProviderOpen}
-                            newModelReasoning={newModelReasoning}
-                            setNewModelReasoning={setNewModelReasoning}
-                            isAddingModel={isAddingModel}
-                            activeProviders={activeProviders}
-                            KNOWN_PROVIDERS={KNOWN_PROVIDERS}
-                            currentCustomModelProviderInfo={currentCustomModelProviderInfo}
-                            handleAddManualCustomModel={handleAddManualCustomModel}
-                        />
+                        {isDevModeEnabled && (
+                            <AdvancedCustomModelForm
+                                showManualForm={showManualForm}
+                                setShowManualForm={setShowManualForm}
+                                newModelId={newModelId}
+                                setNewModelId={setNewModelId}
+                                newModelName={newModelName}
+                                setNewModelName={setNewModelName}
+                                newModelProvider={newModelProvider}
+                                setNewModelProvider={setNewModelProvider}
+                                isCustomModelProviderOpen={isCustomModelProviderOpen}
+                                setIsCustomModelProviderOpen={setIsCustomModelProviderOpen}
+                                newModelReasoning={newModelReasoning}
+                                setNewModelReasoning={setNewModelReasoning}
+                                isAddingModel={isAddingModel}
+                                activeProviders={activeProviders}
+                                KNOWN_PROVIDERS={KNOWN_PROVIDERS}
+                                currentCustomModelProviderInfo={currentCustomModelProviderInfo}
+                                handleAddManualCustomModel={handleAddManualCustomModel}
+                            />
+                        )}
                     </>
                 )}
 
