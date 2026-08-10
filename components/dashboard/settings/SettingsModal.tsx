@@ -1,7 +1,7 @@
 'use client'
 
 import { ReactNode } from 'react'
-import { FiX, FiCreditCard, FiLock, FiGlobe, FiUser, FiCpu, FiArchive, FiBook, FiDisc, FiMonitor, FiBarChart2, FiMic } from 'react-icons/fi'
+import { FiX, FiCreditCard, FiLock, FiGlobe, FiUser, FiCpu, FiArchive, FiBook, FiDisc, FiMonitor, FiBarChart2, FiMic, FiCode } from 'react-icons/fi'
 import { User } from '@supabase/supabase-js'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSettingsStore } from '../../../hooks/useSettingsStore'
@@ -18,6 +18,7 @@ import ModelsTab from './ModelsTab'
 import UsageTab from './UsageTab'
 import ArchivedTab from './ArchivedTab'
 import VoiceTab from './VoiceTab'
+import DeveloperTab from './DeveloperTab'
 
 interface SettingsModalProps {
     user: User | null
@@ -76,6 +77,7 @@ export default function SettingsModal({ user, profile }: SettingsModalProps) {
                                 {tabBtn('models', 'Models', <FiCpu size={16} />)}
                                 {tabBtn('usage', 'Usage', <FiBarChart2 size={16} />)}
                                 {tabBtn('archived', 'Archived', <FiArchive size={16} />)}
+                                {tabBtn('developer', 'Developer', <FiCode size={16} />)}
                             </div>
 
                             <div className="flex items-center md:mb-2 md:order-first">
@@ -109,6 +111,8 @@ export default function SettingsModal({ user, profile }: SettingsModalProps) {
                                 <UsageTab />
                             ) : activeTab === 'archived' ? (
                                 <ArchivedTab user={user} />
+                            ) : activeTab === 'developer' ? (
+                                <DeveloperTab />
                             ) : (
                                 <NetworkTab user={user} />
                             )}

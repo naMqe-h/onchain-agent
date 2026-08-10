@@ -10,9 +10,11 @@ import ChatTransactionsPanel from './ChatTransactionsPanel'
 import AgentAnalysisPanel from './AgentAnalysisPanel'
 import ConfirmContextModal, { type ContextModalMode } from './ConfirmContextModal'
 import { useChatSession, type UseChatSessionProps } from './hooks/useChatSession'
+import { useDevModeStore } from '../../hooks/useDevModeStore'
 
 export default function Chat(props: UseChatSessionProps) {
     const [confirmModalMode, setConfirmModalMode] = useState<ContextModalMode | null>(null)
+    const isDevModeEnabled = useDevModeStore((s) => s.isDevModeEnabled)
 
     const {
         input,
@@ -145,7 +147,7 @@ export default function Chat(props: UseChatSessionProps) {
                         transactions={onchainTxs}
                         onClose={handleCloseTxPanel}
                     />
-                ) : activeMessage && panelMode ? (
+                ) : activeMessage && panelMode && isDevModeEnabled ? (
                     <AgentAnalysisPanel
                         key={`${activeMessageId}-${panelMode}`}
                         activeMessage={activeMessage}

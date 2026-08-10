@@ -12,6 +12,7 @@ import { createClient } from '../../../lib/supabase/client'
 import { useAuthModalStore } from '../../../hooks/useAuthModalStore'
 import { useSettingsStore } from '../../../hooks/useSettingsStore'
 import { useWalletStore } from '../../../hooks/useWalletStore'
+import { useDevModeStore } from '../../../hooks/useDevModeStore'
 import { AuthSessionItem } from '@/types'
 
 function formatRelative(iso: Date | string | null | undefined): string {
@@ -27,6 +28,7 @@ function isMobileUserAgent(userAgent: string | null | undefined): boolean {
 export default function SessionsTab() {
     const router = useRouter()
     const openAuthModal = useAuthModalStore((s) => s.open)
+    const isDevModeEnabled = useDevModeStore((s) => s.isDevModeEnabled)
 
     const [sessions, setSessions] = useState<AuthSessionItem[]>([])
     const [isLoading, setIsLoading] = useState(true)
@@ -220,7 +222,7 @@ export default function SessionsTab() {
                                                 {formatRelative(
                                                     session.updatedAt ?? session.createdAt
                                                 )}
-                                                {session.ip ? ` · ${session.ip}` : ''}
+                                                {isDevModeEnabled && session.ip ? ` · ${session.ip}` : ''}
                                             </span>
                                             <span className="text-[11px] text-zinc-600">
                                                 Signed in {formatRelative(session.createdAt)}
