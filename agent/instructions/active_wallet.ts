@@ -30,7 +30,7 @@ export default defineDynamic({
             const address = attrString(ctx.session.auth.current?.attributes?.activeWalletAddress)
             if (!address) {
                 return defineInstructions({
-                    markdown:
+                    content:
                         networkBlock +
                         `\n[ACTIVE WALLET THIS TURN]\n` +
                         `No active wallet configured/selected. Answer general queries or use tools taking explicit addresses.\n`,
@@ -55,7 +55,7 @@ export default defineDynamic({
             }
 
             return defineInstructions({
-                markdown:
+                content:
                     networkBlock +
                     `\n[ACTIVE WALLET THIS TURN]\n` +
                     `UI Default: \`${address}\`${nameHint}.\n` +

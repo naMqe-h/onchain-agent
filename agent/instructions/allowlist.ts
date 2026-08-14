@@ -7,7 +7,7 @@ export default defineDynamic({
 
             if (enabled) {
                 return defineInstructions({
-                    markdown:
+                    content:
                         `\n\n[ADDRESS ALLOWLIST POLICY THIS TURN - BINDING]\n` +
                         `Status: **enabled**.\n` +
                         `You are ONLY allowed to send native or ERC-20 tokens to recipient addresses that are in the user's Address Book or Wallets.\n` +
@@ -17,7 +17,7 @@ export default defineDynamic({
             }
 
             return defineInstructions({
-                markdown:
+                content:
                     `\n\n[ADDRESS ALLOWLIST POLICY THIS TURN - BINDING]\n` +
                     `Status: **disabled**.\n` +
                     `You may send native or ERC-20 tokens to any destination address as requested by the user, without restriction.\n`,
