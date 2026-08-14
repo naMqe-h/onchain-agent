@@ -41,7 +41,7 @@ export default defineDynamic({
             )
 
             return defineInstructions({
-                markdown:
+                content:
                     `\n[TX CONFIRMATION POLICY THIS TURN]\n` +
                     policyBody(mode),
             })

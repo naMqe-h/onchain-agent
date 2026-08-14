@@ -91,11 +91,8 @@ function resolveDefaultStaticModel(id: SupportedModelId) {
     return getOpenRouterClient()(config.modelId)
 }
 
-const defaultModel = resolveDefaultStaticModel(DEFAULT_MODEL_ID)
-
 export default defineAgent({
     model: defineDynamic({
-        fallback: defaultModel,
         events: {
             "step.started": async (event, ctx) => {
                 const headerModel = ctx.session.auth.current?.attributes?.modelName
@@ -127,30 +124,33 @@ export default defineAgent({
                         if (!apiKey) {
                             throw new Error(`API key required for ${customModel.provider.toUpperCase()}. Please configure your API key in Settings -> Providers.`)
                         }
-                        return resolveModelForProvider(customModel.modelId, customModel.provider, apiKey)
+                        const resolved = resolveModelForProvider(customModel.modelId, customModel.provider, apiKey)
+                        return { model: resolved, modelContextWindowTokens: 256000 }
                     }
 
                     if (requestedModelId in SUPPORTED_MODELS) {
                         const staticConfig = SUPPORTED_MODELS[requestedModelId as SupportedModelId]
                         const userKey = await getDecryptedUserKey(userId, staticConfig.provider)
                         if (userKey) {
-                            return resolveModelForProvider(staticConfig.modelId, staticConfig.provider, userKey)
+                            const resolved = resolveModelForProvider(staticConfig.modelId, staticConfig.provider, userKey)
+                            return { model: resolved, modelContextWindowTokens: 256000 }
                         }
                     }
                 }
 
                 if (requestedModelId in SUPPORTED_MODELS) {
-                    return resolveDefaultStaticModel(requestedModelId as SupportedModelId)
+                    const resolved = resolveDefaultStaticModel(requestedModelId as SupportedModelId)
+                    return { model: resolved, modelContextWindowTokens: 256000 }
                 }
 
-                return resolveDefaultStaticModel(DEFAULT_MODEL_ID)
+                const resolvedDefault = resolveDefaultStaticModel(DEFAULT_MODEL_ID)
+                return { model: resolvedDefault, modelContextWindowTokens: 256000 }
             },
         },
     }),
     compaction: {
         thresholdPercent: 0.8,
     },
-    modelContextWindowTokens: 256000,
     limits: {
         maxInputTokensPerSession: 2_000_000,
         maxOutputTokensPerSession: 500_000,
